@@ -1,7 +1,10 @@
-// Хедер кабинета (FgNav из fig-shared) + мобильные нижние табы (структура it3-mobile)
+// Хедер кабинета (FgNav из fig-shared)
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useStore, initialsOf, shortName } from '../state/store.jsx'
+import { useNavigate } from 'react-router-dom'
+import { useStore, initialsOf } from '../state/store.jsx'
+
+// Имя без канцелярита: «Мария», не «Соколова М.А.» (в fio порядок Фамилия Имя Отчество)
+const firstNameOf = fio => (fio || '').trim().split(/\s+/)[1] || (fio || '').trim()
 
 export const Logo = ({ dark = false, style }) => (
   <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />будущего</div>
@@ -45,8 +48,8 @@ export const Nav = ({ tab = 'apps' }) => {
           aria-label="Меню профиля"
           aria-expanded={open}
         >
-          <span className="umenu-name">{shortName(state.profile.fio) || 'Профиль'}</span>
           <span className="umenu-ava">{initialsOf(state.profile.fio) || '·'}</span>
+          <span className="umenu-name">{firstNameOf(state.profile.fio) || 'Профиль'}</span>
         </button>
         {open && (
           <div className="umenu-drop">
@@ -69,20 +72,3 @@ export const Nav = ({ tab = 'apps' }) => {
   )
 }
 
-export const BottomTabs = () => {
-  const nav = useNavigate()
-  const loc = useLocation()
-  const tab = loc.pathname.startsWith('/profile') ? 'profile' : 'apps'
-  return (
-    <div className="btabs">
-      <button className={'btab' + (tab === 'apps' ? ' on' : '')} onClick={() => nav('/cabinet')}>
-        {tab === 'apps' && <div className="bt-line"></div>}
-        <span>Заявки</span>
-      </button>
-      <button className={'btab' + (tab === 'profile' ? ' on' : '')} onClick={() => nav('/profile')}>
-        {tab === 'profile' && <div className="bt-line"></div>}
-        <span>Профиль</span>
-      </button>
-    </div>
-  )
-}
