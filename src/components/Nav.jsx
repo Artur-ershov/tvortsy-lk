@@ -37,10 +37,7 @@ export const Nav = ({ tab = 'apps' }) => {
   }, [open])
   return (
     <div className="fnav">
-      <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }}><Logo /></button>
-      <div className="links">
-        <a className={tab === 'apps' ? 'on' : ''} onClick={() => nav('/cabinet')}>Заявки</a>
-      </div>
+      <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }} aria-label="К заявкам"><Logo /></button>
       <div ref={menuRef} className="umenu" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <span className="jbm nav-mail" style={{ fontSize: 13, letterSpacing: '.04em', opacity: .7 }}>{state.email}</span>
         <button

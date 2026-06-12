@@ -180,7 +180,6 @@
 
 @media (max-width: 720px) {
   .fnav { padding: 16px 16px; }
-  .fnav .links { display: none; }
   .fnav .nav-mail { display: none; }
   .btabs { display: flex; }
   .mchips { display: flex; }
