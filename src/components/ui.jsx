@@ -237,17 +237,15 @@ export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabe
     <div className={'member-row' + (member.tag === 'invited' ? ' pending' : '')}>
       <span className="init">{init}</span>
       <div style={{ flex: 1, minWidth: 160 }}>
+        {/* имя приглашённого неизвестно до принятия — показываем email */}
         <div style={{ fontSize: 15.5, fontWeight: 500 }}>{member.name || member.email}</div>
         <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 2 }}>
-          {member.role === 'captain' ? `капитан${you ? ' · вы' : ''}` : member.email}
-          {member.minor ? ' · 16 лет' : ''}
+          {member.role === 'captain' ? `капитан${you ? ' · вы' : ''}` : member.name ? member.email : 'имя появится после принятия'}
         </div>
       </div>
       {member.tag === 'invited' && onRemind && <button className="mlink" type="button" onClick={onRemind}>напомнить</button>}
       {onRemove && member.role !== 'captain' && <button className="mlink" type="button" onClick={onRemove}>убрать</button>}
-      <span className={'mtag ' + (member.minor && member.consent !== 'ok' ? 'warn' : t.cls)}>
-        {member.minor && member.consent !== 'ok' ? 'согласие родителя' : tagLabel}
-      </span>
+      <span className={'mtag ' + t.cls}>{tagLabel}</span>
       {children}
     </div>
   )

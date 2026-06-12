@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   useStore, NOMINATIONS, NOMINATION_KEYS, SYNTH_DIR_KEYS,
-  computeTodos, sectionState, filledCount, firstNameCity, shortName,
+  computeTodos, sectionState, filledCount, firstNameCity,
   classifyFile, nextId, countSubmitted, APP_LIMIT,
 } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
@@ -321,23 +321,7 @@ export default function ApplyForm() {
                         you={m.role === 'captain'}
                         onRemove={m.role !== 'captain' ? () => { dispatch({ type: 'remove-member', id, memberId: m.id }); touch() } : undefined}
                         onRemind={m.tag === 'invited' ? () => toast('Напомнили ' + m.email) : undefined}
-                      >
-                        {m.minor && (
-                          <div style={{ flexBasis: '100%', paddingLeft: 48, marginTop: 8, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                            {m.consent === 'ok' ? (
-                              <>
-                                <span className="doc-status ok">принято</span>
-                                <span className="ff-hint">согласие представителя принято</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="doc-status review">на проверке</span>
-                                <span className="ff-hint">участник младше 18 — {shortName(m.name)} загружает согласие родителя в своём кабинете</span>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </MemberRow>
+                      />
                     ))}
                   </div>
 

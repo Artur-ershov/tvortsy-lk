@@ -6,7 +6,7 @@ import { AuthSplit } from '../../components/AuthSplit.jsx'
 import { Field, Wing } from '../../components/ui.jsx'
 
 export default function Onboarding() {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
   const nav = useNavigate()
   const [fio, setFio] = useState('')
   const [dob, setDob] = useState('')
@@ -30,7 +30,8 @@ export default function Onboarding() {
     if (!ok) return
     const profile = { fio: fio.trim(), dob: dob.trim(), phone: phone.trim(), nationality: nationality.trim(), city: city.trim(), work: work.trim() }
     dispatch({ type: 'onboarding', profile })
-    nav(verdict === 'minor' ? '/wall' : '/cabinet')
+    // 18+ с отложенным приглашением — сразу на экран ответа; минор сперва проходит Стену
+    nav(verdict === 'minor' ? '/wall' : state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet')
   }
 
   return (

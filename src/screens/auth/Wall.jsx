@@ -49,8 +49,8 @@ export default function Wall() {
   const nav = useNavigate()
   const [variant, setVariant] = useState('a')
 
-  // документы приняты — кабинет открыт
-  if (state.stage === 'active') return <Navigate to="/cabinet" replace />
+  // документы приняты — кабинет открыт; отложенное приглашение важнее кабинета
+  if (state.stage === 'active') return <Navigate to={state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet'} replace />
 
   const upload = (doc, name) => {
     dispatch({ type: 'upload-minor-doc', doc, name })

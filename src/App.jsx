@@ -13,6 +13,7 @@ import Cabinet from './screens/cabinet/Cabinet.jsx'
 import Profile from './screens/cabinet/Profile.jsx'
 import Success from './screens/cabinet/Success.jsx'
 import ApplyForm from './screens/form/ApplyForm.jsx'
+import JoinInvite from './screens/team/JoinInvite.jsx'
 
 // Куда ведёт стартовый «/» в зависимости от стадии аккаунта (статусная модель из handoff)
 const HOME = {
@@ -54,6 +55,8 @@ export default function App() {
           <Route path="/wall" element={<Wall />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recovery" element={<Recovery />} />
+          {/* приглашение в команду — доступно и гостю, авторизация внутри экрана */}
+          <Route path="/join/:id" element={<JoinInvite />} />
           <Route path="/cabinet" element={<RequireActive><Cabinet /></RequireActive>} />
           <Route path="/profile" element={<RequireActive><Profile /></RequireActive>} />
           <Route path="/apply/:id" element={<RequireActive><ApplyForm /></RequireActive>} />

@@ -21,6 +21,7 @@ export default function Login() {
       nav(state.stage === 'registered' ? '/confirm'
         : state.stage === 'confirmed' ? '/onboarding'
         : state.stage === 'minor-wall' ? '/wall'
+        : state.pendingInvite ? '/join/' + state.pendingInvite
         : '/cabinet')
     } else {
       setErr(true)

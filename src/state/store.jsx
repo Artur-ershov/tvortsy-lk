@@ -103,7 +103,7 @@ export function newDraft(num) {
     description: '',
     mode: 'solo',             // solo | team
     teamName: '',
-    members: [],              // {id, name, email, role:'captain'|'member', tag:'in'|'confirmed'|'invited'|'declined', minor, consent:'review'|'ok'}
+    members: [],              // {id, name, email, role:'captain'|'member', tag:'in'|'confirmed'|'invited'|'declined'}; имя пустое до принятия приглашения
     files: [],                // {id, name, sizeMB, state:'queue'|'progress'|'broken'|'done'|'error'|'over', pct, errText, note}
     link: '',                 // ссылка при превышении лимита
     consents: [false, false], // 2 согласия (Положение + лицензия); ПДн — только на регистрации
@@ -137,8 +137,6 @@ export function computeTodos(app) {
     if (app.members.filter(m => m.role !== 'captain').length === 0) todos.push({ label: 'участники команды', anchor: 's03' })
     const waiting = app.members.filter(m => m.tag === 'invited')
     if (waiting.length) todos.push({ label: waiting.length === 1 ? 'приглашение без ответа' : `приглашения без ответа — ${waiting.length}`, anchor: 's03' })
-    const minor = app.members.find(m => m.minor && m.consent !== 'ok')
-    if (minor) todos.push({ label: `согласие представителя — загружает ${shortName(minor.name)}`, anchor: 's03' })
   }
 
   const unchecked = app.consents.filter(c => !c).length
@@ -166,8 +164,6 @@ export function sectionState(app, n) {
     if (app.mode === 'solo') return 'done'
     const waiting = app.members.filter(m => m.tag === 'invited').length
     if (waiting) return waiting === 1 ? '1 приглашение' : `${waiting} приглашения`
-    const minor = app.members.find(m => m.minor && m.consent !== 'ok')
-    if (minor) return 'согласие на проверке'
     return has('s03') ? '' : 'done'
   }
   if (n === 4) return has('s04') ? '' : 'done'
@@ -226,10 +222,46 @@ const seedApps = () => {
 const TEAM_SEED = () => ([
   { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', role: 'captain', tag: 'in' },
   { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', role: 'member', tag: 'confirmed' },
-  { id: nextId(), name: 'Дмитриев Кирилл Олегович', email: 'k.dmitriev@inbox.ru', role: 'member', tag: 'invited' },
-  // несовершеннолетний в команде: согласие грузит сам в своём кабинете, капитан видит статус (it3)
-  { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', role: 'member', tag: 'confirmed', minor: true, consent: 'review' },
+  // до принятия приглашения известен только email — имени нет
+  { id: nextId(), name: '', email: 'k.dmitriev@inbox.ru', role: 'member', tag: 'invited' },
+  // несовершеннолетний попадает в команду только после Стены согласий — статус согласия капитану не нужен
+  { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', role: 'member', tag: 'confirmed' },
 ])
+
+// Командная заявка «Шум» — фиксированный id, чтобы демо-ссылка /join/team-shum работала из коробки
+const teamShumApp = (members = TEAM_SEED()) => ({
+  ...newDraft('ТВ-2026-0847'),
+  id: 'team-shum',
+  nomination: 'synth',
+  synthDirs: ['audio', 'dance'],
+  title: 'Шёпот города',
+  description: 'Перформанс на стыке звука и движения: полевые записи города становятся партитурой для четырёх танцовщиков.',
+  mode: 'team',
+  teamName: 'Шум',
+  members,
+  files: [
+    { id: nextId(), name: 'shepot_zvuk.wav', sizeMB: 212, state: 'done', pct: 100 },
+    { id: nextId(), name: 'shepot_goroda_v3.mp4', sizeMB: 486, state: 'progress', pct: 64 },
+  ],
+})
+
+const PROFILE_KIRILL = {
+  fio: 'Дмитриев Кирилл Олегович',
+  dob: '21.07.2001',
+  phone: '+7 903 118-42-90',
+  nationality: 'русский',
+  city: 'Казань',
+  work: 'КФУ',
+}
+
+const PROFILE_TIMUR = {
+  fio: 'Гарипов Тимур Маратович',
+  dob: '02.11.2011',
+  phone: '+7 917 555-31-07',
+  nationality: 'татарин',
+  city: 'Казань',
+  work: 'Лицей № 7',
+}
 
 /* ───────── Начальное состояние ───────── */
 
@@ -242,6 +274,7 @@ const initialState = {
   socials: { vk: true, yandex: false, telegram: true },
   apps: [],
   appSeq: 849, // следующий номер ТВ-2026-XXXX
+  pendingInvite: null, // id заявки, на чьё приглашение нужно ответить после авторизации
 }
 
 /* ───────── Редьюсер ───────── */
@@ -341,10 +374,27 @@ function reducer(state, action) {
       return patchApp(state, action.id, a => ({
         members: a.members.map(m => (m.id === action.memberId ? { ...m, tag: action.tag } : m)),
       }))
-    case 'member-consent': // модератор: согласие представителя несовершеннолетнего
-      return patchApp(state, action.id, a => ({
-        members: a.members.map(m => (m.id === action.memberId ? { ...m, consent: action.consent } : m)),
-      }))
+    case 'set-pending-invite': // ссылка-приглашение открыта до авторизации — ответим после входа
+      return { ...state, pendingInvite: action.id }
+    case 'respond-invite': {
+      // приглашённый отвечает со своего email; при принятии имя подтягивается из профиля
+      const email = state.email
+      const next = patchApp(state, action.id, a => {
+        const known = a.members.some(m => m.email === email)
+        if (!known && action.tag === 'confirmed') {
+          // пришёл по пересланной ссылке — добавляем себя в состав
+          return { members: [...a.members, { id: nextId(), name: state.profile.fio, email, role: 'member', tag: 'confirmed' }] }
+        }
+        return {
+          members: a.members.map(m => (m.email === email
+            ? { ...m, tag: action.tag, ...(action.tag === 'confirmed' ? { name: state.profile.fio } : {}) }
+            : m)),
+        }
+      })
+      return { ...next, pendingInvite: null }
+    }
+    case 'leave-team': // участник выходит из команды в своём кабинете
+      return patchApp(state, action.id, a => ({ members: a.members.filter(m => m.email !== state.email) }))
     case 'ensure-captain':
       return patchApp(state, action.id, a => {
         if (a.members.some(m => m.role === 'captain')) return {}
@@ -370,28 +420,36 @@ function reducer(state, action) {
         }
         case 'maria-team': {
           const apps = seedApps()
-          apps[0] = {
-            ...apps[0],
-            nomination: 'synth',
-            synthDirs: ['audio', 'dance'],
-            title: 'Шёпот города',
-            description: 'Перформанс на стыке звука и движения: полевые записи города становятся партитурой для четырёх танцовщиков.',
-            mode: 'team',
-            teamName: 'Шум',
-            members: TEAM_SEED(),
-            files: [
-              { id: nextId(), name: 'shepot_zvuk.wav', sizeMB: 212, state: 'done', pct: 100 },
-              { id: nextId(), name: 'shepot_goroda_v3.mp4', sizeMB: 486, state: 'progress', pct: 64 },
-            ],
-          }
+          apps[0] = { ...teamShumApp(), num: apps[0].num }
           return { ...base, stage: 'active', email: 'm.sokolova@mail.ru', profile: PROFILE_MARIA, apps }
         }
+        case 'invitee':
+          // Кирилл (18+) получил ссылку-приглашение в «Шум» — ещё не ответил
+          return {
+            ...base,
+            stage: 'active',
+            email: 'k.dmitriev@inbox.ru',
+            profile: PROFILE_KIRILL,
+            apps: [teamShumApp()],
+            pendingInvite: 'team-shum',
+          }
+        case 'invitee-minor':
+          // Тимур (14–17) получил приглашение, но сначала — Стена согласий
+          return {
+            ...base,
+            stage: 'minor-wall',
+            email: 't.garipov@mail.ru',
+            profile: PROFILE_TIMUR,
+            minorDocs: { participation: 'none', pdn: 'none' },
+            apps: [teamShumApp(TEAM_SEED().map(m => (m.email === 't.garipov@mail.ru' ? { ...m, tag: 'invited', name: '' } : m)))],
+            pendingInvite: 'team-shum',
+          }
         case 'minor':
           return {
             ...base,
             stage: 'minor-wall',
             email: 't.garipov@mail.ru',
-            profile: { fio: 'Гарипов Тимур Маратович', dob: '02.11.2011', phone: '+7 917 555-31-07', nationality: 'татарин', city: 'Казань', work: 'Лицей № 7' },
+            profile: PROFILE_TIMUR,
             minorDocs: { participation: 'none', pdn: 'review' },
           }
         default:

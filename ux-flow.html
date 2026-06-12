@@ -6,254 +6,347 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e8eaf0; overflow: hidden; }
-
-:root {
-  --c-auth: #3b5bdb;
-  --c-gate: #e8590c;
-  --c-main: #2f9e44;
-  --c-form: #6741d9;
-  --c-modal: #495057;
-  --card-bg: #1a1d26;
-  --border: #2a2d3a;
-}
-
 #app { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
 
-.legend { display: flex; gap: 20px; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; align-items: center; }
-.legend-item { display: flex; align-items: center; gap: 7px; opacity: 0.85; }
-.legend-dot { width: 11px; height: 11px; border-radius: 50%; }
-.legend-hint { margin-left: auto; opacity: 0.35; font-size: 11px; }
+.header { display: flex; align-items: center; gap: 18px; padding: 0 18px; border-bottom: 1px solid #1e2130; height: 44px; flex-shrink: 0; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; opacity: .78; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.sep { width: 1px; height: 16px; background: #1e2130; }
+.hint { margin-left: auto; opacity: .28; font-size: 11px; }
 
-#canvas-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; }
-#canvas-wrap.grabbing { cursor: grabbing; }
-#canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+#wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+#wrap.drag { cursor: grabbing; }
+#cvs { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
-.controls { position: absolute; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 100; }
-.ctrl-btn { width: 36px; height: 36px; border-radius: 7px; border: 1px solid var(--border); background: var(--card-bg); color: #e8eaf0; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
-.ctrl-btn:hover { background: #2a2d3a; }
+.ctrl { position: absolute; bottom: 14px; right: 14px; display: flex; flex-direction: column; gap: 5px; z-index: 10; }
+.cb { width: 33px; height: 33px; border-radius: 7px; border: 1px solid #1e2130; background: #161820; color: #e8eaf0; cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+.cb:hover { background: #22253a; }
+.rb { position: absolute; bottom: 14px; left: 14px; font-size: 11.5px; padding: 6px 13px; border-radius: 7px; border: 1px solid #1e2130; background: #161820; color: #e8eaf0; cursor: pointer; }
+.rb:hover { background: #22253a; }
 
-.reset-btn { position: absolute; bottom: 16px; left: 16px; font-size: 12px; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border); background: var(--card-bg); color: #e8eaf0; cursor: pointer; transition: background 0.15s; }
-.reset-btn:hover { background: #2a2d3a; }
-
-#tooltip { position: fixed; background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; line-height: 1.55; max-width: 280px; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
-#tooltip .tt-title { font-weight: 600; margin-bottom: 3px; font-size: 14px; }
-#tooltip .tt-route { font-family: monospace; font-size: 11.5px; opacity: 0.5; margin-bottom: 8px; }
-#tooltip .tt-desc { opacity: 0.8; font-size: 12px; white-space: pre-line; }
-#tooltip .tt-nav { margin-top: 9px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 11px; opacity: 0.6; }
+#tt { position: fixed; background: #0b0d14; border: 1px solid #1e2130; border-radius: 10px; padding: 11px 15px; font-size: 12px; line-height: 1.6; max-width: 272px; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 12px 40px rgba(0,0,0,.75); }
+#tt .t  { font-weight: 600; font-size: 13.5px; margin-bottom: 2px; }
+#tt .r  { font-family: monospace; font-size: 11px; opacity: .42; margin-bottom: 7px; }
+#tt .d  { opacity: .8; font-size: 12px; white-space: pre-line; }
+#tt .n  { margin-top: 8px; border-top: 1px solid #1e2130; padding-top: 7px; font-size: 11px; opacity: .55; }
+#tt .i  { margin-top: 8px; border-top: 1px solid #1e2130; padding-top: 7px; font-size: 11px; color: #f08c00; }
 
 .node { cursor: pointer; }
-.node:hover rect:first-child { filter: brightness(1.25); }
+.node:hover .nb { filter: brightness(1.22); }
 .node text { pointer-events: none; }
-.section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="legend">
+  <div class="header">
     <div class="legend-item"><div class="legend-dot" style="background:#3b5bdb"></div>Авторизация</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e8590c"></div>Блокирующий экран</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2f9e44"></div>Личный кабинет</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#6741d9"></div>Форма заявки</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#495057"></div>Модалка</div>
-    <div class="legend-hint">наведи на экран · зажми и тащи · скролл для зума</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e8590c"></div>Блокирующий</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2f9e44"></div>Кабинет</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6741d9"></div>Форма / Капитан</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0c8599"></div>Участник команды</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#495057"></div>Модалка / Система</div>
+    <div class="sep"></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f08c00"></div>Открытый вопрос</div>
+    <div class="sep"></div>
+    <div class="legend-item" style="opacity:.4; font-size:11px">── реализовано</div>
+    <div class="legend-item" style="opacity:.4; font-size:11px">╌╌ навигация / ещё не реализовано</div>
+    <div class="hint">наведи · тащи · скролл</div>
   </div>
-  <div id="canvas-wrap">
-    <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
-    <div class="controls">
-      <button class="ctrl-btn" id="zoomIn">+</button>
-      <button class="ctrl-btn" id="zoomOut">−</button>
-    </div>
-    <button class="reset-btn" id="resetView">↺ сбросить</button>
+  <div id="wrap">
+    <svg id="cvs" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="ctrl"><button class="cb" id="zi">+</button><button class="cb" id="zo">−</button></div>
+    <button class="rb" id="rv">↺ сбросить</button>
   </div>
 </div>
-<div id="tooltip">
-  <div class="tt-title" id="tt-title"></div>
-  <div class="tt-route" id="tt-route"></div>
-  <div class="tt-desc" id="tt-desc"></div>
-  <div class="tt-nav" id="tt-nav"></div>
+<div id="tt">
+  <div class="t" id="tt-t"></div>
+  <div class="r" id="tt-r"></div>
+  <div class="d" id="tt-d"></div>
+  <div class="n" id="tt-n"></div>
+  <div class="i" id="tt-i"></div>
 </div>
 
 <script>
+const W=150, H=56;
+
+// ─── ALL NODES ────────────────────────────────────────────────────────────────
 const NODES = [
-  // AUTH
-  { id: 'login',      label: 'Login',       sub: 'Войти',            x: 340, y: 120, color: '#3b5bdb',
-    route: '/login',      desc: 'Вход в аккаунт.\nEmail + пароль.\nДемо: m.sokolova@mail.ru',
-    nav: '/register, /recovery, или в ЛК по статусу' },
-  { id: 'register',   label: 'Register',    sub: 'Шаг 1 из 2',       x: 100, y: 120, color: '#3b5bdb',
-    route: '/register',   desc: 'Создание аккаунта.\nEmail, пароль (8+, буквы+цифры), согласие с условиями.',
-    nav: '→ /confirm' },
-  { id: 'confirm',    label: 'Confirm Email', sub: '4-значный код',  x: 100, y: 275, color: '#3b5bdb',
-    route: '/confirm',    desc: 'Ввод 4-значного кода из письма.\nАвтофокус между ячейками.\nТаймер 60 сек — повторная отправка.',
-    nav: '→ /onboarding' },
-  { id: 'onboarding', label: 'Onboarding',  sub: 'Шаг 2 из 2',       x: 100, y: 430, color: '#3b5bdb',
-    route: '/onboarding', desc: 'Анкета участника:\nФИО, дата рождения (14–35 лет),\nтелефон, гражданство, город, место учёбы.',
-    nav: '→ /wall (14–17 лет) или /cabinet (18+)' },
-  { id: 'recovery',   label: 'Recovery',    sub: '3 шага',            x: 600, y: 120, color: '#3b5bdb',
-    route: '/recovery',   desc: 'Шаг 1: ввод email.\nШаг 2: ожидание письма, таймер 60с.\nШаг 3: новый пароль + подтверждение.',
-    nav: '→ /login' },
 
-  // GATE
-  { id: 'wall',       label: 'Wall',        sub: 'Согласие родителей', x: 100, y: 585, color: '#e8590c',
-    route: '/wall',       desc: 'Только для 14–17 лет.\nВариант A: загрузка 2 скан-согласий (PDF/JPG, <10 МБ).\nВариант B: верификация через Госуслуги.\nСтатус: не загружено → на проверке → принято.',
-    nav: '→ /cabinet (после принятия)' },
+  // ── MAIN FLOW ──
+  { id:'login',     label:'Login',         sub:'Войти',             x:340,  y:120, color:'#3b5bdb',
+    route:'/login',     desc:'Вход в аккаунт.\nEmail + пароль.\nДемо: m.sokolova@mail.ru',
+    nav:'/register, /recovery, или в ЛК по статусу' },
+  { id:'register',  label:'Register',      sub:'Шаг 1 из 2',        x:100,  y:120, color:'#3b5bdb',
+    route:'/register',  desc:'Создание аккаунта.\nEmail, пароль (8+, буквы+цифры), согласие с условиями.',
+    nav:'→ /confirm' },
+  { id:'confirm',   label:'Confirm Email', sub:'4-значный код',     x:100,  y:275, color:'#3b5bdb',
+    route:'/confirm',   desc:'Ввод 4-значного кода из письма.\nАвтофокус между ячейками.\nТаймер 60 сек — повторная отправка.',
+    nav:'→ /onboarding' },
+  { id:'onboarding',label:'Onboarding',    sub:'Шаг 2 из 2',        x:100,  y:430, color:'#3b5bdb',
+    route:'/onboarding',desc:'Анкета участника:\nФИО, дата рождения (14–35 лет),\nтелефон, гражданство, город, место учёбы.',
+    nav:'→ /wall (14–17) или /cabinet (18+)' },
+  { id:'recovery',  label:'Recovery',      sub:'3 шага',             x:590,  y:120, color:'#3b5bdb',
+    route:'/recovery',  desc:'Шаг 1: ввод email.\nШаг 2: ожидание письма, таймер 60с.\nШаг 3: новый пароль + подтверждение.',
+    nav:'→ /login' },
+  { id:'wall',      label:'Wall',          sub:'Согласие родителей', x:100,  y:580, color:'#e8590c',
+    route:'/wall',      desc:'Только для 14–17 лет.\nВариант A: загрузка 2 скан-согласий.\nВариант B: верификация через Госуслуги.\nСтатусы: не загружено → на проверке → принято.',
+    nav:'→ /cabinet (после принятия)' },
+  { id:'cabinet',   label:'Cabinet',       sub:'Мои заявки',         x:910,  y:280, color:'#2f9e44',
+    route:'/cabinet',   desc:'Главный дашборд.\nЧерновики + поданные заявки (лимит 2).\nКарточки раскрываются: статус, таймлайн, файлы, команда.\nЦель как для основного пользователя, так и для участника команды.',
+    nav:'→ /apply/:id, /profile, модалки' },
+  { id:'profile',   label:'Profile',       sub:'Настройки',          x:1150, y:280, color:'#2f9e44',
+    route:'/profile',   desc:'Inline-редактирование анкеты.\nСмена пароля.\nПодключение VK / Яндекс / Telegram.\nВыход.',
+    nav:'→ /cabinet' },
+  { id:'success',   label:'Success',       sub:'Заявка подана',      x:910,  y:450, color:'#2f9e44',
+    route:'/success/:id',desc:'Экран подтверждения подачи.\nНомер, номинация, дата/время.\nТаймлайн статусов.',
+    nav:'→ /cabinet, /apply/:id' },
+  { id:'apply',     label:'Apply Form',    sub:'4 раздела',           x:670,  y:450, color:'#6741d9',
+    route:'/apply/:id', desc:'§01 Номинация + описание\n§02 Материалы (drag-drop)\n§03 Команда — здесь начинается командный флоу\n§04 Согласия + подача\n\nАвтосохранение черновика.',
+    nav:'→ /success/:id (подача), /cabinet (назад)' },
+  { id:'modal-withdraw',label:'Отозвать?', sub:'Модалка',            x:1110, y:420, color:'#495057',
+    route:null, desc:'Подтверждение отзыва поданной заявки.\nСлот освобождается после отзыва.', nav:null },
+  { id:'modal-delete',  label:'Удалить\nчерновик?',sub:'Модалка',    x:1110, y:520, color:'#495057',
+    route:null, desc:'Удаление черновика. Необратимо.', nav:null },
+  { id:'modal-password',label:'Смена\nпароля',sub:'Модалка',         x:1360, y:280, color:'#495057',
+    route:null, desc:'Старый пароль → новый → подтверждение.\nТребования: 8+ символов, буквы + цифры.', nav:null },
 
-  // CABINET
-  { id: 'cabinet',    label: 'Cabinet',     sub: 'Мои заявки',        x: 920, y: 280, color: '#2f9e44',
-    route: '/cabinet',    desc: 'Главный дашборд.\nЧерновики + поданные заявки (лимит 2).\nКарточки раскрываются: статус, таймлайн, файлы, команда.\nПодзаголовок с именем, городом, возрастом.',
-    nav: '→ /apply/:id, /profile, модалки' },
-  { id: 'profile',    label: 'Profile',     sub: 'Настройки аккаунта', x: 1160, y: 280, color: '#2f9e44',
-    route: '/profile',    desc: 'Inline-редактирование полей анкеты.\nСмена пароля (модалка).\nПодключение VK / Яндекс / Telegram.\nВыход из аккаунта.',
-    nav: '→ /cabinet, модалка смены пароля' },
-  { id: 'success',    label: 'Success',     sub: 'Заявка подана',      x: 920, y: 450, color: '#2f9e44',
-    route: '/success/:id', desc: 'Экран подтверждения.\nНомер и номинация заявки, дата/время.\nТаймлайн статусов.\n"К заявкам" и "Подать ещё одну" (если лимит не исчерпан).',
-    nav: '→ /cabinet, /apply/:id' },
+  // ── TEAM FLOW (капитан) ──
+  { id:'c-teamname', label:'Название\nкоманды', sub:'§03 — обязательно', x:180, y:760, color:'#6741d9',
+    route:null, desc:'Появляется после выбора "С командой".\nОбязательное поле — без него форма не валидна.', issue:null },
+  { id:'c-invite',   label:'Приглашение',  sub:'Email или ссылка',   x:180, y:880, color:'#6741d9',
+    route:null, desc:'Два способа:\n① Ввести email → "Пригласить"\n② Скопировать ссылку-приглашение\n\nУчастник появляется в списке со статусом "ожидает".', issue:null },
+  { id:'c-wait',     label:'Ожидание',     sub:'Статус: ожидает',    x:180, y:1010, color:'#6741d9',
+    route:null, desc:'Капитан видит список:\n• Email (имя — после принятия)\n• Статус: приглашён / принял / отклонил\n• Кнопка "Напомнить"\n• Кнопка "Удалить из команды"', issue:null },
+  { id:'c-minor',    label:'Несоверш.\nучастник', sub:'Через Стену',  x:180, y:1140, color:'#6741d9',
+    route:null, desc:'Участник 14–17 проходит Стену согласий ДО принятия приглашения.\nВ команду попадает уже с принятыми документами —\nотдельный consent-статус капитану не нужен.', issue:null },
+  { id:'c-submit',   label:'Подать заявку',sub:'Кнопка в футере',    x:180, y:1290, color:'#2f9e44',
+    route:null, desc:'Кнопка "Подать заявку" активна при соблюдении всех условий формы.\nСтатус участников при подаче не проверяется.',
+    issue:'Можно подать заявку с участниками в статусе "ожидает" — их участие не подтверждено' },
 
-  // FORM
-  { id: 'apply',      label: 'Apply Form',  sub: '4 раздела',          x: 680, y: 450, color: '#6741d9',
-    route: '/apply/:id',  desc: '§01 Номинация + название + описание (лимит 1000 симв.)\n§02 Материалы: drag-drop, прогресс, ссылка при превышении\n§03 Команда: соло / с командой + приглашения по email\n§04 Согласия (2 чекбокса) + подача\n\nАвтосохранение черновика.',
-    nav: '→ /success/:id (подача), /cabinet (назад)' },
+  // ── TEAM FLOW (система) ──
+  { id:'sys-email',  label:'Письмо-\nприглашение', sub:'Системное',  x:480, y:880, color:'#495057',
+    route:null, desc:'Система отправляет письмо на указанный email.\nВ письме: название команды, имя капитана, ссылка-приглашение.',
+    issue:'Нет явной обработки если email не существует' },
 
-  // MODALS
-  { id: 'modal-withdraw', label: 'Отозвать?',    sub: 'Модалка', x: 1120, y: 420, color: '#495057',
-    route: null, desc: 'Подтверждение отзыва поданной заявки.\nПоказывает название и дату подачи.\nПосле — слот освобождается.',
-    nav: null },
-  { id: 'modal-delete',   label: 'Удалить\nчерновик?', sub: 'Модалка', x: 1120, y: 530, color: '#495057',
-    route: null, desc: 'Удаление черновика.\nНеобратимо.', nav: null },
-  { id: 'modal-password', label: 'Смена\nпароля', sub: 'Модалка',      x: 1370, y: 280, color: '#495057',
-    route: null, desc: 'Три поля: старый пароль, новый, подтверждение.\nТребования: 8+ символов, буквы + цифры.\nКнопка неактивна до совпадения.', nav: null },
+  // ── TEAM FLOW (участник) ──
+  { id:'m-email',    label:'Получает\nписьмо',  sub:'Inbox',         x:720, y:880, color:'#0c8599',
+    route:null, desc:'Участник получает письмо с приглашением.', issue:null },
+  { id:'m-hasacc',   label:'Есть аккаунт?',sub:'Развилка',          x:720, y:1010, color:'#0c8599',
+    route:null, desc:'Ссылка из письма ведёт на /join/:id.\n\nЕсть аккаунт → Login → возврат на /join\nНет → Register → Onboarding → возврат на /join\n\nПриглашение хранится в pendingInvite и не теряется.', issue:null },
+  { id:'m-auth',     label:'Login /\nRegister', sub:'Auth flow',     x:720, y:1140, color:'#0c8599',
+    route:null, desc:'Полный флоу для новых:\nRegister → Confirm Email → Onboarding\nИ только потом — экран инвайта.\n\nЕсли 14–17 — сперва Wall (согласия),\nприглашение ждёт за Стеной.', issue:null },
+  { id:'m-invite-screen', label:'Экран\nприглашения', sub:'/join/:id', x:720, y:1290, color:'#0c8599',
+    route:'/join/team-shum', desc:'Отдельный экран:\n• Команда: [название]\n• Заявка: [произведение]\n• Капитан: [имя]\n• Номинация\n\nДва действия: Принять / Отклонить.\nНедействительная ссылка → заглушка.', issue:null },
+  { id:'m-accept',   label:'Принял',       sub:'→ confirmed',        x:560, y:1440, color:'#2f9e44',
+    route:null, desc:'Участник принимает приглашение.\nЕго статус у капитана → "принял",\nимя подтягивается из профиля.', issue:null },
+  { id:'m-decline',  label:'Отклонил',     sub:'→ declined',         x:900, y:1440, color:'#495057',
+    route:null, desc:'Участник отклоняет приглашение.\nКапитан видит статус "отклонил".\nПередумать можно — приглашение бессрочно.', issue:null },
+  { id:'m-minor',    label:'Wall\nучастника', sub:'До приглашения',  x:900, y:1140, color:'#6741d9',
+    route:'/wall',  desc:'Участник 14–17 проходит Wall ДО ответа на приглашение:\nбез принятого согласия на ПДн обрабатывать его данные нельзя.\n\nПосле принятия документов модератором —\nвозврат на /join/:id (pendingInvite).', issue:null },
+  { id:'m-cabinet',  label:'Cabinet',      sub:'Роль "участник"',    x:720, y:1720, color:'#0c8599',
+    route:'/cabinet',desc:'В ЛК участника заявка команды видна\nread-only карточкой «Команда»:\nназвание, произведение, капитан, статус.\n\nРедактирует заявку капитан.\nМожно покинуть команду.\nСвоя отдельная заявка — можно (лимит общий).', issue:null },
 ];
 
+// ─── ALL EDGES ────────────────────────────────────────────────────────────────
 const EDGES = [
-  { from: 'register',   to: 'confirm',        label: 'Создать аккаунт' },
-  { from: 'confirm',    to: 'onboarding',     label: 'Код верный' },
-  { from: 'onboarding', to: 'wall',           label: '14–17 лет' },
-  { from: 'onboarding', to: 'cabinet',        label: '18+ лет' },
-  { from: 'wall',       to: 'cabinet',        label: 'Одобрено' },
-  { from: 'login',      to: 'register',       label: 'Новый аккаунт' },
-  { from: 'login',      to: 'recovery',       label: 'Забыл пароль' },
-  { from: 'login',      to: 'cabinet',        label: 'Войти', dash: true },
-  { from: 'recovery',   to: 'login',          label: 'Пароль обновлён' },
-  { from: 'cabinet',    to: 'apply',          label: 'Новая / редакт.' },
-  { from: 'cabinet',    to: 'profile',        label: 'Профиль' },
-  { from: 'cabinet',    to: 'modal-withdraw', label: 'Отозвать', small: true },
-  { from: 'cabinet',    to: 'modal-delete',   label: 'Удалить черновик', small: true },
-  { from: 'apply',      to: 'success',        label: 'Подать' },
-  { from: 'apply',      to: 'cabinet',        label: 'Назад', dash: true },
-  { from: 'success',    to: 'cabinet',        label: 'К заявкам', dash: true },
-  { from: 'success',    to: 'apply',          label: 'Ещё заявку', dash: true },
-  { from: 'profile',    to: 'modal-password', label: 'Смена пароля', small: true },
-  { from: 'profile',    to: 'login',          label: 'Выйти', dash: true },
+  // main auth
+  { from:'register',   to:'confirm',         label:'Создать аккаунт' },
+  { from:'confirm',    to:'onboarding',      label:'Код верный' },
+  { from:'onboarding', to:'wall',            label:'14–17 лет' },
+  { from:'onboarding', to:'cabinet',         label:'18+ лет' },
+  { from:'wall',       to:'cabinet',         label:'Одобрено' },
+  { from:'login',      to:'register',        label:'Новый аккаунт' },
+  { from:'login',      to:'recovery',        label:'Забыл пароль' },
+  { from:'login',      to:'cabinet',         label:'Войти', dash:true },
+  { from:'recovery',   to:'login',           label:'Пароль обновлён' },
+  { from:'cabinet',    to:'apply',           label:'Новая / редакт.' },
+  { from:'cabinet',    to:'profile',         label:'Профиль' },
+  { from:'cabinet',    to:'modal-withdraw',  label:'Отозвать', small:true },
+  { from:'cabinet',    to:'modal-delete',    label:'Удалить черновик', small:true },
+  { from:'apply',      to:'success',         label:'Подать' },
+  { from:'apply',      to:'cabinet',         label:'Назад', dash:true },
+  { from:'success',    to:'cabinet',         label:'К заявкам', dash:true },
+  { from:'success',    to:'apply',           label:'Ещё заявку', dash:true },
+  { from:'profile',    to:'modal-password',  label:'Смена пароля', small:true },
+  { from:'profile',    to:'login',           label:'Выйти', dash:true },
+
+  // captain flow
+  { from:'c-teamname', to:'c-invite',        label:'' },
+  { from:'c-invite',   to:'c-wait',          label:'После отправки' },
+  { from:'c-wait',     to:'c-minor',         label:'Если 14–17', dash:true },
+  { from:'c-wait',     to:'c-submit',        label:'Все готово' },
+  { from:'c-minor',    to:'c-submit',        label:'', dash:true },
+
+  // system
+  { from:'c-invite',   to:'sys-email',       label:'Триггер' },
+
+  // member flow
+  { from:'sys-email',  to:'m-email',         label:'' },
+  { from:'m-email',    to:'m-hasacc',        label:'По ссылке' },
+  { from:'m-hasacc',   to:'m-auth',          label:'Нет аккаунта' },
+  { from:'m-hasacc',   to:'m-invite-screen', label:'Есть аккаунт', dash:true },
+  { from:'m-auth',     to:'m-invite-screen', label:'После auth' },
+  { from:'m-invite-screen', to:'m-accept',  label:'Принять' },
+  { from:'m-invite-screen', to:'m-decline', label:'Отклонить' },
+  { from:'m-auth',     to:'m-minor',         label:'Если 14–17', dash:true },
+  { from:'m-minor',    to:'m-invite-screen', label:'Документы приняты' },
+  { from:'m-accept',   to:'m-cabinet',       label:'' },
 ];
 
-const W = 150, H = 60;
+// ─── CROSS-FLOW CONNECTIONS ───────────────────────────────────────────────────
+// These get special manual paths drawn separately
+const CROSS = [
+  // apply → c-teamname  (§03 "С командой" → капитан заводит команду)
+  { path: `M${670+75},${450+56} C${670+75},700 ${180+75},700 ${180+75},760`,
+    label: '§03 — "С командой"', color: '#6741d9' },
+  // m-cabinet → cabinet  (участник попадает в тот же ЛК)
+  { path: `M${720+150},${1720+28} C1140,${1720+28} 1140,${280+28} ${910+150},${280+28}`,
+    label: 'участник попадает в ЛК', color: '#0c8599', dash: true },
+];
 
-function getNodeCenter(id) {
-  const n = NODES.find(n => n.id === id);
-  return { x: n.x + W/2, y: n.y + H/2 };
-}
+// ─── ZONES ───────────────────────────────────────────────────────────────────
+const ZONES = [
+  // main
+  { label:'АВТОРИЗАЦИЯ',      x:60,   y:80,   w:600, h:536, color:'#3b5bdb' },
+  { label:'БЛОКИРУЮЩИЙ',      x:60,   y:548,  w:210, h:112, color:'#e8590c' },
+  { label:'ЛИЧНЫЙ КАБИНЕТ',   x:860,  y:242,  w:562, h:376, color:'#2f9e44' },
+  { label:'ФОРМА ЗАЯВКИ',     x:622,  y:412,  w:258, h:122, color:'#6741d9' },
+  // team section separator
+  { label:'ФЛОУ КОМАНД',      x:60,   y:716,  w:1100,h:16,  color:'#888', thin:true },
+  // team zones
+  { label:'КАПИТАН',          x:130,  y:740,  w:260, h:630, color:'#6741d9' },
+  { label:'СИСТЕМА',          x:428,  y:840,  w:244, h:158, color:'#495057' },
+  { label:'УЧАСТНИК',         x:670,  y:840,  w:314, h:632, color:'#0c8599' },
+  { label:'ПРИНЯТИЕ / ИСХОД', x:428,  y:1400, w:560, h:200, color:'#888' },
+];
 
+// ─── BUILD SVG ───────────────────────────────────────────────────────────────
 function buildSVG() {
-  const svg = document.getElementById('canvas');
-  const PAD = 80;
-  const allX = NODES.map(n => n.x), allY = NODES.map(n => n.y);
-  const minX = Math.min(...allX) - PAD, minY = Math.min(...allY) - PAD;
-  const maxX = Math.max(...allX) + W + PAD, maxY = Math.max(...allY) + H + PAD;
-  const svgW = maxX - minX, svgH = maxY - minY;
-  svg.setAttribute('width', svgW);
-  svg.setAttribute('height', svgH);
-  svg.setAttribute('viewBox', `${minX} ${minY} ${svgW} ${svgH}`);
+  const svg = document.getElementById('cvs');
+  const PAD = 70;
+  const allX = NODES.map(n=>n.x), allY = NODES.map(n=>n.y);
+  const minX = Math.min(...allX)-PAD, minY = Math.min(...allY)-PAD;
+  const maxX = Math.max(...allX)+W+PAD, maxY = Math.max(...allY)+H+PAD;
+  svg.setAttribute('width',  maxX-minX);
+  svg.setAttribute('height', maxY-minY);
+  svg.setAttribute('viewBox',`${minX} ${minY} ${maxX-minX} ${maxY-minY}`);
 
   svg.innerHTML = `<defs>
-    <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L9,3.5 z" fill="#555"/>
-    </marker>
-    <marker id="arr-dash" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L9,3.5 z" fill="#3a3a3a"/>
-    </marker>
+    <marker id="a1" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#555"/></marker>
+    <marker id="a2" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#333"/></marker>
+    <marker id="a-cap" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#6741d9"/></marker>
+    <marker id="a-mem" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#0c8599"/></marker>
   </defs>`;
 
-  // Zone backgrounds
-  const zones = [
-    { label: 'АВТОРИЗАЦИЯ',    x: 60,  y: 80,  w: 610, h: 540, color: '#3b5bdb' },
-    { label: 'БЛОКИРУЮЩИЙ',    x: 60,  y: 555, w: 210, h: 110, color: '#e8590c' },
-    { label: 'ЛИЧНЫЙ КАБИНЕТ', x: 870, y: 240, w: 550, h: 380, color: '#2f9e44' },
-    { label: 'ФОРМА ЗАЯВКИ',   x: 630, y: 410, w: 260, h: 120, color: '#6741d9' },
-  ];
-  zones.forEach(z => {
+  // Zones
+  ZONES.forEach(z => {
+    if (z.thin) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',z.x); line.setAttribute('y1',z.y+z.h/2);
+      line.setAttribute('x2',z.x+z.w); line.setAttribute('y2',z.y+z.h/2);
+      line.setAttribute('stroke',z.color); line.setAttribute('stroke-opacity','0.2');
+      line.setAttribute('stroke-width','1');
+      svg.appendChild(line);
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',z.x+z.w/2); t.setAttribute('y',z.y+z.h/2-4);
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('fill',z.color); t.setAttribute('fill-opacity','0.3');
+      t.setAttribute('font-size','9.5'); t.setAttribute('font-weight','700');
+      t.setAttribute('letter-spacing','0.12em');
+      t.textContent = z.label;
+      svg.appendChild(t);
+      return;
+    }
     const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    r.setAttribute('x', z.x); r.setAttribute('y', z.y);
-    r.setAttribute('width', z.w); r.setAttribute('height', z.h);
-    r.setAttribute('rx', 18); r.setAttribute('fill', z.color);
-    r.setAttribute('fill-opacity', '0.055');
-    r.setAttribute('stroke', z.color); r.setAttribute('stroke-opacity', '0.2');
-    r.setAttribute('stroke-width', '1.5');
+    r.setAttribute('x',z.x); r.setAttribute('y',z.y);
+    r.setAttribute('width',z.w); r.setAttribute('height',z.h);
+    r.setAttribute('rx',16);
+    r.setAttribute('fill',z.color); r.setAttribute('fill-opacity','0.055');
+    r.setAttribute('stroke',z.color); r.setAttribute('stroke-opacity','0.18');
+    r.setAttribute('stroke-width','1.5');
     svg.appendChild(r);
-
     const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x', z.x + 16); t.setAttribute('y', z.y + 22);
-    t.setAttribute('class', 'section-label');
-    t.setAttribute('fill', z.color); t.setAttribute('fill-opacity', '0.55');
+    t.setAttribute('x',z.x+14); t.setAttribute('y',z.y+20);
+    t.setAttribute('fill',z.color); t.setAttribute('fill-opacity','0.5');
+    t.setAttribute('font-size','10'); t.setAttribute('font-weight','700');
+    t.setAttribute('letter-spacing','0.09em');
     t.textContent = z.label;
     svg.appendChild(t);
   });
 
-  // Detect bidirectional pairs and assign bend direction
-  const reverseExists = (e) => EDGES.some(e2 => e2.from === e.to && e2.to === e.from);
-  const isFirstOfPair = (e) => {
-    const rev = EDGES.find(e2 => e2.from === e.to && e2.to === e.from);
+  // Cross connections (drawn before regular edges so they appear under)
+  CROSS.forEach(c => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+    el.setAttribute('d', c.path); el.setAttribute('fill','none');
+    el.setAttribute('stroke', c.color); el.setAttribute('stroke-opacity','0.5');
+    el.setAttribute('stroke-width','1.8');
+    el.setAttribute('stroke-dasharray', c.dash ? '7,5' : '4,3');
+    const mid = c.color === '#6741d9' ? 'url(#a-cap)' : 'url(#a-mem)';
+    el.setAttribute('marker-end', mid);
+    svg.appendChild(el);
+
+    // label at midpoint (rough)
+    if (c.label) {
+      const tl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      // put label slightly off the path midpoint
+      const lx = c.color === '#6741d9' ? 670+75+30 : 1150;
+      const ly = c.color === '#6741d9' ? 700+14     : 1060;
+      tl.setAttribute('x', lx); tl.setAttribute('y', ly);
+      tl.setAttribute('fill', c.color); tl.setAttribute('fill-opacity','0.6');
+      tl.setAttribute('font-size','10'); tl.setAttribute('text-anchor','middle');
+      tl.textContent = c.label;
+      svg.appendChild(tl);
+    }
+  });
+
+  // Regular edges
+  const revExists = e => EDGES.some(e2=>e2.from===e.to && e2.to===e.from);
+  const isFirst   = e => {
+    const rev = EDGES.find(e2=>e2.from===e.to && e2.to===e.from);
     return !rev || EDGES.indexOf(e) < EDGES.indexOf(rev);
   };
 
-  // Edges
   EDGES.forEach(e => {
-    const na = NODES.find(n => n.id === e.from);
-    const nb = NODES.find(n => n.id === e.to);
-    const a = { x: na.x + W/2, y: na.y + H/2 };
-    const b = { x: nb.x + W/2, y: nb.y + H/2 };
-    const dx = b.x - a.x, dy = b.y - a.y;
-
-    const bidi = reverseExists(e);
-    const bendDir = bidi ? (isFirstOfPair(e) ? 1 : -1) : 0;
-    const bendAmt = bidi ? 38 : 0;
+    const na = NODES.find(n=>n.id===e.from);
+    const nb = NODES.find(n=>n.id===e.to);
+    if (!na||!nb) return;
+    const ax=na.x+W/2, ay=na.y+H/2, bx=nb.x+W/2, by=nb.y+H/2;
+    const dx=bx-ax, dy=by-ay;
     const horiz = Math.abs(dx) >= Math.abs(dy);
+    const bidi = revExists(e), bd = bidi?(isFirst(e)?1:-1):0, ba = bidi?36:0;
 
-    let sx, sy, tx, ty;
-    if (horiz) {
-      sx = dx > 0 ? na.x + W : na.x; sy = a.y;
-      tx = dx > 0 ? nb.x : nb.x + W; ty = b.y;
-    } else {
-      sx = a.x; sy = dy > 0 ? na.y + H : na.y;
-      tx = b.x; ty = dy > 0 ? nb.y : nb.y + H;
-    }
+    let sx,sy,tx,ty;
+    if (horiz) { sx=dx>0?na.x+W:na.x; sy=ay; tx=dx>0?nb.x:nb.x+W; ty=by; }
+    else        { sx=ax; sy=dy>0?na.y+H:na.y; tx=bx; ty=dy>0?nb.y:nb.y+H; }
 
-    let path, lx, ly;
+    let path,lx,ly;
     if (horiz) {
-      const mx = (sx + tx) / 2;
-      const off = bendDir * bendAmt;
-      path = `M${sx},${sy} C${mx},${sy + off} ${mx},${ty + off} ${tx},${ty}`;
-      lx = mx;
-      ly = (sy + ty) / 2 + off - 8;
+      const mx=(sx+tx)/2, off=bd*ba;
+      path=`M${sx},${sy} C${mx},${sy+off} ${mx},${ty+off} ${tx},${ty}`;
+      lx=mx; ly=(sy+ty)/2+off-8;
     } else {
-      const my = (sy + ty) / 2;
-      const off = bendDir * bendAmt;
-      path = `M${sx},${sy} C${sx + off},${my} ${tx + off},${my} ${tx},${ty}`;
-      lx = (sx + tx) / 2 + off + 10;
-      ly = my;
+      const my=(sy+ty)/2, off=bd*ba;
+      path=`M${sx},${sy} C${sx+off},${my} ${tx+off},${my} ${tx},${ty}`;
+      lx=(sx+tx)/2+(off?off+10:8); ly=my;
     }
 
     const el = document.createElementNS('http://www.w3.org/2000/svg','path');
-    el.setAttribute('d', path); el.setAttribute('fill', 'none');
-    el.setAttribute('stroke', e.dash ? '#2e2e2e' : '#484848');
-    el.setAttribute('stroke-width', e.small ? '1.2' : '1.8');
-    el.setAttribute('stroke-dasharray', e.dash ? '6,4' : 'none');
-    el.setAttribute('marker-end', e.dash ? 'url(#arr-dash)' : 'url(#arr)');
+    el.setAttribute('d',path); el.setAttribute('fill','none');
+    el.setAttribute('stroke', e.dash?'#2c2c3e':'#454545');
+    el.setAttribute('stroke-width', e.small?'1.2':'1.8');
+    el.setAttribute('stroke-dasharray', e.dash?'6,4':'none');
+    el.setAttribute('marker-end', e.dash?'url(#a2)':'url(#a1)');
     svg.appendChild(el);
 
     if (e.label && !e.small) {
       const tl = document.createElementNS('http://www.w3.org/2000/svg','text');
-      tl.setAttribute('x', lx); tl.setAttribute('y', ly);
-      tl.setAttribute('fill', '#666'); tl.setAttribute('font-size', '10');
-      tl.setAttribute('text-anchor', 'middle');
+      tl.setAttribute('x',lx); tl.setAttribute('y',ly);
+      tl.setAttribute('fill','#585858'); tl.setAttribute('font-size','10');
+      tl.setAttribute('text-anchor','middle');
       tl.textContent = e.label;
       svg.appendChild(tl);
     }
@@ -262,124 +355,107 @@ function buildSVG() {
   // Nodes
   NODES.forEach(n => {
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class', 'node');
-    g.setAttribute('transform', `translate(${n.x},${n.y})`);
-    g.setAttribute('data-id', n.id);
+    g.setAttribute('class','node');
+    g.setAttribute('transform',`translate(${n.x},${n.y})`);
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    rect.setAttribute('width', W); rect.setAttribute('height', H);
-    rect.setAttribute('rx', 9);
-    rect.setAttribute('fill', n.color); rect.setAttribute('fill-opacity', '0.17');
-    rect.setAttribute('stroke', n.color); rect.setAttribute('stroke-opacity', '0.75');
-    rect.setAttribute('stroke-width', '1.8');
+    rect.setAttribute('class','nb');
+    rect.setAttribute('width',W); rect.setAttribute('height',H); rect.setAttribute('rx',9);
+    rect.setAttribute('fill',n.color); rect.setAttribute('fill-opacity','0.17');
+    rect.setAttribute('stroke',n.color); rect.setAttribute('stroke-opacity','0.75');
+    rect.setAttribute('stroke-width','1.8');
     g.appendChild(rect);
 
+    if (n.issue) {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',W-9); dot.setAttribute('cy',9);
+      dot.setAttribute('r',5); dot.setAttribute('fill','#f08c00');
+      g.appendChild(dot);
+    }
+
     const bar = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    bar.setAttribute('width', 3); bar.setAttribute('height', H - 18);
-    bar.setAttribute('x', 0); bar.setAttribute('y', 9);
-    bar.setAttribute('rx', 2); bar.setAttribute('fill', n.color);
+    bar.setAttribute('width',3); bar.setAttribute('height',H-18);
+    bar.setAttribute('x',0); bar.setAttribute('y',9);
+    bar.setAttribute('rx',2); bar.setAttribute('fill',n.color);
     g.appendChild(bar);
 
     const lines = n.label.split('\n');
-    const lineH = 15;
-    const startY = H/2 - ((lines.length - 1) * lineH / 2) + (n.sub ? -7 : 0);
-    lines.forEach((line, i) => {
-      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-      t.setAttribute('x', W/2 + 2); t.setAttribute('y', startY + i * lineH);
-      t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('dominant-baseline', 'middle');
-      t.setAttribute('fill', '#e8eaf0'); t.setAttribute('font-size', '13.5');
-      t.setAttribute('font-weight', '600');
-      t.textContent = line;
+    const lh=14, sy0=H/2-((lines.length-1)*lh/2)+(n.sub?-6:0);
+    lines.forEach((line,i)=>{
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',W/2+2); t.setAttribute('y',sy0+i*lh);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','middle');
+      t.setAttribute('fill','#e8eaf0'); t.setAttribute('font-size','13');
+      t.setAttribute('font-weight','600'); t.textContent=line;
       g.appendChild(t);
     });
 
     if (n.sub) {
-      const ts = document.createElementNS('http://www.w3.org/2000/svg','text');
-      ts.setAttribute('x', W/2 + 2); ts.setAttribute('y', H/2 + 16);
-      ts.setAttribute('text-anchor', 'middle');
-      ts.setAttribute('dominant-baseline', 'middle');
-      ts.setAttribute('fill', n.color); ts.setAttribute('fill-opacity', '0.85');
-      ts.setAttribute('font-size', '10');
-      ts.textContent = n.sub;
+      const ts=document.createElementNS('http://www.w3.org/2000/svg','text');
+      ts.setAttribute('x',W/2+2); ts.setAttribute('y',H/2+15);
+      ts.setAttribute('text-anchor','middle'); ts.setAttribute('dominant-baseline','middle');
+      ts.setAttribute('fill',n.color); ts.setAttribute('fill-opacity','0.8');
+      ts.setAttribute('font-size','9.5'); ts.textContent=n.sub;
       g.appendChild(ts);
     }
 
     svg.appendChild(g);
-
-    g.addEventListener('mouseenter', evt => showTT(n, evt));
-    g.addEventListener('mousemove', moveTT);
-    g.addEventListener('mouseleave', () => { document.getElementById('tooltip').style.display = 'none'; });
+    g.addEventListener('mouseenter', evt=>showTT(n,evt));
+    g.addEventListener('mousemove',  moveTT);
+    g.addEventListener('mouseleave', ()=>{ document.getElementById('tt').style.display='none'; });
   });
 }
 
-function showTT(n, evt) {
-  document.getElementById('tt-title').textContent = n.label.replace('\n', ' ');
-  document.getElementById('tt-route').textContent = n.route || '';
-  document.getElementById('tt-desc').textContent = n.desc;
-  const navEl = document.getElementById('tt-nav');
-  navEl.textContent = n.nav ? '→ ' + n.nav : '';
-  navEl.style.display = n.nav ? 'block' : 'none';
-  document.getElementById('tooltip').style.display = 'block';
+function showTT(n,evt){
+  document.getElementById('tt-t').textContent = n.label.replace('\n',' ');
+  document.getElementById('tt-r').textContent = n.route||'';
+  document.getElementById('tt-d').textContent = n.desc;
+  const nel=document.getElementById('tt-n');
+  nel.textContent=n.nav?'→ '+n.nav:''; nel.style.display=n.nav?'block':'none';
+  const iel=document.getElementById('tt-i');
+  iel.textContent=n.issue?'⚠ '+n.issue:''; iel.style.display=n.issue?'block':'none';
+  document.getElementById('tt').style.display='block';
   moveTT(evt);
 }
-
-function moveTT(evt) {
-  const tt = document.getElementById('tooltip');
-  let x = evt.clientX + 16, y = evt.clientY - 12;
-  if (x + 300 > window.innerWidth) x = evt.clientX - 296;
-  if (y + 220 > window.innerHeight) y = evt.clientY - 225;
-  tt.style.left = x + 'px'; tt.style.top = y + 'px';
+function moveTT(evt){
+  const tt=document.getElementById('tt');
+  let x=evt.clientX+16, y=evt.clientY-12;
+  if(x+282>window.innerWidth)  x=evt.clientX-288;
+  if(y+270>window.innerHeight) y=evt.clientY-275;
+  tt.style.left=x+'px'; tt.style.top=y+'px';
 }
 
-// Pan & zoom
-let scale = 1, ox = 0, oy = 0;
-let dragging = false, startX, startY, startOx, startOy;
-const wrap = document.getElementById('canvas-wrap');
-const canvas = document.getElementById('canvas');
+// ─── PAN / ZOOM ───────────────────────────────────────────────────────────────
+let sc=1,ox=0,oy=0,dr=false,sx0,sy0,sox,soy;
+const wrap=document.getElementById('wrap'), cvs=document.getElementById('cvs');
+const applyT=()=>cvs.style.transform=`translate(${ox}px,${oy}px) scale(${sc})`;
 
-function applyTransform() {
-  canvas.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+function fit(){
+  const svgW=parseFloat(cvs.getAttribute('width')||1300);
+  const svgH=parseFloat(cvs.getAttribute('height')||1900);
+  const wW=wrap.offsetWidth, wH=wrap.offsetHeight;
+  sc=Math.min(wW/svgW, wH/svgH)*0.92;
+  ox=(wW-svgW*sc)/2; oy=(wH-svgH*sc)/2; applyT();
 }
 
-function fitToView() {
-  const svgW = parseFloat(canvas.getAttribute('width') || 1600);
-  const svgH = parseFloat(canvas.getAttribute('height') || 760);
-  const wW = wrap.offsetWidth, wH = wrap.offsetHeight;
-  scale = Math.min(wW / svgW, wH / svgH) * 0.93;
-  ox = (wW - svgW * scale) / 2;
-  oy = (wH - svgH * scale) / 2;
-  applyTransform();
-}
-
-wrap.addEventListener('mousedown', e => {
-  dragging = true; startX = e.clientX; startY = e.clientY;
-  startOx = ox; startOy = oy; wrap.classList.add('grabbing');
+wrap.addEventListener('mousedown',e=>{
+  dr=true; sx0=e.clientX; sy0=e.clientY; sox=ox; soy=oy;
+  wrap.classList.add('drag');
 });
-window.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  ox = startOx + (e.clientX - startX);
-  oy = startOy + (e.clientY - startY);
-  applyTransform();
-});
-window.addEventListener('mouseup', () => { dragging = false; wrap.classList.remove('grabbing'); });
-wrap.addEventListener('wheel', e => {
+window.addEventListener('mousemove',e=>{ if(!dr)return; ox=sox+(e.clientX-sx0); oy=soy+(e.clientY-sy0); applyT(); });
+window.addEventListener('mouseup',()=>{ dr=false; wrap.classList.remove('drag'); });
+wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  const rect = wrap.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const delta = e.deltaY > 0 ? 0.88 : 1.14;
-  const ns = Math.max(0.2, Math.min(4, scale * delta));
-  ox = mx - (mx - ox) * (ns / scale);
-  oy = my - (my - oy) * (ns / scale);
-  scale = ns; applyTransform();
-}, { passive: false });
-
-document.getElementById('zoomIn').onclick = () => { scale = Math.min(4, scale * 1.2); applyTransform(); };
-document.getElementById('zoomOut').onclick = () => { scale = Math.max(0.2, scale / 1.2); applyTransform(); };
-document.getElementById('resetView').onclick = fitToView;
+  const r=wrap.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const d=e.deltaY>0?.88:1.14, ns=Math.max(.18,Math.min(4,sc*d));
+  ox=mx-(mx-ox)*(ns/sc); oy=my-(my-oy)*(ns/sc); sc=ns; applyT();
+},{passive:false});
+document.getElementById('zi').onclick=()=>{ sc=Math.min(4,sc*1.2); applyT(); };
+document.getElementById('zo').onclick=()=>{ sc=Math.max(.18,sc/1.2); applyT(); };
+document.getElementById('rv').onclick=fit;
 
 buildSVG();
-setTimeout(fitToView, 30);
+setTimeout(fit, 30);
 </script>
 </body>
 </html>

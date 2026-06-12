@@ -28,10 +28,17 @@ export const DemoPanel = () => {
           <button className="dp-btn" onClick={() => scenario('maria-full', '/cabinet')}>Мария · черновик + 2 заявки</button>
           <button className="dp-btn" onClick={() => scenario('maria-team', '/cabinet')}>Мария · командная заявка «Шум»</button>
           <button className="dp-btn" onClick={() => scenario('minor', '/wall')}>Тимур · 14–17 · стена согласий</button>
+          <button className="dp-btn" onClick={() => scenario('invitee', '/join/team-shum')}>Кирилл · приглашение в команду</button>
+          <button className="dp-btn" onClick={() => scenario('invitee-minor', '/join/team-shum')}>Тимур · приглашение (14–17)</button>
 
           <span className="dp-title">Действия</span>
           {state.stage === 'minor-wall' && (
-            <button className="dp-btn" onClick={() => { dispatch({ type: 'accept-docs' }); toast('Документы приняты — кабинет открыт'); nav('/cabinet') }}>
+            <button className="dp-btn" onClick={() => {
+              dispatch({ type: 'accept-docs' })
+              toast('Документы приняты — кабинет открыт')
+              // отложенное приглашение важнее кабинета — возвращаем к ответу
+              nav(state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet')
+            }}>
               Принять документы (модератор)
             </button>
           )}
@@ -40,11 +47,6 @@ export const DemoPanel = () => {
               Вернуть документ на замену (модератор)
             </button>
           )}
-          {state.apps.flatMap(a => a.members.filter(m => m.minor && m.consent === 'review').map(m => ({ a, m }))).slice(0, 1).map(({ a, m }) => (
-            <button key={m.id} className="dp-btn" onClick={() => { dispatch({ type: 'member-consent', id: a.id, memberId: m.id, consent: 'ok' }); toast('Согласие представителя принято') }}>
-              Принять согласие участника 14–17
-            </button>
-          ))}
           {firstActive && (
             <button className="dp-btn" onClick={() => { dispatch({ type: 'advance-status', id: firstActive.id }); toast('Статус продвинут') }}>
               Продвинуть статус «{firstActive.title || firstActive.num}»
