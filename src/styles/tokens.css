@@ -1,0 +1,43 @@
+/* ===== Творцы РФ · ЛК — токены из макета TV.fig (источник: lk3/fig-cab.css) =====
+   Белый фон, sky-кнопки r16, плиты r36, Fira Mono кикеры,
+   Golos Text крупно, чёрные плиты #15151A */
+
+:root {
+  --w: #FFFFFF;
+  --ink: #000000;
+  --plate: #15151A;
+  --paper: #F0F8FD;
+  --sky: #D9ECF9;
+  --sky-2: #C5E4F9;
+  --gray: #666666;
+  --gray-2: #646A6E;
+  --line: rgba(0, 0, 0, .10);
+  --guide: rgba(0, 0, 0, .08);
+  --ok: #1F8A5B;
+  --err: #B3402E;
+  --warn: #8A6200;
+  --warn-bg: rgba(255, 185, 0, .07);
+  --warn-line: rgba(255, 185, 0, .35);
+  --accent: #5B9BC9;
+
+  --font-sans: "Golos Text", -apple-system, sans-serif;
+  --font-mono: "Fira Mono", ui-monospace, monospace;
+  --font-jbm: "JetBrains Mono", ui-monospace, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--w);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { cursor: pointer; color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; text-align: inherit; }
+input, textarea, select { font: inherit; color: inherit; }
+img { display: block; max-width: 100%; }
+h1, h2, h3, p { margin: 0; }

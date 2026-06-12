@@ -1,0 +1,109 @@
+/* ===== Базовые примитивы языка лендинга (источник: lk3/fig-cab.css) ===== */
+
+.mono { font-family: var(--font-mono); }
+.jbm  { font-family: var(--font-jbm); }
+
+/* Кикер раздела: «01 / ЗАЯВКИ» */
+.kick {
+  font-family: var(--font-mono);
+  font-weight: 500; font-size: 16px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink);
+}
+
+/* Мета мелкая */
+.meta {
+  font-family: var(--font-jbm);
+  font-size: 13px; letter-spacing: .04em; color: var(--gray-2);
+}
+
+/* Заголовки как на лендинге: плотный лайнхайт, минус-трекинг */
+.h-huge { font-size: 96px; font-weight: 500; line-height: .9; letter-spacing: -.05em; margin: 0; }
+.h-big  { font-size: 72px; font-weight: 400; line-height: 1; letter-spacing: -.02em; margin: 0; }
+.h-sec  { font-size: 48px; font-weight: 400; line-height: 1; letter-spacing: -.02em; margin: 0; }
+
+/* Гигантский постерный заголовок */
+.mega { font-weight: 500; letter-spacing: -.05em; line-height: .82; margin: 0; }
+
+/* Подпись-кластер как на постере (мелкий mono) */
+.cluster { font-family: var(--font-jbm); font-size: 12.5px; line-height: 1.55; letter-spacing: .03em; color: var(--ink); }
+.cluster .lab { text-transform: uppercase; letter-spacing: .07em; color: var(--accent); font-weight: 500; }
+
+/* Кнопки макета: sky, r16, высокие, Golos bold */
+.fbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 64px; padding: 0 32px; border-radius: 16px;
+  background: var(--sky); color: #0C0C0D;
+  font-family: var(--font-sans);
+  font-weight: 700; font-size: 20px; cursor: pointer;
+  border: none; white-space: nowrap;
+}
+.fbtn.lg   { height: 84px; font-size: 24px; padding: 0 40px; }
+.fbtn.dark { background: var(--plate); color: var(--sky); }
+.fbtn.line { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.22); }
+.fbtn.sm   { height: 44px; font-size: 15px; padding: 0 20px; border-radius: 12px; font-weight: 500; }
+.fbtn.disabled { opacity: .45; cursor: default; pointer-events: none; }
+/* Главные кнопки форм: тёмные, не жирные (правка Артура) */
+.fbtn.submit { background: var(--plate); color: #fff; font-weight: 400; width: 100%; height: 60px; }
+
+/* Хедер кабинета (как на лендинге) */
+.fnav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 30px; background: var(--w);
+}
+.fnav .links { display: flex; gap: 32px; font-size: 16px; }
+.fnav .links a { color: var(--ink); text-decoration: none; cursor: pointer; opacity: .65; }
+.fnav .links a.on { font-weight: 600; opacity: 1; }
+.logo {
+  font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+  letter-spacing: .06em; text-transform: uppercase; line-height: 1.15;
+}
+
+/* Пиксельная мозаика (кластеры лендинга) */
+.pix { display: grid; gap: 6px; pointer-events: none; }
+.pix i { width: 22px; height: 22px; border-radius: 6px; background: var(--sky); }
+.pix i.x { background: transparent; }
+.pix.on-dark i { background: var(--sky-2); }
+.pix.on-dark i.x { background: transparent; }
+
+/* Статусы — mono, точка-индикатор */
+.fst {
+  font-family: var(--font-jbm); font-size: 14px;
+  letter-spacing: .05em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+}
+.fst::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--ink); flex-shrink: 0; }
+.fst.ok   { color: var(--ok); }     .fst.ok::before   { background: var(--ok); }
+.fst.err  { color: var(--err); }    .fst.err::before  { background: var(--err); }
+.fst.wait { color: var(--gray-2); } .fst.wait::before { background: var(--sky-2); }
+.fst.warn { color: var(--warn); }   .fst.warn::before { background: var(--warn); }
+
+/* Mono-ссылка действия */
+.mlink {
+  font-family: var(--font-jbm); font-size: 12px; letter-spacing: .04em;
+  color: var(--gray-2); text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
+}
+
+/* Mono-тег статуса участника/документа */
+.mtag {
+  font-family: var(--font-jbm); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+  color: var(--gray-2); background: rgba(0, 0, 0, .06);
+}
+.mtag.ok   { color: var(--ok); background: rgba(31, 138, 91, .08); }
+.mtag.err  { color: var(--err); background: rgba(179, 64, 46, .08); }
+.mtag.warn { color: var(--warn); background: rgba(255, 185, 0, .18); }
+.mtag.wait { color: var(--gray-2); background: rgba(0, 0, 0, .06); }
+
+/* Тултип */
+.tipwrap { position: relative; display: inline-flex; }
+.tipwrap .tip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: var(--plate); color: #fff; font-size: 12.5px; line-height: 1.35;
+  padding: 8px 12px; border-radius: 8px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 30;
+}
+.tipwrap:hover .tip { opacity: 1; }
+
+/* Плита (для тёмных полотен) */
+.plate-dark { background: var(--plate); color: #fff; border-radius: 36px; overflow: hidden; }

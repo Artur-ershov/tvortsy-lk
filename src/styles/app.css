@@ -1,0 +1,200 @@
+/* ===== Каркасы экранов, модалки, мобайл (структура: lk3/it3-*, стиль: lk3/screens-*) ===== */
+
+.app-root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Сплит авторизации: тёмное полотно слева + paper-форма справа ── */
+.auth-shell { min-height: 100vh; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--w); }
+.auth-top { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px 4px; }
+.auth-grid { display: grid; grid-template-columns: 1fr 560px; gap: 12px; flex: 1 0 auto; }
+.auth-poster {
+  position: relative; background: var(--plate); color: #fff;
+  border-radius: 36px; overflow: hidden; padding: 48px 52px;
+  display: flex; flex-direction: column;
+}
+.auth-panel {
+  background: var(--paper); border-radius: 36px; padding: 44px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.poster-stats {
+  display: grid; gap: 20px;
+  border-top: 1px solid rgba(255, 255, 255, .18); padding-top: 26px;
+}
+.poster-stats .n { font-size: 36px; font-weight: 400; letter-spacing: -.03em; color: #fff; }
+.poster-stats .t { font-size: 14px; line-height: 1.45; color: rgba(255, 255, 255, .65); margin-top: 8px; }
+.or-row { display: flex; align-items: center; gap: 14px; margin: 2px 0; }
+.or-row i { flex: 1; height: 1px; background: var(--line); }
+
+/* ── Лист кабинета («один лист», К9) ── */
+.sheet { padding: 0 16px; }
+.rule-strong { border-top: 1px solid rgba(0, 0, 0, .25); }
+.rule-soft   { border-top: 1px solid rgba(0, 0, 0, .15); }
+.cab-head { padding-top: 24px; display: grid; grid-template-columns: 200px 1fr auto; gap: 12px; align-items: baseline; }
+.cab-section { padding-top: 26px; display: grid; grid-template-columns: 200px 1fr 392px; gap: 12px; }
+.cab-side { border-left: 1px solid var(--line); padding-left: 28px; display: flex; flex-direction: column; gap: 18px; }
+.sheet-foot {
+  padding: 22px 0 28px; display: flex; justify-content: space-between;
+  align-items: baseline; gap: 16px; flex-wrap: wrap;
+}
+.row-line {
+  display: grid; grid-template-columns: 200px 1fr 140px; gap: 12px;
+  padding: 15px 0; border-bottom: 1px solid var(--line); align-items: baseline;
+}
+
+/* ── Форма заявки («один лист») ── */
+.fsection { display: grid; grid-template-columns: 240px 1fr; gap: 16px; border-top: 1px solid rgba(0, 0, 0, .15); padding: 30px 0; }
+.form-cols { display: grid; grid-template-columns: 240px 1fr; gap: 16px; }
+.form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-grid2 .full { grid-column: 1 / -1; }
+.anchor-sticky { position: sticky; top: 20px; align-self: start; }
+
+/* Участник-бар над формой (it3) */
+.pbar {
+  font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .04em; color: var(--gray-2);
+  border-bottom: 1px solid var(--line); padding: 10px 16px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.pbar a, .pbar button { color: var(--gray-2); text-decoration: underline; text-underline-offset: 3px; font: inherit; }
+
+/* Участник команды */
+.member-row {
+  display: flex; align-items: center; gap: 14px; background: #fff;
+  border: 1px solid rgba(0, 0, 0, .1); border-radius: 14px; padding: 14px 18px; flex-wrap: wrap;
+}
+.member-row.pending { background: var(--paper); }
+.member-row .init {
+  width: 38px; height: 38px; border-radius: 10px; background: var(--sky);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-jbm); font-size: 12px; font-weight: 700; color: #23425A; flex-shrink: 0;
+}
+
+/* ── Стена 14–17, статусы документов ── */
+.wall-card { background: #fff; border: 1px solid var(--warn-line); border-radius: 22px; padding: 28px 30px; }
+.locked-banner { border: 1px solid var(--warn-line); background: var(--warn-bg); border-radius: 16px; padding: 16px 20px; }
+.minor-block { background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 16px; padding: 20px 22px; }
+.doc-status {
+  font-family: var(--font-jbm); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+}
+.doc-status.none    { color: var(--gray-2); background: rgba(0, 0, 0, .06); }
+.doc-status.review  { color: var(--warn); background: rgba(255, 185, 0, .18); }
+.doc-status.ok      { color: var(--ok); background: rgba(31, 138, 91, .08); }
+.doc-status.replace { color: var(--err); background: rgba(179, 64, 46, .08); }
+
+/* ── Карточки/строки профиля ── */
+.card-white { background: #fff; border: 1px solid rgba(0, 0, 0, .1); border-radius: 22px; padding: 28px 32px; }
+.prow {
+  display: grid; grid-template-columns: 180px 1fr auto; gap: 16px; align-items: center;
+  border-top: 1px solid rgba(0, 0, 0, .1); padding: 16px 0;
+}
+
+/* ── Модалки ── */
+.scrim {
+  position: fixed; inset: 0; background: rgba(15, 15, 20, .55);
+  backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+  z-index: 60; padding: 16px;
+}
+.modal-card {
+  background: #fff; border-radius: 28px; padding: 40px 44px; width: 480px;
+  max-width: 100%; box-shadow: 0 24px 60px rgba(0, 0, 0, .18);
+}
+
+/* ── Тосты ── */
+.toast-wrap {
+  position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; z-index: 90; align-items: center; pointer-events: none;
+}
+.toast {
+  background: var(--plate); color: #fff; font-family: var(--font-jbm); font-size: 13px;
+  letter-spacing: .03em; padding: 11px 18px; border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .25); white-space: nowrap;
+}
+
+/* ── Демо-панель (как tweaks в прототипе) ── */
+.demo-fab {
+  position: fixed; right: 18px; bottom: 18px; z-index: 70;
+  width: 48px; height: 48px; border-radius: 14px; background: var(--plate); color: var(--sky);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-jbm); font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .3); cursor: pointer; border: none;
+}
+.demo-panel {
+  position: fixed; right: 18px; bottom: 76px; z-index: 70; width: 290px;
+  background: var(--plate); color: #fff; border-radius: 18px; padding: 20px 20px 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .4);
+  display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 110px); overflow: auto;
+}
+.demo-panel .dp-title { font-family: var(--font-jbm); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--sky-2); }
+.demo-panel .dp-btn {
+  font-size: 13.5px; padding: 8px 12px; border-radius: 9px; cursor: pointer;
+  background: rgba(255, 255, 255, .08); color: #fff; border: none; text-align: left; width: 100%;
+}
+.demo-panel .dp-btn:hover { background: rgba(255, 255, 255, .16); }
+
+/* ── Мобайл: нижние табы + прогресс-чипы (структура: it3-mobile) ── */
+.btabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: #fff; border-top: 1px solid var(--line);
+  display: none; padding-bottom: env(safe-area-inset-bottom);
+}
+.btab {
+  flex: 1; position: relative; text-align: center; padding: 15px 0 13px;
+  font-size: 14px; color: var(--gray-2); cursor: pointer; background: none; border: none;
+}
+.btab.on { color: var(--ink); font-weight: 600; }
+.btab.on .bt-line { position: absolute; top: 0; left: 25%; right: 25%; height: 2px; background: var(--ink); }
+
+.mchips {
+  display: none; gap: 8px; padding: 10px 14px;
+  background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 25;
+}
+.mc {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--gray-2); background: #fff; cursor: pointer;
+}
+.mc.cur  { background: var(--ink); color: #fff; border-color: var(--ink); }
+.mc.done { color: var(--ok); border-color: rgba(31, 138, 91, .4); }
+
+/* ── Адаптив ── */
+@media (max-width: 1080px) {
+  .auth-grid { grid-template-columns: 1fr 480px; }
+  .cab-section { grid-template-columns: 170px 1fr 300px; }
+  .cab-head { grid-template-columns: 170px 1fr auto; }
+}
+
+@media (max-width: 920px) {
+  .auth-grid { grid-template-columns: 1fr; }
+  .auth-poster { padding: 36px 32px; }
+  .auth-panel { padding: 32px 28px; }
+  .cab-section { grid-template-columns: 1fr; gap: 18px; }
+  .cab-side { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 18px; }
+  .cab-head { grid-template-columns: 1fr; gap: 14px; }
+  .fsection, .form-cols { grid-template-columns: 1fr; }
+  .form-grid2 { grid-template-columns: 1fr; }
+  .anchor-sticky { position: static; }
+  .row-line { grid-template-columns: 140px 1fr; }
+  .row-line > :last-child { grid-column: 2; text-align: left; }
+  .prow { grid-template-columns: 1fr; gap: 6px; }
+}
+
+@media (max-width: 720px) {
+  .fnav { padding: 16px 16px; }
+  .fnav .links { display: none; }
+  .fnav .nav-mail { display: none; }
+  .btabs { display: flex; }
+  .mchips { display: flex; }
+  .has-btabs { padding-bottom: 76px; }
+  .anchor-desktop { display: none; }
+  .auth-shell { padding: 10px; }
+  .auth-poster { border-radius: 24px; }
+  .auth-panel { border-radius: 24px; }
+  .poster-stats { grid-template-columns: 1fr 1fr !important; }
+  .code-cell { width: 64px; height: 72px; font-size: 34px; }
+  .ff-social { grid-template-columns: 1fr; }
+  .sheet { padding: 0 14px; }
+  .sheet-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .modal-card { padding: 28px 24px; }
+  .ff-foot { flex-wrap: wrap; gap: 10px; padding: 12px 0 16px; }
+  .recovery-row { flex-direction: column; }
+}

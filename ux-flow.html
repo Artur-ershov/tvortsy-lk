@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UX Flow — Творцы будущего</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e8eaf0; overflow: hidden; }
+
+:root {
+  --c-auth: #3b5bdb;
+  --c-gate: #e8590c;
+  --c-main: #2f9e44;
+  --c-form: #6741d9;
+  --c-modal: #495057;
+  --card-bg: #1a1d26;
+  --border: #2a2d3a;
+}
+
+#app { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+.legend { display: flex; gap: 20px; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 7px; opacity: 0.85; }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; }
+.legend-hint { margin-left: auto; opacity: 0.35; font-size: 11px; }
+
+#canvas-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+#canvas-wrap.grabbing { cursor: grabbing; }
+#canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+.controls { position: absolute; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 100; }
+.ctrl-btn { width: 36px; height: 36px; border-radius: 7px; border: 1px solid var(--border); background: var(--card-bg); color: #e8eaf0; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.ctrl-btn:hover { background: #2a2d3a; }
+
+.reset-btn { position: absolute; bottom: 16px; left: 16px; font-size: 12px; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border); background: var(--card-bg); color: #e8eaf0; cursor: pointer; transition: background 0.15s; }
+.reset-btn:hover { background: #2a2d3a; }
+
+#tooltip { position: fixed; background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; line-height: 1.55; max-width: 280px; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+#tooltip .tt-title { font-weight: 600; margin-bottom: 3px; font-size: 14px; }
+#tooltip .tt-route { font-family: monospace; font-size: 11.5px; opacity: 0.5; margin-bottom: 8px; }
+#tooltip .tt-desc { opacity: 0.8; font-size: 12px; white-space: pre-line; }
+#tooltip .tt-nav { margin-top: 9px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 11px; opacity: 0.6; }
+
+.node { cursor: pointer; }
+.node:hover rect:first-child { filter: brightness(1.25); }
+.node text { pointer-events: none; }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3b5bdb"></div>Авторизация</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e8590c"></div>Блокирующий экран</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2f9e44"></div>Личный кабинет</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6741d9"></div>Форма заявки</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#495057"></div>Модалка</div>
+    <div class="legend-hint">наведи на экран · зажми и тащи · скролл для зума</div>
+  </div>
+  <div id="canvas-wrap">
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="controls">
+      <button class="ctrl-btn" id="zoomIn">+</button>
+      <button class="ctrl-btn" id="zoomOut">−</button>
+    </div>
+    <button class="reset-btn" id="resetView">↺ сбросить</button>
+  </div>
+</div>
+<div id="tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div class="tt-route" id="tt-route"></div>
+  <div class="tt-desc" id="tt-desc"></div>
+  <div class="tt-nav" id="tt-nav"></div>
+</div>
+
+<script>
+const NODES = [
+  // AUTH
+  { id: 'login',      label: 'Login',       sub: 'Войти',            x: 340, y: 120, color: '#3b5bdb',
+    route: '/login',      desc: 'Вход в аккаунт.\nEmail + пароль.\nДемо: m.sokolova@mail.ru',
+    nav: '/register, /recovery, или в ЛК по статусу' },
+  { id: 'register',   label: 'Register',    sub: 'Шаг 1 из 2',       x: 100, y: 120, color: '#3b5bdb',
+    route: '/register',   desc: 'Создание аккаунта.\nEmail, пароль (8+, буквы+цифры), согласие с условиями.',
+    nav: '→ /confirm' },
+  { id: 'confirm',    label: 'Confirm Email', sub: '4-значный код',  x: 100, y: 275, color: '#3b5bdb',
+    route: '/confirm',    desc: 'Ввод 4-значного кода из письма.\nАвтофокус между ячейками.\nТаймер 60 сек — повторная отправка.',
+    nav: '→ /onboarding' },
+  { id: 'onboarding', label: 'Onboarding',  sub: 'Шаг 2 из 2',       x: 100, y: 430, color: '#3b5bdb',
+    route: '/onboarding', desc: 'Анкета участника:\nФИО, дата рождения (14–35 лет),\nтелефон, гражданство, город, место учёбы.',
+    nav: '→ /wall (14–17 лет) или /cabinet (18+)' },
+  { id: 'recovery',   label: 'Recovery',    sub: '3 шага',            x: 600, y: 120, color: '#3b5bdb',
+    route: '/recovery',   desc: 'Шаг 1: ввод email.\nШаг 2: ожидание письма, таймер 60с.\nШаг 3: новый пароль + подтверждение.',
+    nav: '→ /login' },
+
+  // GATE
+  { id: 'wall',       label: 'Wall',        sub: 'Согласие родителей', x: 100, y: 585, color: '#e8590c',
+    route: '/wall',       desc: 'Только для 14–17 лет.\nВариант A: загрузка 2 скан-согласий (PDF/JPG, <10 МБ).\nВариант B: верификация через Госуслуги.\nСтатус: не загружено → на проверке → принято.',
+    nav: '→ /cabinet (после принятия)' },
+
+  // CABINET
+  { id: 'cabinet',    label: 'Cabinet',     sub: 'Мои заявки',        x: 920, y: 280, color: '#2f9e44',
+    route: '/cabinet',    desc: 'Главный дашборд.\nЧерновики + поданные заявки (лимит 2).\nКарточки раскрываются: статус, таймлайн, файлы, команда.\nПодзаголовок с именем, городом, возрастом.',
+    nav: '→ /apply/:id, /profile, модалки' },
+  { id: 'profile',    label: 'Profile',     sub: 'Настройки аккаунта', x: 1160, y: 280, color: '#2f9e44',
+    route: '/profile',    desc: 'Inline-редактирование полей анкеты.\nСмена пароля (модалка).\nПодключение VK / Яндекс / Telegram.\nВыход из аккаунта.',
+    nav: '→ /cabinet, модалка смены пароля' },
+  { id: 'success',    label: 'Success',     sub: 'Заявка подана',      x: 920, y: 450, color: '#2f9e44',
+    route: '/success/:id', desc: 'Экран подтверждения.\nНомер и номинация заявки, дата/время.\nТаймлайн статусов.\n"К заявкам" и "Подать ещё одну" (если лимит не исчерпан).',
+    nav: '→ /cabinet, /apply/:id' },
+
+  // FORM
+  { id: 'apply',      label: 'Apply Form',  sub: '4 раздела',          x: 680, y: 450, color: '#6741d9',
+    route: '/apply/:id',  desc: '§01 Номинация + название + описание (лимит 1000 симв.)\n§02 Материалы: drag-drop, прогресс, ссылка при превышении\n§03 Команда: соло / с командой + приглашения по email\n§04 Согласия (2 чекбокса) + подача\n\nАвтосохранение черновика.',
+    nav: '→ /success/:id (подача), /cabinet (назад)' },
+
+  // MODALS
+  { id: 'modal-withdraw', label: 'Отозвать?',    sub: 'Модалка', x: 1120, y: 420, color: '#495057',
+    route: null, desc: 'Подтверждение отзыва поданной заявки.\nПоказывает название и дату подачи.\nПосле — слот освобождается.',
+    nav: null },
+  { id: 'modal-delete',   label: 'Удалить\nчерновик?', sub: 'Модалка', x: 1120, y: 530, color: '#495057',
+    route: null, desc: 'Удаление черновика.\nНеобратимо.', nav: null },
+  { id: 'modal-password', label: 'Смена\nпароля', sub: 'Модалка',      x: 1370, y: 280, color: '#495057',
+    route: null, desc: 'Три поля: старый пароль, новый, подтверждение.\nТребования: 8+ символов, буквы + цифры.\nКнопка неактивна до совпадения.', nav: null },
+];
+
+const EDGES = [
+  { from: 'register',   to: 'confirm',        label: 'Создать аккаунт' },
+  { from: 'confirm',    to: 'onboarding',     label: 'Код верный' },
+  { from: 'onboarding', to: 'wall',           label: '14–17 лет' },
+  { from: 'onboarding', to: 'cabinet',        label: '18+ лет' },
+  { from: 'wall',       to: 'cabinet',        label: 'Одобрено' },
+  { from: 'login',      to: 'register',       label: 'Новый аккаунт' },
+  { from: 'login',      to: 'recovery',       label: 'Забыл пароль' },
+  { from: 'login',      to: 'cabinet',        label: 'Войти', dash: true },
+  { from: 'recovery',   to: 'login',          label: 'Пароль обновлён' },
+  { from: 'cabinet',    to: 'apply',          label: 'Новая / редакт.' },
+  { from: 'cabinet',    to: 'profile',        label: 'Профиль' },
+  { from: 'cabinet',    to: 'modal-withdraw', label: 'Отозвать', small: true },
+  { from: 'cabinet',    to: 'modal-delete',   label: 'Удалить черновик', small: true },
+  { from: 'apply',      to: 'success',        label: 'Подать' },
+  { from: 'apply',      to: 'cabinet',        label: 'Назад', dash: true },
+  { from: 'success',    to: 'cabinet',        label: 'К заявкам', dash: true },
+  { from: 'success',    to: 'apply',          label: 'Ещё заявку', dash: true },
+  { from: 'profile',    to: 'modal-password', label: 'Смена пароля', small: true },
+  { from: 'profile',    to: 'login',          label: 'Выйти', dash: true },
+];
+
+const W = 150, H = 60;
+
+function getNodeCenter(id) {
+  const n = NODES.find(n => n.id === id);
+  return { x: n.x + W/2, y: n.y + H/2 };
+}
+
+function buildSVG() {
+  const svg = document.getElementById('canvas');
+  const PAD = 80;
+  const allX = NODES.map(n => n.x), allY = NODES.map(n => n.y);
+  const minX = Math.min(...allX) - PAD, minY = Math.min(...allY) - PAD;
+  const maxX = Math.max(...allX) + W + PAD, maxY = Math.max(...allY) + H + PAD;
+  const svgW = maxX - minX, svgH = maxY - minY;
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.setAttribute('viewBox', `${minX} ${minY} ${svgW} ${svgH}`);
+
+  svg.innerHTML = `<defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#555"/>
+    </marker>
+    <marker id="arr-dash" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L9,3.5 z" fill="#3a3a3a"/>
+    </marker>
+  </defs>`;
+
+  // Zone backgrounds
+  const zones = [
+    { label: 'АВТОРИЗАЦИЯ',    x: 60,  y: 80,  w: 610, h: 540, color: '#3b5bdb' },
+    { label: 'БЛОКИРУЮЩИЙ',    x: 60,  y: 555, w: 210, h: 110, color: '#e8590c' },
+    { label: 'ЛИЧНЫЙ КАБИНЕТ', x: 870, y: 240, w: 550, h: 380, color: '#2f9e44' },
+    { label: 'ФОРМА ЗАЯВКИ',   x: 630, y: 410, w: 260, h: 120, color: '#6741d9' },
+  ];
+  zones.forEach(z => {
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x', z.x); r.setAttribute('y', z.y);
+    r.setAttribute('width', z.w); r.setAttribute('height', z.h);
+    r.setAttribute('rx', 18); r.setAttribute('fill', z.color);
+    r.setAttribute('fill-opacity', '0.055');
+    r.setAttribute('stroke', z.color); r.setAttribute('stroke-opacity', '0.2');
+    r.setAttribute('stroke-width', '1.5');
+    svg.appendChild(r);
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', z.x + 16); t.setAttribute('y', z.y + 22);
+    t.setAttribute('class', 'section-label');
+    t.setAttribute('fill', z.color); t.setAttribute('fill-opacity', '0.55');
+    t.textContent = z.label;
+    svg.appendChild(t);
+  });
+
+  // Detect bidirectional pairs and assign bend direction
+  const reverseExists = (e) => EDGES.some(e2 => e2.from === e.to && e2.to === e.from);
+  const isFirstOfPair = (e) => {
+    const rev = EDGES.find(e2 => e2.from === e.to && e2.to === e.from);
+    return !rev || EDGES.indexOf(e) < EDGES.indexOf(rev);
+  };
+
+  // Edges
+  EDGES.forEach(e => {
+    const na = NODES.find(n => n.id === e.from);
+    const nb = NODES.find(n => n.id === e.to);
+    const a = { x: na.x + W/2, y: na.y + H/2 };
+    const b = { x: nb.x + W/2, y: nb.y + H/2 };
+    const dx = b.x - a.x, dy = b.y - a.y;
+
+    const bidi = reverseExists(e);
+    const bendDir = bidi ? (isFirstOfPair(e) ? 1 : -1) : 0;
+    const bendAmt = bidi ? 38 : 0;
+    const horiz = Math.abs(dx) >= Math.abs(dy);
+
+    let sx, sy, tx, ty;
+    if (horiz) {
+      sx = dx > 0 ? na.x + W : na.x; sy = a.y;
+      tx = dx > 0 ? nb.x : nb.x + W; ty = b.y;
+    } else {
+      sx = a.x; sy = dy > 0 ? na.y + H : na.y;
+      tx = b.x; ty = dy > 0 ? nb.y : nb.y + H;
+    }
+
+    let path, lx, ly;
+    if (horiz) {
+      const mx = (sx + tx) / 2;
+      const off = bendDir * bendAmt;
+      path = `M${sx},${sy} C${mx},${sy + off} ${mx},${ty + off} ${tx},${ty}`;
+      lx = mx;
+      ly = (sy + ty) / 2 + off - 8;
+    } else {
+      const my = (sy + ty) / 2;
+      const off = bendDir * bendAmt;
+      path = `M${sx},${sy} C${sx + off},${my} ${tx + off},${my} ${tx},${ty}`;
+      lx = (sx + tx) / 2 + off + 10;
+      ly = my;
+    }
+
+    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+    el.setAttribute('d', path); el.setAttribute('fill', 'none');
+    el.setAttribute('stroke', e.dash ? '#2e2e2e' : '#484848');
+    el.setAttribute('stroke-width', e.small ? '1.2' : '1.8');
+    el.setAttribute('stroke-dasharray', e.dash ? '6,4' : 'none');
+    el.setAttribute('marker-end', e.dash ? 'url(#arr-dash)' : 'url(#arr)');
+    svg.appendChild(el);
+
+    if (e.label && !e.small) {
+      const tl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      tl.setAttribute('x', lx); tl.setAttribute('y', ly);
+      tl.setAttribute('fill', '#666'); tl.setAttribute('font-size', '10');
+      tl.setAttribute('text-anchor', 'middle');
+      tl.textContent = e.label;
+      svg.appendChild(tl);
+    }
+  });
+
+  // Nodes
+  NODES.forEach(n => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class', 'node');
+    g.setAttribute('transform', `translate(${n.x},${n.y})`);
+    g.setAttribute('data-id', n.id);
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('width', W); rect.setAttribute('height', H);
+    rect.setAttribute('rx', 9);
+    rect.setAttribute('fill', n.color); rect.setAttribute('fill-opacity', '0.17');
+    rect.setAttribute('stroke', n.color); rect.setAttribute('stroke-opacity', '0.75');
+    rect.setAttribute('stroke-width', '1.8');
+    g.appendChild(rect);
+
+    const bar = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('width', 3); bar.setAttribute('height', H - 18);
+    bar.setAttribute('x', 0); bar.setAttribute('y', 9);
+    bar.setAttribute('rx', 2); bar.setAttribute('fill', n.color);
+    g.appendChild(bar);
+
+    const lines = n.label.split('\n');
+    const lineH = 15;
+    const startY = H/2 - ((lines.length - 1) * lineH / 2) + (n.sub ? -7 : 0);
+    lines.forEach((line, i) => {
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', W/2 + 2); t.setAttribute('y', startY + i * lineH);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('dominant-baseline', 'middle');
+      t.setAttribute('fill', '#e8eaf0'); t.setAttribute('font-size', '13.5');
+      t.setAttribute('font-weight', '600');
+      t.textContent = line;
+      g.appendChild(t);
+    });
+
+    if (n.sub) {
+      const ts = document.createElementNS('http://www.w3.org/2000/svg','text');
+      ts.setAttribute('x', W/2 + 2); ts.setAttribute('y', H/2 + 16);
+      ts.setAttribute('text-anchor', 'middle');
+      ts.setAttribute('dominant-baseline', 'middle');
+      ts.setAttribute('fill', n.color); ts.setAttribute('fill-opacity', '0.85');
+      ts.setAttribute('font-size', '10');
+      ts.textContent = n.sub;
+      g.appendChild(ts);
+    }
+
+    svg.appendChild(g);
+
+    g.addEventListener('mouseenter', evt => showTT(n, evt));
+    g.addEventListener('mousemove', moveTT);
+    g.addEventListener('mouseleave', () => { document.getElementById('tooltip').style.display = 'none'; });
+  });
+}
+
+function showTT(n, evt) {
+  document.getElementById('tt-title').textContent = n.label.replace('\n', ' ');
+  document.getElementById('tt-route').textContent = n.route || '';
+  document.getElementById('tt-desc').textContent = n.desc;
+  const navEl = document.getElementById('tt-nav');
+  navEl.textContent = n.nav ? '→ ' + n.nav : '';
+  navEl.style.display = n.nav ? 'block' : 'none';
+  document.getElementById('tooltip').style.display = 'block';
+  moveTT(evt);
+}
+
+function moveTT(evt) {
+  const tt = document.getElementById('tooltip');
+  let x = evt.clientX + 16, y = evt.clientY - 12;
+  if (x + 300 > window.innerWidth) x = evt.clientX - 296;
+  if (y + 220 > window.innerHeight) y = evt.clientY - 225;
+  tt.style.left = x + 'px'; tt.style.top = y + 'px';
+}
+
+// Pan & zoom
+let scale = 1, ox = 0, oy = 0;
+let dragging = false, startX, startY, startOx, startOy;
+const wrap = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('canvas');
+
+function applyTransform() {
+  canvas.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+}
+
+function fitToView() {
+  const svgW = parseFloat(canvas.getAttribute('width') || 1600);
+  const svgH = parseFloat(canvas.getAttribute('height') || 760);
+  const wW = wrap.offsetWidth, wH = wrap.offsetHeight;
+  scale = Math.min(wW / svgW, wH / svgH) * 0.93;
+  ox = (wW - svgW * scale) / 2;
+  oy = (wH - svgH * scale) / 2;
+  applyTransform();
+}
+
+wrap.addEventListener('mousedown', e => {
+  dragging = true; startX = e.clientX; startY = e.clientY;
+  startOx = ox; startOy = oy; wrap.classList.add('grabbing');
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  ox = startOx + (e.clientX - startX);
+  oy = startOy + (e.clientY - startY);
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { dragging = false; wrap.classList.remove('grabbing'); });
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = wrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const delta = e.deltaY > 0 ? 0.88 : 1.14;
+  const ns = Math.max(0.2, Math.min(4, scale * delta));
+  ox = mx - (mx - ox) * (ns / scale);
+  oy = my - (my - oy) * (ns / scale);
+  scale = ns; applyTransform();
+}, { passive: false });
+
+document.getElementById('zoomIn').onclick = () => { scale = Math.min(4, scale * 1.2); applyTransform(); };
+document.getElementById('zoomOut').onclick = () => { scale = Math.max(0.2, scale / 1.2); applyTransform(); };
+document.getElementById('resetView').onclick = fitToView;
+
+buildSVG();
+setTimeout(fitToView, 30);
+</script>
+</body>
+</html>
