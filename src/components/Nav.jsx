@@ -1,7 +1,7 @@
 // Хедер кабинета (FgNav из fig-shared) + мобильные нижние табы (структура it3-mobile)
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useStore, initialsOf } from '../state/store.jsx'
+import { useStore, initialsOf, shortName } from '../state/store.jsx'
 
 export const Logo = ({ dark = false, style }) => (
   <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />будущего</div>
@@ -38,16 +38,23 @@ export const Nav = ({ tab = 'apps' }) => {
   return (
     <div className="fnav">
       <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }} aria-label="К заявкам"><Logo /></button>
-      <div ref={menuRef} className="umenu" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span className="jbm nav-mail" style={{ fontSize: 13, letterSpacing: '.04em', opacity: .7 }}>{state.email}</span>
+      <div ref={menuRef} className="umenu">
         <button
+          className="umenu-trigger"
           onClick={() => setOpen(o => !o)}
-          style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#23425A' }}
           aria-label="Меню профиля"
           aria-expanded={open}
-        >{initialsOf(state.profile.fio) || '·'}</button>
+        >
+          <span className="umenu-name">{shortName(state.profile.fio) || 'Профиль'}</span>
+          <span className="umenu-ava">{initialsOf(state.profile.fio) || '·'}</span>
+        </button>
         {open && (
           <div className="umenu-drop">
+            <div className="umenu-head">
+              <div className="umenu-head-name">{state.profile.fio}</div>
+              <div className="umenu-head-mail jbm">{state.email}</div>
+            </div>
+            <div className="umenu-sep" />
             <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>
               <IconUser />Мой профиль
             </button>
