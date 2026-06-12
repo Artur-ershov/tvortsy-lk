@@ -46,7 +46,18 @@ export default function Cabinet() {
   // командные заявки, где я не капитан — членство, а не моя заявка (read-only карточка)
   const myMemberIn = a => a.mode === 'team' && a.members.find(m => m.email === state.email && m.role !== 'captain')
   const memberships = state.apps.filter(a => { const m = myMemberIn(a); return m && m.tag === 'confirmed' })
+  // приглашения без ответа — видны в кабинете, даже если ссылка из письма потерялась
+  const invites = state.apps.filter(a => { const m = myMemberIn(a); return m && m.tag === 'invited' })
   const own = state.apps.filter(a => !myMemberIn(a))
+
+  const acceptInvite = (app) => {
+    dispatch({ type: 'respond-invite', id: app.id, tag: 'confirmed' })
+    toast(`Вы в команде «${app.teamName}»`)
+  }
+  const declineInvite = (app) => {
+    dispatch({ type: 'respond-invite', id: app.id, tag: 'declined' })
+    toast('Приглашение отклонено')
+  }
 
   const submitted = own.filter(a => a.status !== 'draft')
   const drafts = own.filter(a => a.status === 'draft')
@@ -111,6 +122,26 @@ export default function Cabinet() {
         </div>
         <div className="meta cab-meta">{meta}</div>
 
+        {/* Вариант Б: баннер-полоска над заявками */}
+        {invites.map(app => {
+          const captain = app.members.find(m => m.role === 'captain')
+          return (
+            <div key={'bn' + app.id} style={{
+              marginTop: 28, border: '1px solid var(--ink)', borderRadius: 16, padding: '16px 22px',
+              display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap',
+            }}>
+              <span className="kick">Приглашение</span>
+              <span style={{ flex: 1, minWidth: 220, fontSize: 16.5 }}>
+                {captain ? shortName(captain.name) : 'Капитан'} зовёт вас в команду «{app.teamName}» — «{app.title || 'Без названия'}»
+              </span>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="fbtn sm" onClick={() => acceptInvite(app)}>Принять</button>
+                <button className="fbtn sm line" onClick={() => declineInvite(app)}>Отклонить</button>
+              </div>
+            </div>
+          )
+        })}
+
         {/* Пустое состояние */}
         {state.apps.length === 0 && (
           <div className="rule-soft" style={{ marginTop: 40, paddingTop: 40, paddingBottom: 60 }}>
@@ -149,6 +180,37 @@ export default function Cabinet() {
             </div>
           </div>
         ))}
+
+        {/* Вариант А: приглашение карточкой в списке заявок */}
+        {invites.map(app => {
+          const captain = app.members.find(m => m.role === 'captain')
+          return (
+            <div key={'inv' + app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
+              <div>
+                <span className="kick">Приглашение</span>
+                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 14, lineHeight: 1.7 }}>
+                  {app.num}<br />
+                  капитан {captain ? shortName(captain.name) : '—'}<br />
+                  {app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''} · {app.members.length} {memberWord(app.members.length)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
+                  «{app.teamName}» · {app.title || 'Без названия'}
+                </div>
+                <div className="ff-hint" style={{ marginTop: 10 }}>
+                  {captain ? shortName(captain.name) : 'капитан'} приглашает вас в команду — участие подтверждается с вашего email
+                </div>
+              </div>
+              <div className="cab-side">
+                <span className="fst wait">Ждёт ответа</span>
+                <button className="fbtn sm" onClick={() => acceptInvite(app)}>Принять</button>
+                <button className="fbtn sm line" onClick={() => declineInvite(app)}>Отклонить</button>
+                <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => nav('/join/' + app.id)}>подробнее</button>
+              </div>
+            </div>
+          )
+        })}
 
         {/* Команды, где я участник (не капитан) — read-only, редактирует капитан */}
         {memberships.map(app => {
