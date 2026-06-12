@@ -130,19 +130,7 @@
 }
 .demo-panel .dp-btn:hover { background: rgba(255, 255, 255, .16); }
 
-/* ── Мобайл: нижние табы + прогресс-чипы (структура: it3-mobile) ── */
-.btabs {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  background: #fff; border-top: 1px solid var(--line);
-  display: none; padding-bottom: env(safe-area-inset-bottom);
-}
-.btab {
-  flex: 1; position: relative; text-align: center; padding: 15px 0 13px;
-  font-size: 14px; color: var(--gray-2); cursor: pointer; background: none; border: none;
-}
-.btab.on { color: var(--ink); font-weight: 600; }
-.btab.on .bt-line { position: absolute; top: 0; left: 25%; right: 25%; height: 2px; background: var(--ink); }
-
+/* ── Мобайл: прогресс-чипы формы (структура: it3-mobile) ── */
 .mchips {
   display: none; gap: 8px; padding: 10px 14px;
   background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
@@ -180,9 +168,7 @@
 
 @media (max-width: 720px) {
   .fnav { padding: 16px 16px; }
-  .btabs { display: flex; }
   .mchips { display: flex; }
-  .has-btabs { padding-bottom: 76px; }
   .anchor-desktop { display: none; }
   .auth-shell { padding: 10px; }
   .auth-poster { border-radius: 24px; }

@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../state/store.jsx'
-import { Nav, BottomTabs } from '../../components/Nav.jsx'
+import { Nav } from '../../components/Nav.jsx'
 import { Modal, PasswordInput } from '../../components/ui.jsx'
 
 // Строка анкеты: label | значение | действие (PRow из ScrProfile).
@@ -85,7 +85,7 @@ export default function Profile() {
   })
 
   return (
-    <div className="app-root has-btabs">
+    <div className="app-root">
       <style>{`
         .profile-wrap{padding:0 30px 60px;flex:1 0 auto}
         .profile-grid{display:grid;grid-template-columns:1fr 400px;gap:16px;margin-top:28px;align-items:start}
@@ -199,8 +199,6 @@ export default function Profile() {
           </div>
         </Modal>
       )}
-
-      <BottomTabs />
     </div>
   )
 }
