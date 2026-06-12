@@ -61,12 +61,17 @@
   display: flex; flex-direction: column;
 }
 .umenu-item {
+  display: flex; align-items: center; gap: 10px;
   font-size: 15px; color: var(--ink); text-align: left;
   padding: 10px 14px; border-radius: 10px; cursor: pointer;
   background: none; border: none; opacity: .75;
 }
+.umenu-item svg { flex-shrink: 0; opacity: .7; }
 .umenu-item:hover { background: rgba(0,0,0,.05); opacity: 1; }
 .umenu-item.on { font-weight: 600; opacity: 1; }
+.umenu-item.danger { color: var(--err); opacity: 1; }
+.umenu-item.danger:hover { background: rgba(179, 64, 46, .08); }
+.umenu-sep { height: 1px; margin: 4px 8px; background: rgba(0,0,0,.08); }
 
 .logo {
   font-family: var(--font-mono); font-weight: 700; font-size: 15px;

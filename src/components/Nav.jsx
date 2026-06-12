@@ -7,6 +7,21 @@ export const Logo = ({ dark = false, style }) => (
   <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />будущего</div>
 )
 
+const IconUser = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" />
+  </svg>
+)
+
+const IconExit = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
+  </svg>
+)
+
 export const Nav = ({ tab = 'apps' }) => {
   const { state, dispatch } = useStore()
   const nav = useNavigate()
@@ -36,8 +51,13 @@ export const Nav = ({ tab = 'apps' }) => {
         >{initialsOf(state.profile.fio) || '·'}</button>
         {open && (
           <div className="umenu-drop">
-            <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>Профиль</button>
-            <button className="umenu-item" onClick={() => { setOpen(false); dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>
+            <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>
+              <IconUser />Мой профиль
+            </button>
+            <div className="umenu-sep" />
+            <button className="umenu-item danger" onClick={() => { setOpen(false); dispatch({ type: 'logout' }); nav('/login') }}>
+              <IconExit />Выйти
+            </button>
           </div>
         )}
       </div>
