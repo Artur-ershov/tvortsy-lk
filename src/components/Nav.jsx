@@ -1,5 +1,5 @@
 // Хедер кабинета (FgNav из fig-shared) + мобильные нижние табы (структура it3-mobile)
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore, initialsOf } from '../state/store.jsx'
 
@@ -8,22 +8,38 @@ export const Logo = ({ dark = false, style }) => (
 )
 
 export const Nav = ({ tab = 'apps' }) => {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
   const nav = useNavigate()
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const close = e => { if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false) }
+    const esc = e => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc) }
+  }, [open])
   return (
     <div className="fnav">
       <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }}><Logo /></button>
       <div className="links">
         <a className={tab === 'apps' ? 'on' : ''} onClick={() => nav('/cabinet')}>Заявки</a>
-        <a className={tab === 'profile' ? 'on' : ''} onClick={() => nav('/profile')}>Профиль</a>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div ref={menuRef} className="umenu" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <span className="jbm nav-mail" style={{ fontSize: 13, letterSpacing: '.04em', opacity: .7 }}>{state.email}</span>
         <button
-          onClick={() => nav('/profile')}
+          onClick={() => setOpen(o => !o)}
           style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#23425A' }}
-          aria-label="Профиль"
+          aria-label="Меню профиля"
+          aria-expanded={open}
         >{initialsOf(state.profile.fio) || '·'}</button>
+        {open && (
+          <div className="umenu-drop">
+            <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>Профиль</button>
+            <button className="umenu-item" onClick={() => { setOpen(false); dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>
+          </div>
+        )}
       </div>
     </div>
   )
