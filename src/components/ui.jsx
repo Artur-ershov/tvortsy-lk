@@ -1,6 +1,6 @@
 // Общие примитивы — стиль из «Основные экраны» (lk3/fig-shared.jsx, screens-*.jsx)
 import React, { useState } from 'react'
-import { STATUS, CYCLE, CYCLE_DATES, fmtMB } from '../state/store.jsx'
+import { STATUS, CYCLE, CYCLE_DATES, fmtMB, initialsOf } from '../state/store.jsx'
 
 /* ── Пиксельная мозаика по битовой карте (FgPix) ── */
 export const PIX_A = ['0110', '1100', '0111', '0010']
@@ -232,7 +232,7 @@ export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabe
   const t = MEMBER_TAGS[member.tag] || MEMBER_TAGS.invited
   // в форме приглашённый — «не ответил» (it3-form), в кабинете — «приглашён» (it3-cabinet)
   const tagLabel = member.tag === 'invited' && invitedLabel ? invitedLabel : t.label
-  const init = member.name ? member.name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() : '··'
+  const init = member.name ? initialsOf(member.name) : '··'
   return (
     <div className={'member-row' + (member.tag === 'invited' ? ' pending' : '')}>
       <span className="init">{init}</span>

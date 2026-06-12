@@ -68,10 +68,11 @@ export function fmtMB(mb) {
   return Math.round(mb) + ' МБ'
 }
 
+// Инициалы: Имя + Фамилия («Соколова Мария Андреевна» → «МС»)
 export function initialsOf(fio) {
   const p = (fio || '').trim().split(/\s+/)
   if (!p[0]) return '··'
-  return ((p[0][0] || '') + (p[1]?.[0] || '')).toUpperCase()
+  return ((p[1]?.[0] || '') + (p[0][0] || '')).toUpperCase()
 }
 
 export function firstNameCity(profile) {
