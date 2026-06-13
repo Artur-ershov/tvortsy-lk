@@ -1,3 +1,5 @@
 node_modules/
 dist/
 .ux-audit-raw.json
+
+.vercel

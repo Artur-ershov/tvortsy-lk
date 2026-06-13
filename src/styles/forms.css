@@ -85,7 +85,7 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 .ff-drop.over { border-color: var(--ink); background: var(--paper); }
 
 /* Быстрые входы */
-.ff-social { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ff-social { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .ff-social .s {
   height: 52px; border-radius: 12px; border: 1px solid var(--line); background: #fff;
   display: flex; align-items: center; justify-content: center; gap: 8px;

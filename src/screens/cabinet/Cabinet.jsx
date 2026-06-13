@@ -6,6 +6,7 @@ import {
 } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Pix, PIX_A, StatusTag, StatusTimeline, MemberRow, Modal } from '../../components/ui.jsx'
+import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 
 /* Склонения */
 const fileWord = (n) => {
@@ -75,8 +76,10 @@ export default function Cabinet() {
   const [deleteDraft, setDeleteDraft] = useState(null) // черновик для модалки удаления
   const [leaveApp, setLeaveApp] = useState(null)       // команда для модалки «Покинуть»
 
-  const createDraft = () => {
-    const d = newDraft('ТВ-2026-0' + state.appSeq)
+  // «Подать заявку» → сразу форма; номинация выбирается уже внутри формы (необязательна тут).
+  // С карточки витрины можно прийти с предвыбранной номинацией.
+  const startApply = (nom = null) => {
+    const d = { ...newDraft('ТВ-2026-0' + state.appSeq), nomination: nom }
     dispatch({ type: 'create-draft', draft: d })
     nav('/apply/' + d.id)
   }
@@ -117,7 +120,7 @@ export default function Cabinet() {
               <span className="ff-hint" style={{ textAlign: 'right' }}>достигнут лимит — 2 заявки на участника</span>
             </div>
           ) : (
-            <button className="fbtn" onClick={createDraft}>+ Подать заявку</button>
+            <button className="fbtn" onClick={() => startApply()}>+ Подать заявку</button>
           )}
         </div>
         <div className="meta cab-meta">{meta}</div>
@@ -142,18 +145,25 @@ export default function Cabinet() {
           )
         })}
 
-        {/* Пустое состояние */}
+        {/* Пустое состояние — витрина номинаций. Карточка ведёт сразу в форму с предвыбором. */}
         {state.apps.length === 0 && (
-          <div className="rule-soft" style={{ marginTop: 40, paddingTop: 40, paddingBottom: 60 }}>
-            <div style={{ border: '1.5px dashed rgba(0,0,0,.18)', borderRadius: 22, padding: '64px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center' }}>
-              <Pix map={PIX_A} cell={20} gap={5} />
-              <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-.02em' }}>Заявок пока нет</div>
-              <p style={{ margin: 0, fontSize: 17, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 430 }}>
-                Выбери номинацию, расскажи о работе и загрузи материалы. Черновик сохраняется — заполнять можно в несколько подходов.
-              </p>
-              <button className="fbtn" style={{ marginTop: 8 }} onClick={createDraft}>Подать заявку</button>
-              <span className="cluster" style={{ color: 'var(--gray-2)' }}>одному или с командой · от 14 до 35 лет</span>
+          <div className="rule-soft" style={{ marginTop: 40, paddingTop: 30, paddingBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+              <div>
+                <span className="kick">Заявок пока нет</span>
+                <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', marginTop: 8 }}>Выбери номинацию</div>
+                <p style={{ margin: '8px 0 0', fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 460 }}>
+                  Бейдж подскажет, подходит ли работа по формату. Номинацию можно сменить уже в форме. Черновик сохраняется.
+                </p>
+              </div>
+              <span className="jbm" style={{ fontSize: 11.5, letterSpacing: '.04em', color: 'var(--gray-2)', textAlign: 'right', lineHeight: 1.7 }}>
+                до 1 июня · осталось 12 дней<br />не более 2 заявок на участника<br />14–35 лет · бесплатно · ~12 мин
+              </span>
             </div>
+            <div className="nom-grid">
+              {NOM_CARD_KEYS.map(k => <NomCard key={k} k={k} onClick={startApply} />)}
+            </div>
+            <SynthCard onClick={startApply} />
           </div>
         )}
 

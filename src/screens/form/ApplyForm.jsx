@@ -1,20 +1,21 @@
 // Форма заявки «один лист» — структура/копирайт: lk3/it3-form.jsx (+ it3-mobile),
 // визуальный стиль: lk3/screens-form.jsx + screens-form-extra.jsx.
-// 01 Номинация и работа → 02 Материалы → 03 Команда → 04 Согласия и подача.
+// 01 Номинация → 02 Работа → 03 Команда → 04 Согласия и подача.
 // Анкеты в форме нет — участник-бар над формой; 2 согласия; приглашения бессрочны.
 import React, { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
-  useStore, NOMINATIONS, NOMINATION_KEYS, SYNTH_DIR_KEYS,
+  useStore, NOMINATIONS, SYNTH_DIR_KEYS,
   computeTodos, sectionState, filledCount, firstNameCity,
   classifyFile, nextId, countSubmitted, APP_LIMIT,
 } from '../../state/store.jsx'
+import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Field, Chips, Check, FileRow, MemberRow } from '../../components/ui.jsx'
 
 const SECTIONS = [
-  ['01', 'Номинация и работа'],
-  ['02', 'Материалы'],
+  ['01', 'Номинация'],
+  ['02', 'Работа'],
   ['03', 'Команда'],
   ['04', 'Согласия и подача'],
 ]
@@ -172,51 +173,40 @@ export default function ApplyForm() {
         </div>
 
         <div className="form-cols" style={{ marginTop: 28 }}>
-          {/* Левая якорная навигация (sticky, только десктоп) */}
-          <div className="anchor-sticky anchor-desktop">
-            <div className="ff-anchor">
-              {SECTIONS.map(([num, label], i) => {
-                const sid = 's' + num
-                const done = sectionState(app, i + 1) === 'done'
-                return (
-                  <button
-                    key={num}
-                    type="button"
-                    className={'a' + (done ? ' done' : '') + (cur === sid ? ' cur' : '')}
-                    onClick={() => goTo(sid)}
-                  ><span className="n">{num}</span> {label}</button>
-                )
-              })}
-            </div>
-            <div className="cluster" style={{ marginTop: 20 }}>
-              <span className="lab">Готовность</span><br />
-              заполнено {filled} из 4{todos.length === 0 ? ' · можно подавать' : ''}
-            </div>
-            <div className="ff-hint" style={{ marginTop: 10 }}>Черновик сохраняется автоматически.</div>
-          </div>
-
-          {/* Правая колонка — секции */}
+          {/* Левая колонка — секции */}
           <div>
-            {/* 01 ── Номинация и работа */}
-            <FSection num="01" title="Номинация и работа" st={sectionState(app, 1)}>
-              <Chips
-                options={NOMINATION_KEYS.map(k => ({ key: k, label: NOMINATIONS[k].label }))}
-                value={app.nomination}
-                onChange={k => patch({ nomination: k, synthDirs: [] })}
-              />
-              {app.nomination && <div className="ff-hint" style={{ marginTop: 12 }}>{NOMINATIONS[app.nomination].req}</div>}
-              {app.nomination === 'synth' && (
-                <div>
-                  <span className="ff-label" style={{ marginTop: 18 }}>Направления внутри синтеза · минимум 2</span>
-                  <Chips
-                    multi
-                    options={SYNTH_DIR_KEYS.map(k => ({ key: k, label: NOMINATIONS[k].label }))}
-                    value={app.synthDirs}
-                    onChange={dirs => patch({ synthDirs: dirs })}
+            {/* 01 ── Номинация */}
+            <FSection num="01" title="Номинация" st={sectionState(app, 1)}>
+              <div className="nom-grid">
+                {NOM_CARD_KEYS.map(k => (
+                  <NomCard
+                    key={k}
+                    k={k}
+                    selected={app.nomination === k}
+                    onClick={kk => patch({ nomination: kk, synthDirs: [] })}
                   />
-                </div>
-              )}
-              <div style={{ display: 'grid', gap: 18, marginTop: 22 }}>
+                ))}
+              </div>
+              <SynthCard
+                selected={app.nomination === 'synth'}
+                onClick={() => patch({ nomination: 'synth' })}
+              >
+                <span className="ff-label" style={{ color: '#7FA9C9', marginBottom: 10 }}>
+                  Направления внутри синтеза · минимум 2
+                  {app.synthDirs.length > 0 && app.synthDirs.length < 2 && ' · выбрано 1'}
+                </span>
+                <Chips
+                  multi
+                  options={SYNTH_DIR_KEYS.map(k => ({ key: k, label: NOMINATIONS[k].label }))}
+                  value={app.synthDirs}
+                  onChange={dirs => patch({ synthDirs: dirs })}
+                />
+              </SynthCard>
+            </FSection>
+
+            {/* 02 ── Работа */}
+            <FSection num="02" title="Работа" st={sectionState(app, 2)}>
+              <div style={{ display: 'grid', gap: 18, marginBottom: 22 }}>
                 <Field
                   label="Название работы"
                   value={app.title}
@@ -233,10 +223,6 @@ export default function ApplyForm() {
                   onChange={v => patch({ description: v })}
                 />
               </div>
-            </FSection>
-
-            {/* 02 ── Материалы */}
-            <FSection num="02" title="Материалы" st={sectionState(app, 2)}>
               <div className="ff-hint">
                 {nomDef.fmt}. Файлов может быть несколько. Загрузка идёт в фоне — заполняй дальше.
               </div>
@@ -362,6 +348,29 @@ export default function ApplyForm() {
                 </Check>
               </div>
             </FSection>
+          </div>
+
+          {/* Правая якорная навигация (sticky, только десктоп) */}
+          <div className="anchor-sticky anchor-desktop">
+            <div className="ff-anchor">
+              {SECTIONS.map(([num, label], i) => {
+                const sid = 's' + num
+                const done = sectionState(app, i + 1) === 'done'
+                return (
+                  <button
+                    key={num}
+                    type="button"
+                    className={'a' + (done ? ' done' : '') + (cur === sid ? ' cur' : '')}
+                    onClick={() => goTo(sid)}
+                  ><span className="n">{num}</span> {label}</button>
+                )
+              })}
+            </div>
+            <div className="cluster" style={{ marginTop: 20 }}>
+              <span className="lab">Готовность</span><br />
+              заполнено {filled} из 4{todos.length === 0 ? ' · можно подавать' : ''}
+            </div>
+            <div className="ff-hint" style={{ marginTop: 10 }}>Черновик сохраняется автоматически.</div>
           </div>
         </div>
 

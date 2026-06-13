@@ -30,6 +30,83 @@
 .rule-soft   { border-top: 1px solid rgba(0, 0, 0, .15); }
 .cab-head { padding-top: 24px; display: grid; grid-template-columns: 200px 1fr auto; gap: 12px; align-items: baseline; }
 .cab-section { padding-top: 26px; display: grid; grid-template-columns: 200px 1fr 392px; gap: 12px; }
+
+/* Карточки номинаций (витрина ЛК + выбор в форме) — общий компонент NominationCards.jsx */
+.nom-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.fsection .nom-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1080px) { .nom-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .nom-grid { grid-template-columns: 1fr; } }
+.nom-card {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 430px; border-radius: 18px; overflow: hidden; background-size: cover; background-position: center;
+  text-align: left; color: #fff; padding: 18px 20px; transition: transform .14s, box-shadow .14s;
+}
+.nom-card::after { content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,.05) 48%, rgba(0,0,0,.8) 100%); }
+.nom-card:hover, .nom-synth:hover { transform: translateY(-3px); }
+.nom-card.sel { box-shadow: 0 0 0 3px var(--accent); }
+.nom-synth.sel { box-shadow: 0 0 0 3px var(--accent); }
+.nom-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.nom-kick { font-size: 12px; font-weight: 500; letter-spacing: .06em; color: rgba(255,255,255,.85); }
+.nom-badge { font-family: var(--font-jbm); font-weight: 700; font-size: 10.5px; letter-spacing: .04em;
+  text-transform: uppercase; color: #fff; border: 1px solid rgba(255,255,255,.7); border-radius: 7px; padding: 5px 8px; white-space: nowrap; }
+.nom-title { font-size: 30px; font-weight: 500; letter-spacing: -.025em; line-height: 1; }
+.nom-desc { font-size: 13.5px; line-height: 1.4; color: rgba(255,255,255,.85); margin-top: 8px; }
+.nom-foot { display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid rgba(255,255,255,.28); margin-top: 14px; padding-top: 12px; }
+.nom-mode { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,.92); }
+.nom-cta { font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .03em; color: #fff; white-space: nowrap; }
+/* Плита «Синтез» — та же колонка, что .nom-card: шапка сверху, орнамент по центру, тайтл+CTA снизу */
+.nom-synth { display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 430px; width: 100%; text-align: left; background: #15151A; color: #fff;
+  border-radius: 18px; padding: 18px 20px; margin-top: 14px;
+  position: relative; overflow: hidden; isolation: isolate;
+  transition: transform .14s, box-shadow .14s; }
+/* Орнамент-«крылья» по центру свободной зоны карточки */
+.nom-synth-art {
+  flex: 1 1 auto; align-self: center; min-height: 0; width: auto; max-width: 86%;
+  object-fit: contain; margin: 14px 0; pointer-events: none; user-select: none;
+}
+/* Подвыбор направлений внутри плиты «Синтез»: раскрытие — ease-out quad со стаггером чипов,
+   скрытие — ease-in quad, быстрее и все вместе. Блок всегда в DOM, видимость — классом .open.
+   Блок — нижний ряд колонки .nom-synth. */
+.nom-synth-dirs {
+  flex: 0 0 auto; cursor: default; overflow: hidden;
+  border-top: 1px solid rgba(255,255,255,.16);
+  max-height: 0; opacity: 0; padding-top: 0; margin-top: 0; visibility: hidden;
+  transition:
+    max-height .24s cubic-bezier(.55,.085,.68,.53),
+    opacity .2s cubic-bezier(.55,.085,.68,.53),
+    padding-top .24s cubic-bezier(.55,.085,.68,.53),
+    margin-top .24s cubic-bezier(.55,.085,.68,.53),
+    visibility 0s linear .24s;
+}
+.nom-synth-dirs.open {
+  max-height: 300px; opacity: 1; padding-top: 16px; margin-top: 14px; visibility: visible;
+  transition:
+    max-height .34s cubic-bezier(.25,.46,.45,.94),
+    opacity .3s cubic-bezier(.25,.46,.45,.94),
+    padding-top .34s cubic-bezier(.25,.46,.45,.94),
+    margin-top .34s cubic-bezier(.25,.46,.45,.94),
+    visibility 0s;
+}
+.nom-synth-dirs .ff-label,
+.nom-synth-dirs .ff-chip {
+  opacity: 0; transform: translateY(7px);
+  transition: opacity .16s cubic-bezier(.55,.085,.68,.53), transform .16s cubic-bezier(.55,.085,.68,.53);
+}
+.nom-synth-dirs.open .ff-label,
+.nom-synth-dirs.open .ff-chip {
+  opacity: 1; transform: none;
+  transition: opacity .28s cubic-bezier(.25,.46,.45,.94), transform .28s cubic-bezier(.25,.46,.45,.94);
+}
+.nom-synth-dirs.open .ff-label { transition-delay: .06s; }
+.nom-synth-dirs.open .ff-chip:nth-child(1) { transition-delay: .14s; }
+.nom-synth-dirs.open .ff-chip:nth-child(2) { transition-delay: .21s; }
+.nom-synth-dirs.open .ff-chip:nth-child(3) { transition-delay: .28s; }
+.nom-synth-dirs.open .ff-chip:nth-child(4) { transition-delay: .35s; }
+.nom-synth-dirs .ff-chip { background: transparent; border-color: rgba(255,255,255,.35); color: #fff; }
+.nom-synth-dirs .ff-chip.on, .nom-synth-dirs .ff-chip.sky { background: #C5E4F9; border-color: #C5E4F9; color: #0C0C0D; }
 .cab-side { border-left: 1px solid var(--line); padding-left: 28px; display: flex; flex-direction: column; gap: 18px; }
 .sheet-foot {
   padding: 22px 0 28px; display: flex; justify-content: space-between;
@@ -41,8 +118,8 @@
 }
 
 /* ── Форма заявки («один лист») ── */
-.fsection { display: grid; grid-template-columns: 240px 1fr; gap: 16px; border-top: 1px solid rgba(0, 0, 0, .15); padding: 30px 0; }
-.form-cols { display: grid; grid-template-columns: 240px 1fr; gap: 16px; }
+.fsection { display: grid; grid-template-columns: 240px 670px; gap: 16px; border-top: 1px solid rgba(0, 0, 0, .15); padding: 30px 0; }
+.form-cols { display: grid; grid-template-columns: 1fr 240px; gap: 16px; }
 .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-grid2 .full { grid-column: 1 / -1; }
 .anchor-sticky { position: sticky; top: 20px; align-self: start; }

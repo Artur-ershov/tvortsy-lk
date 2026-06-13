@@ -29,6 +29,7 @@ export const DemoPanel = () => {
           <button className="dp-btn" onClick={() => scenario('maria-team', '/cabinet')}>Мария · командная заявка «Шум»</button>
           <button className="dp-btn" onClick={() => scenario('minor', '/wall')}>Тимур · 14–17 · стена согласий</button>
           <button className="dp-btn" onClick={() => scenario('invitee', '/join/team-shum')}>Кирилл · приглашение в команду</button>
+          <button className="dp-btn" onClick={() => scenario('invitee', '/cabinet')}>Кирилл · приглашение в кабинете (А/Б)</button>
           <button className="dp-btn" onClick={() => scenario('invitee-minor', '/join/team-shum')}>Тимур · приглашение (14–17)</button>
 
           <span className="dp-title">Действия</span>

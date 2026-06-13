@@ -6,11 +6,11 @@ import React, { createContext, useContext, useEffect, useMemo, useReducer, useRe
 /* ───────── Справочники ───────── */
 
 export const NOMINATIONS = {
-  audio:  { label: 'Аудио',  req: 'Аудио — запись MP3 или WAV · до 300 МБ',  formats: ['mp3', 'wav'], maxMB: 300, fmt: 'MP3 или WAV · до 300 МБ' },
-  media:  { label: 'Медиа',  req: 'Медиа — видеоролик MP4 · до 500 МБ',      formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
-  dance:  { label: 'Танец',  req: 'Танец — видеозапись MP4 · до 500 МБ',     formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
-  visual: { label: 'Визуал', req: 'Визуал — файл PDF или PNG · до 100 МБ',   formats: ['pdf', 'png'], maxMB: 100, fmt: 'PDF или PNG · до 100 МБ' },
-  synth:  { label: 'Синтез', req: 'Синтез — материалы по выбранным направлениям · суммарно до 800 МБ', formats: null, maxMB: 800, fmt: 'несколько форматов · до 800 МБ суммарно', minDirs: 2 },
+  audio:  { label: 'Аудио',  num: '01', en: 'AUDIO',     badge: 'demo · 1–2 трека',    blurb: 'Композиция · саунд-дизайн · электроника · песня', req: 'Аудио — запись MP3 или WAV · до 300 МБ',  formats: ['mp3', 'wav'], maxMB: 300, fmt: 'MP3 или WAV · до 300 МБ' },
+  media:  { label: 'Медиа',  num: '04', en: 'MEDIA',     badge: '1 фильм · до 15 мин',  blurb: 'Короткий метр · док · экспериментальное видео',   req: 'Медиа — видеоролик MP4 · до 500 МБ',      formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
+  dance:  { label: 'Танец',  num: '03', en: 'DANCE',     badge: 'видео · 3–5 мин',      blurb: 'Хореография · перформанс · contemporary',          req: 'Танец — видеозапись MP4 · до 500 МБ',     formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
+  visual: { label: 'Визуал', num: '02', en: 'VISUAL',    badge: 'до 12 работ',          blurb: 'Иллюстрация · моушн · 3D · AI · фотография',       req: 'Визуал — файл PDF или PNG · до 100 МБ',   formats: ['pdf', 'png'], maxMB: 100, fmt: 'PDF или PNG · до 100 МБ' },
+  synth:  { label: 'Синтез', num: '05', en: 'SYNTHESIS', badge: 'на стыке · грант ×2',  blurb: 'Произведение, которое собирается на стыке направлений', req: 'Синтез — материалы по выбранным направлениям · суммарно до 800 МБ', formats: null, maxMB: 800, fmt: 'несколько форматов · до 800 МБ суммарно', minDirs: 2 },
 }
 export const NOMINATION_KEYS = ['audio', 'media', 'dance', 'visual', 'synth']
 export const SYNTH_DIR_KEYS = ['audio', 'media', 'dance', 'visual']
@@ -120,8 +120,8 @@ export function computeTodos(app) {
   const nom = app.nomination && NOMINATIONS[app.nomination]
   if (!nom) todos.push({ label: 'номинация', anchor: 's01' })
   if (app.nomination === 'synth' && app.synthDirs.length < 2) todos.push({ label: 'направления синтеза — минимум 2', anchor: 's01' })
-  if (!app.title.trim()) todos.push({ label: 'название работы', anchor: 's01' })
-  if (!app.description.trim()) todos.push({ label: 'описание работы', anchor: 's01' })
+  if (!app.title.trim()) todos.push({ label: 'название работы', anchor: 's02' })
+  if (!app.description.trim()) todos.push({ label: 'описание работы', anchor: 's02' })
 
   const done = app.files.filter(f => f.state === 'done')
   const loading = app.files.find(f => f.state === 'progress' || f.state === 'queue')
@@ -272,7 +272,7 @@ const initialState = {
   email: '',
   profile: { fio: '', dob: '', phone: '', nationality: '', city: '', work: '' },
   minorDocs: { participation: 'none', pdn: 'none' }, // none | review | ok | replace
-  socials: { vk: true, yandex: false, telegram: true },
+  socials: { vk: true, yandex: false },
   apps: [],
   appSeq: 849, // следующий номер ТВ-2026-XXXX
   pendingInvite: null, // id заявки, на чьё приглашение нужно ответить после авторизации
