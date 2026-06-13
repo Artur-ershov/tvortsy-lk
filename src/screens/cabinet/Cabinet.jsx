@@ -2,19 +2,13 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, fmtMB, ageFrom, ageWord, shortName,
+  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, ageFrom, ageWord, shortName,
 } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
-import { Pix, PIX_A, StatusTag, StatusTimeline, MemberRow, Modal } from '../../components/ui.jsx'
+import { StatusTag, StatusTimeline, Modal } from '../../components/ui.jsx'
 import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 
 /* Склонения */
-const fileWord = (n) => {
-  const m10 = n % 10, m100 = n % 100
-  if (m10 === 1 && m100 !== 11) return 'файл'
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'файла'
-  return 'файлов'
-}
 const memberWord = (n) => {
   const m10 = n % 10, m100 = n % 100
   if (m10 === 1 && m100 !== 11) return 'участник'
@@ -30,15 +24,6 @@ const SIDE_NOTE = {
   admitted: 'Работа в программе мастерских. Следующий этап — показы, июль.',
   results: 'Сезон завершён — спасибо за участие!',
 }
-
-/* Строка-линия раскрытой заявки (FgRow из FgV9) */
-const Row = ({ label, value, action, actionColor }) => (
-  <div className="row-line">
-    <span className="jbm" style={{ fontSize: 12.5, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gray-2)' }}>{label}</span>
-    <span style={{ fontSize: 16.5 }}>{value}</span>
-    <span className="jbm" style={{ fontSize: 12.5, letterSpacing: '.04em', textAlign: 'right', color: actionColor || 'var(--gray-2)' }}>{action || ''}</span>
-  </div>
-)
 
 export default function Cabinet() {
   const { state, dispatch, toast } = useStore()
@@ -64,13 +49,6 @@ export default function Cabinet() {
   const drafts = own.filter(a => a.status === 'draft')
   const subCount = countSubmitted(own)
   const limitReached = subCount >= APP_LIMIT
-
-  // По умолчанию раскрыта первая заявка не в rework
-  const [expanded, setExpanded] = useState(() => {
-    const first = state.apps.filter(a => a.status !== 'draft').find(a => a.status !== 'rework')
-    return first ? { [first.id]: true } : {}
-  })
-  const toggle = (id) => setExpanded(e => ({ ...e, [id]: !e[id] }))
 
   const [withdrawApp, setWithdrawApp] = useState(null) // заявка для модалки «Отозвать»
   const [deleteDraft, setDeleteDraft] = useState(null) // черновик для модалки удаления
@@ -256,12 +234,8 @@ export default function Cabinet() {
 
         {/* Поданные заявки */}
         {submitted.map((app, i) => {
-          const open = !!expanded[app.id]
           const nn = String(i + 1).padStart(2, '0')
           const nomLabel = app.nomination ? NOMINATIONS[app.nomination].label : ''
-          const totalMB = app.files.reduce((s, f) => s + (f.sizeMB || 0), 0)
-          const waiting = app.members.filter(m => m.tag === 'invited').length
-          const signed = app.consents.filter(Boolean).length
           return (
             <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
               {/* Левая колонка */}
@@ -276,57 +250,21 @@ export default function Cabinet() {
 
               {/* Центр */}
               <div>
-                <div style={open
-                  ? { fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 500, letterSpacing: '-.035em', lineHeight: .95 }
-                  : { fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
+                <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   {app.title}
                 </div>
                 {app.status === 'rework' && (
                   <div style={{ fontSize: 16, color: 'var(--err)', marginTop: 12 }}>{app.reworkNote}</div>
                 )}
-                {open && (
-                  <>
-                    <div style={{ marginTop: 44, maxWidth: 720 }}>
-                      <StatusTimeline status={app.status} submittedAt={app.submittedAt} />
-                    </div>
-                    <div style={{ marginTop: 44 }}>
-                      <Row
-                        label="Файлы работы"
-                        value={`${app.files.map(f => f.name).join(', ')} · ${fmtMB(totalMB)} · ${app.files.length} ${fileWord(app.files.length)}`}
-                      />
-                      <Row label="Согласия" value={`Подписаны · ${signed} из 2`} />
-                      {app.mode === 'team' && (
-                        <Row
-                          label="Команда"
-                          value={`«${app.teamName}» · ${app.members.length} ${memberWord(app.members.length)}`}
-                          action={waiting ? `${waiting} ${waiting === 1 ? 'ожидает' : 'ожидают'} подтверждения` : ''}
-                          actionColor="var(--warn)"
-                        />
-                      )}
-                    </div>
-                    {app.mode === 'team' && (
-                      <div style={{ marginTop: 24 }}>
-                        <div className="mono" style={{ fontSize: 11.5, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gray-2)', marginBottom: 12 }}>
-                          Состав команды
-                        </div>
-                        <div style={{ display: 'grid', gap: 8 }}>
-                          {app.members.map(m => (
-                            <MemberRow key={m.id} member={m} you={m.role === 'captain'} invitedLabel="приглашён" />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                <div style={{ marginTop: 28, maxWidth: 720 }}>
+                  <StatusTimeline status={app.status} submittedAt={app.submittedAt} />
+                </div>
               </div>
 
               {/* Правая колонка */}
               <div className="cab-side">
                 <StatusTag status={app.status} />
                 <div style={{ fontSize: 15.5, lineHeight: 1.4, color: 'var(--gray-2)' }}>{SIDE_NOTE[app.status]}</div>
-                <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => toggle(app.id)}>
-                  {open ? 'Свернуть' : 'Подробнее'}
-                </button>
                 {app.status === 'submitted' && (
                   <button className="fbtn sm" onClick={() => nav('/apply/' + app.id)}>Редактировать</button>
                 )}
@@ -342,7 +280,6 @@ export default function Cabinet() {
                 {(app.status === 'submitted' || app.status === 'review') && (
                   <button className="fbtn sm line" onClick={() => setWithdrawApp(app)}>Отозвать</button>
                 )}
-                {open && <Pix map={PIX_A} cell={15} gap={4} style={{ marginTop: 'auto', opacity: .7 }} />}
               </div>
             </div>
           )

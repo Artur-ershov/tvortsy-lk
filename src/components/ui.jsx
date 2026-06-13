@@ -58,13 +58,13 @@ export const StatusTimeline = ({ status = 'submitted', dark = false, submittedAt
           <div key={key} style={{ position: 'relative', paddingRight: 12 }}>
             <span style={{
               display: 'block', width: 11, height: 11, borderRadius: 3,
-              background: done || cur ? (dark ? 'var(--sky-2)' : 'var(--ink)') : (dark ? '#3A3A42' : '#D6DCE1'),
-              outline: cur ? `2px solid ${dark ? 'var(--sky-2)' : 'var(--ink)'}` : 'none', outlineOffset: 2,
+              background: cur ? 'var(--accent)' : done ? (dark ? 'var(--sky-2)' : 'var(--ink)') : (dark ? '#3A3A42' : '#D6DCE1'),
+              outline: cur ? '2px solid var(--sky-2)' : 'none', outlineOffset: 2,
             }}></span>
             <div className="jbm" style={{ fontSize: 11.5, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 14, opacity: .6 }}>
               {i === 0 && submittedAt ? submittedAt : CYCLE_DATES[key]}
             </div>
-            <div style={{ fontSize: 16.5, fontWeight: cur ? 600 : 400, marginTop: 6, lineHeight: 1.25 }}>{STATUS[key].label}</div>
+            <div style={{ fontSize: 16.5, fontWeight: cur ? 600 : 400, marginTop: 6, lineHeight: 1.25, color: cur ? 'var(--accent)' : undefined }}>{STATUS[key].label}</div>
           </div>
         )
       })}
