@@ -4,16 +4,18 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../state/store.jsx'
 import { AuthSplit, PanelHead } from '../../components/AuthSplit.jsx'
 import { Field, PasswordInput, SocialRow, OrRow } from '../../components/ui.jsx'
+import { useField, vEmail } from '../../state/validation.js'
+import g559 from '../../assets/group559.png'
 
 export default function Login() {
   const { state, dispatch, toast } = useStore()
   const nav = useNavigate()
-  const [email, setEmail] = useState('')
+  const emailF = useField('', vEmail)
   const [pass, setPass] = useState('')
   const [err, setErr] = useState(false)
 
   const submit = () => {
-    const e = email.trim()
+    const e = emailF.value.trim()
     const known = e === 'm.sokolova@mail.ru' || (state.email && e === state.email)
     if (known && pass) {
       dispatch({ type: 'login', email: e })
@@ -31,23 +33,24 @@ export default function Login() {
   return (
     <AuthSplit
       header={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)' }}>
           <span className="cluster">Первый раз?</span>
           <button type="button" className="fbtn sm line" onClick={() => nav('/register')}>Зарегистрироваться</button>
         </div>
       }
-      kicker="Кабинет участника · 2026"
-      title={'С возвра­щением'}
+      kicker="Творцы РФ · 2026"
+      title={'С возвращением'}
       titleSize="clamp(44px, 7vw, 92px)"
+      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
       posterBottom={
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 26 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-5)', borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 'var(--sp-6)' }}>
           {[
-            ['Статус заявки', 'виден в кабинете, изменения — на email'],
-            ['Черновики', 'сохраняются, можно заполнять в несколько подходов'],
+            ['Статус заявки', 'виден в кабинете, об изменениях напишем на e-mail'],
+            ['Черновики', 'сохраняются сами — заполняй частями, когда удобно'],
           ].map(([n, t]) => (
             <div key={n}>
               <div style={{ fontSize: 16, fontWeight: 500, color: '#fff' }}>{n}</div>
-              <div style={{ fontSize: 13.5, lineHeight: 1.45, color: 'rgba(255,255,255,.6)', marginTop: 6 }}>{t}</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.45, color: 'rgba(255,255,255,.6)', marginTop: 'var(--sp-1)' }}>{t}</div>
             </div>
           ))}
         </div>
@@ -58,15 +61,15 @@ export default function Login() {
       <Field
         label="Email"
         type="email"
-        value={email}
-        onChange={v => { setEmail(v); setErr(false) }}
+        {...emailF.bind}
+        onChange={v => { emailF.setValue(v); setErr(false) }}
         placeholder="m.sokolova@mail.ru"
         autoComplete="email"
-        error={err ? 'Неверный email или пароль' : null}
+        error={emailF.error || (err ? 'Не удалось войти. Проверь e-mail и пароль или восстанови доступ' : null)}
       />
 
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 9 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--sp-2)' }}>
           <span className="ff-label" style={{ margin: 0 }}>Пароль</span>
           <button type="button" className="mlink" onClick={() => nav('/recovery')}>Забыли пароль?</button>
         </div>
@@ -78,7 +81,7 @@ export default function Login() {
         />
       </div>
 
-      <button type="button" className="fbtn submit" style={{ marginTop: 4 }} onClick={submit}>Войти</button>
+      <button type="button" className="fbtn submit" style={{ marginTop: 'var(--sp-1)' }} onClick={submit}>Войти</button>
 
       <OrRow>или</OrRow>
       <SocialRow onClick={() => toast('Демо: быстрый вход недоступен в прототипе')} />
@@ -91,7 +94,6 @@ export default function Login() {
           onClick={() => nav('/register')}
         >Зарегистрироваться</a>
       </div>
-      <div className="cluster" style={{ color: 'var(--gray-2)', textAlign: 'center' }}>демо: m.sokolova@mail.ru · пароль любой</div>
     </AuthSplit>
   )
 }

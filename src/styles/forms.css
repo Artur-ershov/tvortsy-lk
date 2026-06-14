@@ -3,13 +3,13 @@
 .ff-label {
   display: block; font-family: var(--font-jbm);
   font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--gray-2); margin-bottom: 9px;
+  color: var(--gray-2); margin-bottom: var(--sp-2);
 }
 
 .ff-input {
-  background: #fff; border: 1px solid var(--line); border-radius: 12px;
-  padding: 15px 18px; font-size: 17px; color: var(--ink); min-height: 54px;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: var(--sp-4) var(--sp-4); font-size: 17px; color: var(--ink); min-height: 54px;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
   width: 100%;
 }
 input.ff-input, textarea.ff-input { display: block; outline: none; }
@@ -20,10 +20,33 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 .ff-input.ph  { color: #9AA6B0; }
 .ff-input.dis, input.ff-input:disabled { background: #F2F5F8; color: var(--gray-2); }
 .ff-input.err, input.ff-input.err, textarea.ff-input.err { border-color: var(--err); }
+.ff-input.warn, input.ff-input.warn, textarea.ff-input.warn { border-color: var(--warn-line); }
+.ff-input.ok, input.ff-input.ok, textarea.ff-input.ok { border-color: rgba(31, 138, 91, .5); }
+input.ff-input.err:focus, textarea.ff-input.err:focus { border-color: var(--err); box-shadow: 0 0 0 3px rgba(179, 64, 46, .12); }
+input.ff-input.warn:focus, textarea.ff-input.warn:focus { border-color: var(--warn); box-shadow: 0 0 0 3px rgba(255, 185, 0, .16); }
+input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); box-shadow: 0 0 0 3px rgba(31, 138, 91, .12); }
 .ff-input.area, textarea.ff-input { min-height: 92px; align-items: flex-start; line-height: 1.4; resize: vertical; }
 
-.ff-err  { display: block; font-size: 13.5px; color: var(--err); margin-top: 8px; }
+/* Обёртка контрола + иконка статуса (галочка/«!») */
+.ff-ctrl { position: relative; }
+.ff-ctrl.has-status > .ff-input:not(.area) { padding-right: var(--sp-11); }
+.ff-ctrl.has-status > textarea.ff-input { padding-right: var(--sp-11); }
+.ff-status {
+  position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; pointer-events: none; animation: ff-pop .2s ease-out;
+}
+.ff-ctrl.area > .ff-status { top: 19px; transform: none; }
+.ff-status.ok   { color: var(--ok); }
+.ff-status.err  { color: var(--err); }
+.ff-status.warn { color: var(--warn); }
+.ff-status.pw   { right: 44px; }
+
+.ff-err  { display: block; font-size: 13.5px; color: var(--err); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
+.ff-warn { display: block; font-size: 13.5px; color: var(--warn); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
 .ff-hint { font-size: 13.5px; color: var(--gray-2); line-height: 1.4; }
+
+@keyframes ff-msg { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@keyframes ff-pop { from { opacity: 0; } to { opacity: 1; } }
 .ff-act  {
   font-family: var(--font-jbm); font-size: 12.5px; color: var(--gray-2);
   cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
@@ -31,27 +54,27 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 
 /* Обёртка инпута с правой иконкой (глазик и т.п.) */
 .ff-wrap { position: relative; }
-.ff-wrap input.ff-input { padding-right: 48px; }
+.ff-wrap input.ff-input { padding-right: var(--sp-12); }
 .ff-wrap .ff-eye {
   position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
   display: inline-flex; opacity: .45; cursor: pointer; background: none; border: none; padding: 0;
 }
 
 /* Сегмент-чипы */
-.ff-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.ff-seg { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .ff-chip {
   font-family: var(--font-sans);
-  font-size: 15px; padding: 9px 16px; border-radius: 999px;
+  font-size: 15px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
   background: #fff; border: 1px solid var(--line); color: var(--ink);
   cursor: pointer; white-space: nowrap;
 }
 .ff-chip.on  { background: var(--ink); color: #fff; border-color: var(--ink); }
-.ff-chip.sky { background: var(--sky); border-color: var(--sky); color: #23425A; }
+.ff-chip.sky { background: var(--sky); border-color: var(--sky); color: var(--ink-blue); }
 
 /* Чекбоксы */
-.ff-check { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; line-height: 1.4; cursor: pointer; text-align: left; }
+.ff-check { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: 15.5px; line-height: 1.4; cursor: pointer; text-align: left; }
 .ff-check .box {
-  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px;
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: var(--r-xs);
   border: 1.5px solid rgba(0, 0, 0, .3); margin-top: 1px; position: relative; background: #fff;
 }
 .ff-check.on .box { background: var(--ink); border-color: var(--ink); }
@@ -63,41 +86,46 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 
 /* Файл-строка */
 .ff-file {
-  display: flex; align-items: center; gap: 16px;
-  background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px;
+  display: flex; align-items: center; gap: var(--sp-4);
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
 }
 .ff-file .ic {
-  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 9px; background: var(--sky);
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--sky);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-jbm); font-size: 11px; font-weight: 700; color: #23425A;
+  font-family: var(--font-jbm); font-size: 11px; font-weight: 700; color: var(--ink-blue);
 }
 .ff-file.done { box-shadow: inset 0 0 0 1px rgba(31, 138, 91, .4); }
 .ff-file.err  { box-shadow: inset 0 0 0 1px rgba(179, 64, 46, .5); }
-.ff-bar { height: 6px; border-radius: 99px; background: rgba(0, 0, 0, .08); overflow: hidden; margin-top: 8px; }
-.ff-bar i { display: block; height: 100%; background: var(--ink); border-radius: 99px; }
+.ff-file.warn { box-shadow: inset 0 0 0 1px var(--warn-line); }
+/* Иконки статуса файла берут stroke из токенов состояния (var() в SVG-атрибуте не работает) */
+.ff-file .ic svg { stroke: var(--ink-blue); }
+.ff-file.err  .ic svg { stroke: var(--err); }
+.ff-file.warn .ic svg { stroke: var(--warn); }
+.ff-bar { height: 6px; border-radius: var(--r-pill); background: rgba(0, 0, 0, .08); overflow: hidden; margin-top: var(--sp-2); }
+.ff-bar i { display: block; height: 100%; background: var(--accent); border-radius: var(--r-pill); }
 .ff-bar.err i { background: var(--err); }
 
 /* Drop-зона */
 .ff-drop {
-  border: 1.5px dashed rgba(0, 0, 0, .25); border-radius: 12px; padding: 22px 24px;
+  border: 1.5px dashed rgba(0, 0, 0, .25); border-radius: var(--r-sm); padding: var(--sp-5) var(--sp-6);
   text-align: center; color: var(--gray-2); cursor: pointer; width: 100%; background: transparent;
 }
 .ff-drop.over { border-color: var(--ink); background: var(--paper); }
 
 /* Быстрые входы */
-.ff-social { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.ff-social { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); }
 .ff-social .s {
-  height: 52px; border-radius: 12px; border: 1px solid var(--line); background: #fff;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
   font-size: 14.5px; font-weight: 500; cursor: pointer;
 }
-.ff-social .s .d { width: 22px; height: 22px; border-radius: 6px; display: inline-block; }
+.ff-social .s .d { width: 22px; height: 22px; border-radius: var(--r-xs); display: inline-block; }
 
 /* Sticky-футер формы */
 .ff-foot {
   position: sticky; bottom: 0; background: rgba(255, 255, 255, .92);
   backdrop-filter: blur(8px); border-top: 2px solid var(--ink);
-  display: flex; align-items: center; gap: 20px; padding: 18px 0;
+  display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) 0;
   z-index: 20;
 }
 .ff-foot .todo a, .ff-foot .todo button { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font: inherit; }
@@ -105,7 +133,7 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 /* Якорная навигация формы */
 .ff-anchor { display: flex; flex-direction: column; gap: 2px; }
 .ff-anchor .a {
-  display: flex; align-items: center; gap: 12px; padding: 11px 0;
+  display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0;
   font-size: 15.5px; color: var(--gray-2); cursor: pointer; border-bottom: 1px solid var(--line);
   background: none; border-left: none; border-right: none; border-top: none; text-align: left; width: 100%;
 }
@@ -114,9 +142,9 @@ input.ff-input:focus, textarea.ff-input:focus, .ff-input.focus {
 .ff-anchor .a.done .n { color: var(--ok); }
 
 /* Ячейки кода подтверждения */
-.code-cells { display: flex; gap: 12px; justify-content: center; }
+.code-cells { display: flex; gap: var(--sp-3); justify-content: center; }
 .code-cell {
-  width: 80px; height: 88px; border-radius: 18px;
+  width: 80px; height: 88px; border-radius: var(--r-md);
   border: 1.5px solid rgba(0, 0, 0, .18); background: #fff;
   display: flex; align-items: center; justify-content: center; text-align: center;
   font-size: 42px; font-weight: 400; letter-spacing: -.02em; font-family: var(--font-sans);

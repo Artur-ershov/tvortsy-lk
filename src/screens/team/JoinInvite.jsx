@@ -20,8 +20,8 @@ const InviteRows = ({ app, light = false }) => {
     <div style={{ display: 'grid', gap: 0 }}>
       {rows.map(([label, value]) => (
         <div key={label} style={{
-          display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline',
-          padding: '12px 0', borderBottom: '1px solid ' + (light ? 'rgba(255,255,255,.18)' : 'var(--line)'),
+          display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-4)', alignItems: 'baseline',
+          padding: 'var(--sp-3) 0', borderBottom: '1px solid ' + (light ? 'rgba(255,255,255,.18)' : 'var(--line)'),
         }}>
           <span className="jbm" style={{ fontSize: 12.5, letterSpacing: '.06em', textTransform: 'uppercase', color: light ? 'rgba(255,255,255,.6)' : 'var(--gray-2)' }}>{label}</span>
           <span style={{ fontSize: 16.5, fontWeight: 500, textAlign: 'right', color: light ? '#fff' : 'var(--ink)' }}>{value}</span>
@@ -33,15 +33,15 @@ const InviteRows = ({ app, light = false }) => {
 
 /* Центрированный каркас (паттерн Wall.jsx) для авторизованных состояний */
 const CenterShell = ({ onLogout, title, children }) => (
-  <div style={{ minHeight: '100vh', background: 'var(--w)', padding: 16, display: 'flex', flexDirection: 'column' }}>
+  <div style={{ minHeight: '100vh', background: 'var(--w)', padding: 'var(--sp-4)', display: 'flex', flexDirection: 'column' }}>
     <div className="auth-top">
       <Logo />
       {onLogout && <button type="button" className="mlink" onClick={onLogout}>Выйти</button>}
     </div>
     <div style={{ maxWidth: 560, width: '100%', margin: '0 auto', paddingBottom: 60 }}>
-      <div style={{ textAlign: 'center', marginTop: 28 }}>
+      <div style={{ textAlign: 'center', marginTop: 'var(--sp-7)' }}>
         <span className="kick">Приглашение в команду</span>
-        <h1 style={{ fontSize: 'clamp(36px, 6vw, 48px)', fontWeight: 500, letterSpacing: '-.03em', lineHeight: 1.05, margin: 0, marginTop: 12 }}>{title}</h1>
+        <h1 style={{ fontSize: 'clamp(36px, 6vw, 48px)', fontWeight: 500, letterSpacing: '-.03em', lineHeight: 1.05, margin: 0, marginTop: 'var(--sp-3)' }}>{title}</h1>
       </div>
       {children}
     </div>
@@ -58,11 +58,11 @@ export default function JoinInvite() {
   if (!app) {
     return (
       <CenterShell title="Приглашение недействительно">
-        <div className="wall-card" style={{ marginTop: 32, textAlign: 'center' }}>
+        <div className="wall-card" style={{ marginTop: 'var(--sp-8)', textAlign: 'center' }}>
           <p className="ff-hint" style={{ margin: 0 }}>
-            Ссылка устарела или заявка была удалена. Попроси капитана прислать новое приглашение.
+            Ссылка устарела или заявка была удалена. Попроси капитана прислать новую ссылку.
           </p>
-          <button type="button" className="fbtn sm line" style={{ marginTop: 20 }} onClick={() => nav('/')}>
+          <button type="button" className="fbtn sm line" style={{ marginTop: 'var(--sp-5)' }} onClick={() => nav('/')}>
             {state.stage === 'active' ? 'В кабинет' : 'Ко входу'}
           </button>
         </div>
@@ -84,30 +84,30 @@ export default function JoinInvite() {
       <AuthSplit
         header={<span className="cluster">Приглашение · бессрочно</span>}
         kicker="Команда зовёт · 2026"
-        title={'Вас зовут в команду'}
+        title={'Тебя зовут в команду'}
         titleSize="clamp(44px, 6.5vw, 84px)"
-        lede={captain ? `${shortName(captain.name)} приглашает присоединиться к заявке на фестиваль «Творцы РФ 2026».` : 'Вас приглашают присоединиться к заявке на фестиваль «Творцы РФ 2026».'}
+        lede={captain ? `${shortName(captain.name)} приглашает присоединиться к заявке на фестиваль «Творцы РФ 2026».` : 'Тебя приглашают присоединиться к заявке на фестиваль «Творцы РФ 2026».'}
         posterBottom={<InviteRows app={app} light />}
       >
         <PanelHead
           kicker="Шаг 1 из 2"
-          title={isMinorWall ? 'Сначала — согласие представителя' : 'Войдите, чтобы ответить'}
+          title={isMinorWall ? 'Сначала — согласие родителя' : 'Войдите, чтобы ответить'}
           hint={isMinorWall
-            ? 'Тебе 14–17 лет: до решения по приглашению нужно согласие родителя или опекуна. Приглашение никуда не денется — вернём к нему после проверки документов.'
-            : 'Принять или отклонить приглашение можно только из своего аккаунта — участие подтверждается с личного email.'}
+            ? 'Тебе 14–17 лет: до решения по приглашению нужно согласие родителя или опекуна. Приглашение никуда не денется — вернём к нему после проверки документов.'
+            : 'Принять или отклонить приглашение можно только из своего аккаунта — участие подтверждается с твоего email.'}
           kickerColor="var(--ink)"
           titleColor="var(--ink)"
         />
         {isMinorWall ? (
-          <button type="button" className="fbtn submit" onClick={() => go('/wall')}>К документам</button>
+          <button type="button" className="fbtn submit" onClick={() => go('/wall')}>К согласию родителя</button>
         ) : (
           <>
-            <button type="button" className="fbtn submit" onClick={() => go('/login')}>Войти</button>
+            <button type="button" className="fbtn submit" onClick={() => go('/login')}>Войти и ответить</button>
             <button type="button" className="fbtn sm line" onClick={() => go('/register')}>Зарегистрироваться</button>
           </>
         )}
         <div className="cluster" style={{ color: 'var(--gray-2)', textAlign: 'center' }}>
-          после {isMinorWall ? 'проверки документов' : 'входа'} вернём к этому приглашению
+          после {isMinorWall ? 'согласия родителя' : 'входа'} вернём к этому приглашению
         </div>
       </AuthSplit>
     )
@@ -118,10 +118,10 @@ export default function JoinInvite() {
   /* ── уже в команде ── */
   if (me && me.tag === 'confirmed') {
     return (
-      <CenterShell title={`Вы уже в команде «${app.teamName}»`} onLogout={logout}>
-        <div className="wall-card" style={{ marginTop: 32 }}>
+      <CenterShell title={`Ты уже в команде «${app.teamName}»`} onLogout={logout}>
+        <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
           <InviteRows app={app} />
-          <button type="button" className="fbtn submit" style={{ marginTop: 24 }} onClick={() => nav('/cabinet')}>В кабинет</button>
+          <button type="button" className="fbtn submit" style={{ marginTop: 'var(--sp-6)' }} onClick={() => nav('/cabinet')}>В кабинет</button>
         </div>
       </CenterShell>
     )
@@ -129,7 +129,7 @@ export default function JoinInvite() {
 
   const accept = () => {
     dispatch({ type: 'respond-invite', id, tag: 'confirmed' })
-    toast(`Вы в команде «${app.teamName}»`)
+    toast(`Готово! Ты в команде «${app.teamName}»`)
     nav('/cabinet')
   }
   const decline = () => {
@@ -140,11 +140,11 @@ export default function JoinInvite() {
   if (me && me.tag === 'declined') {
     return (
       <CenterShell title="Приглашение отклонено" onLogout={logout}>
-        <div className="wall-card" style={{ marginTop: 32 }}>
+        <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
           <p className="ff-hint" style={{ margin: 0 }}>
-            Капитан увидит отказ в составе команды. Если передумаете — приглашение бессрочно.
+            Капитан увидит отказ в составе команды. Если передумаешь — приглашение бессрочное, примешь в любой момент.
           </p>
-          <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)', flexWrap: 'wrap' }}>
             <button type="button" className="fbtn sm" onClick={accept}>Передумать и принять</button>
             <button type="button" className="fbtn sm line" onClick={() => nav('/cabinet')}>В кабинет</button>
           </div>
@@ -156,21 +156,21 @@ export default function JoinInvite() {
   /* ── ещё не ответил: принять / отклонить ── */
   return (
     <CenterShell title={`Команда «${app.teamName || 'Без названия'}»`} onLogout={logout}>
-      <div className="wall-card" style={{ marginTop: 32 }}>
+      <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
         <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-.015em' }}>
-          {captain ? shortName(captain.name) : 'Капитан'} приглашает вас в команду
+          {captain ? shortName(captain.name) : 'Капитан'} зовёт тебя в команду
         </div>
-        <p className="ff-hint" style={{ margin: '10px 0 18px' }}>
-          Участие подтверждается с вашего email — {state.email}. Приглашение бессрочно.
+        <p className="ff-hint" style={{ margin: 'var(--sp-2) 0 var(--sp-4)' }}>
+          Участие подтверждается с твоего email — {state.email}. Приглашение бессрочное.
         </p>
         <InviteRows app={app} />
-        <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)', flexWrap: 'wrap' }}>
           <button type="button" className="fbtn submit" style={{ flex: 1, minWidth: 180 }} onClick={accept}>Принять приглашение</button>
           <button type="button" className="fbtn sm line" style={{ alignSelf: 'center' }} onClick={decline}>Отклонить</button>
         </div>
       </div>
-      <div className="ff-hint" style={{ marginTop: 16, textAlign: 'center' }}>
-        После принятия заявка появится в вашем кабинете — редактирует её капитан.
+      <div className="ff-hint" style={{ marginTop: 'var(--sp-4)', textAlign: 'center' }}>
+        После принятия заявка появится в твоём кабинете — её редактирует капитан.
       </div>
     </CenterShell>
   )

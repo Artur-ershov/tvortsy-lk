@@ -12,7 +12,7 @@ import imgSynth from '../assets/noms/synth.png'
 export const NOM_IMG = { audio: imgAudio, visual: imgVisual, dance: imgDance, media: imgMedia }
 export const NOM_CARD_KEYS = ['audio', 'visual', 'dance', 'media'] // порядок как на лендинге; синтез — отдельной плитой
 
-export const NomCard = ({ k, selected = false, onClick, cta = 'Заявка →' }) => {
+export const NomCard = ({ k, selected = false, onClick, cta = 'Выбрать →' }) => {
   const n = NOMINATIONS[k]
   return (
     <button
@@ -38,7 +38,7 @@ export const NomCard = ({ k, selected = false, onClick, cta = 'Заявка →'
 }
 
 // div, а не button: при selected внутрь раскрывается подвыбор направлений (children с кнопками)
-export const SynthCard = ({ selected = false, onClick, cta = 'Подать →', children }) => {
+export const SynthCard = ({ selected = false, onClick, cta = 'Выбрать →', children }) => {
   const n = NOMINATIONS.synth
   return (
     <div
@@ -50,18 +50,18 @@ export const SynthCard = ({ selected = false, onClick, cta = 'Подать →',
       style={{ cursor: 'pointer' }}
     >
       <div className="nom-top">
-        <span className="nom-kick jbm" style={{ color: '#7FA9C9' }}>{n.num} / {n.en}</span>
-        <span className="nom-badge" style={{ borderColor: '#5B9BC9', color: '#C5E4F9' }}>{n.badge}</span>
+        <span className="nom-kick jbm" style={{ color: 'var(--accent-2)' }}>{n.num} / {n.en}</span>
+        <span className="nom-badge" style={{ borderColor: 'var(--accent)', color: 'var(--sky-2)' }}>{n.badge}</span>
       </div>
       <img src={imgSynth} alt="" aria-hidden="true" className="nom-synth-art" />
       <div>
         <div className="nom-title">
-          {n.label} <span style={{ fontSize: 13, fontWeight: 400, color: '#7FA9C9', letterSpacing: 0 }}>— главная номинация</span>
+          {n.label} <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--accent-2)', letterSpacing: 0 }}>— главная номинация</span>
         </div>
-        <div className="nom-desc" style={{ color: '#A9C2D4' }}>{n.blurb}</div>
+        <div className="nom-desc" style={{ color: 'var(--accent-3)' }}>{n.blurb}</div>
         <div className="nom-foot">
           <span className="nom-mode">соло или коллаб</span>
-          <span className="nom-cta" style={{ background: selected ? '#1F8A5B' : '#C5E4F9', color: selected ? '#fff' : '#0C0C0D', borderRadius: 11, padding: '10px 16px' }}>
+          <span className="nom-cta" style={{ background: selected ? 'var(--ok)' : 'var(--sky-2)', color: selected ? '#fff' : 'var(--ink-soft)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)' }}>
             {selected ? '✓ Выбрано' : cta}
           </span>
         </div>

@@ -63,7 +63,7 @@ export default function App() {
           <Route path="/success/:id" element={<RequireActive><Success /></RequireActive>} />
           <Route path="*" element={<Index />} />
         </Routes>
-        <DemoPanel />
+        {import.meta.env.DEV && <DemoPanel />}
       </HashRouter>
     </StoreProvider>
   )

@@ -30,23 +30,23 @@ export default function Success() {
       `}</style>
       <Nav tab="apps" />
       <div className="success-center">
-        <Pix map={PIX_B} cell={22} gap={6} />
-        <div className="cluster" style={{ marginTop: 28, color: 'var(--gray-2)', textAlign: 'center' }}>
-          заявка № {app.num} · {nomLabel} · {app.submittedAt}{app.submittedTime ? ', ' + app.submittedTime : ''}
+        <Pix map={PIX_B} cell={30} gap={8} />
+        <div className="cluster" style={{ marginTop: 'var(--sp-7)', color: 'var(--gray-2)', textAlign: 'center' }}>
+          Заявка №&nbsp;{app.num} · {nomLabel} · {app.submittedAt}{app.submittedTime ? ', ' + app.submittedTime : ''}
         </div>
-        <h1 style={{ margin: 0, fontSize: 'clamp(44px, 7vw, 72px)', fontWeight: 500, letterSpacing: '-.04em', marginTop: 16, lineHeight: 1, textAlign: 'center' }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(44px, 7vw, 72px)', fontWeight: 500, letterSpacing: '-.04em', marginTop: 'var(--sp-4)', lineHeight: 1, textAlign: 'center' }}>
           Заявка подана
         </h1>
-        <p style={{ margin: '18px auto 0', fontSize: 18, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
-          Сначала её проверят организаторы, затем допущенные работы оценивает жюри. Статус виден в кабинете, об изменениях напишем на email.
+        <p style={{ margin: 'var(--sp-4) auto 0', fontSize: 18, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
+          Сначала её проверят организаторы, а затем допущенные работы оценит жюри. Следить за статусом можно в кабинете — как только что-то изменится, напишем тебе на почту.
         </p>
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,.12)', borderRadius: 22, padding: '28px 32px', marginTop: 32, width: '100%', maxWidth: 640 }}>
+        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,.12)', borderRadius: 'var(--r-lg)', padding: 'var(--sp-7) var(--sp-8)', marginTop: 'var(--sp-8)', width: '100%', maxWidth: 640 }}>
           <StatusTimeline status="submitted" submittedAt={app.submittedAt} />
         </div>
-        <div className="ff-hint" style={{ marginTop: 14, textAlign: 'center' }}>
-          Пока заявка в статусе «Подана», её можно редактировать или отозвать.
+        <div className="ff-hint" style={{ marginTop: 'var(--sp-3)', textAlign: 'center' }}>
+          Заявку ещё можно отредактировать или отозвать — пока она в статусе «Подана».
         </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-3)', marginTop: 'var(--sp-7)', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button className="fbtn" style={{ height: 54, fontSize: 16, fontWeight: 500 }} onClick={() => nav('/cabinet')}>
             К моим заявкам
           </button>

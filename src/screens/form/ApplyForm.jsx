@@ -6,12 +6,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   useStore, NOMINATIONS, SYNTH_DIR_KEYS,
-  computeTodos, sectionState, filledCount, firstNameCity,
+  computeTodos, sectionState, filledCount, firstNameCity, fullName,
   classifyFile, nextId, countSubmitted, APP_LIMIT,
 } from '../../state/store.jsx'
 import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Field, Chips, Check, FileRow, MemberRow } from '../../components/ui.jsx'
+import { vEmail } from '../../state/validation.js'
 
 const SECTIONS = [
   ['01', 'Номинация'],
@@ -27,9 +28,9 @@ const goTo = (sid) => document.getElementById(sid)?.scrollIntoView({ behavior: '
 /* Индикатор готовности секции под кикером */
 const SectionTag = ({ st }) => {
   if (!st) return null
-  if (st === 'done') return <div className="fst ok" style={{ marginTop: 16, fontSize: 12.5 }}>готово</div>
+  if (st === 'done') return <div className="fst ok" style={{ marginTop: 'var(--sp-4)', fontSize: 12.5 }}>готово</div>
   const cls = st === 'согласие на проверке' ? 'warn' : 'wait'
-  return <div className={'fst ' + cls} style={{ marginTop: 16, fontSize: 12.5 }}>{st}</div>
+  return <div className={'fst ' + cls} style={{ marginTop: 'var(--sp-4)', fontSize: 12.5 }}>{st}</div>
 }
 
 /* Секция «один лист»: kick слева, контент справа */
@@ -111,7 +112,9 @@ export default function ApplyForm() {
   }
 
   /* ── команда ── */
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim())
+  const inviteErr = (vEmail(inviteEmail) || {}).error || null
+  const emailOk = !inviteErr
+  const showInviteErr = inviteEmail.trim() && inviteErr
   const sendInvite = () => {
     if (!emailOk) return
     dispatch({ type: 'add-member', id, member: { id: nextId(), name: '', email: inviteEmail.trim(), role: 'member', tag: 'invited' } })
@@ -131,6 +134,22 @@ export default function ApplyForm() {
     dispatch({ type: 'submit-app', id })
     nav('/success/' + id)
   }
+
+  const statusHint = limitReached ? (
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>ты подал 2 заявки — это максимум. Чтобы освободить место, отзови одну в кабинете.</span>
+  ) : todos.length === 0 ? (
+    <span className="cluster" style={{ color: 'var(--ink)' }}>всё готово — можно подавать заявку</span>
+  ) : (
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>
+      Осталось:{' '}
+      {todos.map((t, i) => (
+        <React.Fragment key={t.label + i}>
+          {i > 0 && ' · '}
+          <button type="button" onClick={() => goTo(t.anchor)}>{t.label}</button>
+        </React.Fragment>
+      ))}
+    </span>
+  )
 
   return (
     <div className="app-root" style={{ background: 'var(--w)' }}>
@@ -162,17 +181,17 @@ export default function ApplyForm() {
 
       <div className="sheet" style={{ flex: '1 0 auto' }}>
         {/* Шапка */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, paddingTop: 26 }}>
+        <div className="rule-strong" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 'var(--sp-6)', paddingTop: 'var(--sp-6)' }}>
           <div>
             <span className="kick">{editingSubmitted ? 'Заявка · Подана' : 'Новая заявка · черновик'}</span>
-            <h1 className="mega" style={{ fontSize: 'clamp(48px, 8vw, 96px)', marginTop: 14 }}>Подать заявку</h1>
+            <h1 style={{ fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9, marginTop: 'var(--sp-3)' }}>Подать заявку</h1>
           </div>
-          <span className="cluster" style={{ paddingBottom: 8, textAlign: 'right' }}>
-            {editingSubmitted ? 'изменения сохраняются' : 'черновик сохранён'} · {app.updatedAt}<br />{app.num}
+          <span className="cluster" style={{ paddingBottom: 'var(--sp-2)', textAlign: 'right' }}>
+            {editingSubmitted ? 'изменения сохранены' : 'черновик сохранён'} · {app.updatedAt}<br />{app.num}
           </span>
         </div>
 
-        <div className="form-cols" style={{ marginTop: 28 }}>
+        <div className="form-cols" style={{ marginTop: 'var(--sp-7)' }}>
           {/* Левая колонка — секции */}
           <div>
             {/* 01 ── Номинация */}
@@ -191,7 +210,7 @@ export default function ApplyForm() {
                 selected={app.nomination === 'synth'}
                 onClick={() => patch({ nomination: 'synth' })}
               >
-                <span className="ff-label" style={{ color: '#7FA9C9', marginBottom: 10 }}>
+                <span className="ff-label" style={{ color: 'var(--accent-2)', marginBottom: 'var(--sp-2)' }}>
                   Направления внутри синтеза · минимум 2
                   {app.synthDirs.length > 0 && app.synthDirs.length < 2 && ' · выбрано 1'}
                 </span>
@@ -206,11 +225,11 @@ export default function ApplyForm() {
 
             {/* 02 ── Работа */}
             <FSection num="02" title="Работа" st={sectionState(app, 2)}>
-              <div style={{ display: 'grid', gap: 18, marginBottom: 22 }}>
+              <div style={{ display: 'grid', gap: 'var(--sp-4)', marginBottom: 'var(--sp-5)' }}>
                 <Field
                   label="Название работы"
                   value={app.title}
-                  placeholder="«Название»"
+                  placeholder="Например: Город, которого нет"
                   onChange={v => patch({ title: v })}
                 />
                 <Field
@@ -224,10 +243,10 @@ export default function ApplyForm() {
                 />
               </div>
               <div className="ff-hint">
-                {nomDef.fmt}. Файлов может быть несколько. Загрузка идёт в фоне — заполняй дальше.
+                {nomDef.fmt}. Можно загрузить несколько файлов. Загрузка идёт в фоне — заполняй заявку дальше.
               </div>
               {app.files.length > 0 && (
-                <div style={{ display: 'grid', gap: 9, marginTop: 14 }}>
+                <div style={{ display: 'grid', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
                   {app.files.map(f => (
                     <FileRow
                       key={f.id}
@@ -242,14 +261,14 @@ export default function ApplyForm() {
               <button
                 type="button"
                 className={'ff-drop' + (over ? ' over' : '')}
-                style={{ marginTop: 12 }}
+                style={{ marginTop: 'var(--sp-3)' }}
                 onClick={() => fileInput.current?.click()}
                 onDragOver={e => { e.preventDefault(); setOver(true) }}
                 onDragLeave={() => setOver(false)}
                 onDrop={e => { e.preventDefault(); setOver(false); if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files) }}
               >
                 <div style={{ fontSize: 15.5, color: 'var(--ink)' }}>Перетащи файлы или нажми для выбора</div>
-                <div className="ff-hint" style={{ marginTop: 4 }}>{nomDef.fmt}</div>
+                <div className="ff-hint" style={{ marginTop: 'var(--sp-1)' }}>{nomDef.fmt}</div>
               </button>
               <input
                 ref={fileInput} type="file" multiple style={{ display: 'none' }}
@@ -257,12 +276,12 @@ export default function ApplyForm() {
               />
               <input ref={replaceInput} type="file" style={{ display: 'none' }} onChange={onReplacePicked} />
               {app.files.some(f => f.state === 'over') && (
-                <div style={{ marginTop: 14 }}>
+                <div style={{ marginTop: 'var(--sp-3)' }}>
                   <Field
                     label="Ссылка на файлы"
                     value={app.link}
                     placeholder="https://…"
-                    hint="Открытый доступ по ссылке. Фонд сохраняет копию при подаче — замена файла по ссылке после этого равнозначна отзыву заявки."
+                    hint="Открой доступ к файлам по ссылке для всех. При подаче мы сохраним копию. Важно: если поменяешь файл по ссылке после подачи, заявка считается отозванной — оставь всё как есть."
                     onChange={v => patch({ link: v })}
                   />
                 </div>
@@ -271,7 +290,7 @@ export default function ApplyForm() {
 
             {/* 03 ── Команда */}
             <FSection num="03" title="Команда" st={sectionState(app, 3)}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-4)', flexWrap: 'wrap' }}>
                 <Chips
                   options={[{ key: 'solo', label: 'Одному' }, { key: 'team', label: 'С командой' }]}
                   value={app.mode}
@@ -279,27 +298,27 @@ export default function ApplyForm() {
                 />
                 <span className="ff-hint">
                   {app.mode === 'solo'
-                    ? `участвуешь как ${state.profile.fio}`
+                    ? `участвуешь как ${fullName(state.profile)}`
                     : 'приглашённые подтверждают участие со своего email'}
                 </span>
               </div>
 
               {app.mode === 'team' && (
                 <>
-                  <div style={{ marginTop: 16 }}>
+                  <div style={{ marginTop: 'var(--sp-4)' }}>
                     <Field
                       label="Название команды"
                       value={app.teamName}
-                      placeholder="«Название»"
+                      placeholder="Например: Северный ветер"
                       onChange={v => patch({ teamName: v })}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-3)', marginTop: 'var(--sp-4)', flexWrap: 'wrap' }}>
                     <span className="mono" style={{ fontSize: 12.5, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--gray-2)' }}>Участники</span>
                     <span className="ff-hint">подать заявку можно, когда все приглашённые ответили</span>
                   </div>
-                  <div style={{ display: 'grid', gap: 9, marginTop: 10 }}>
+                  <div style={{ display: 'grid', gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
                     {app.members.map(m => (
                       <MemberRow
                         key={m.id}
@@ -311,26 +330,29 @@ export default function ApplyForm() {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: 'var(--sp-3)', display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
                     <button type="button" className="fbtn sm line" onClick={() => setInviteOpen(o => !o)}>+ Пригласить по email</button>
                     <button type="button" className="fbtn sm line" onClick={copyInviteLink}>Скопировать ссылку-приглашение</button>
                   </div>
                   {inviteOpen && (
-                    <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                      <input
-                        className="ff-input"
-                        style={{ minHeight: 44, padding: '10px 14px', flex: 1 }}
-                        placeholder="email участника"
-                        type="email"
-                        value={inviteEmail}
-                        autoFocus
-                        onChange={e => setInviteEmail(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') sendInvite() }}
-                      />
-                      <button type="button" className={'fbtn sm' + (emailOk ? '' : ' disabled')} onClick={sendInvite}>Пригласить</button>
+                    <div style={{ marginTop: 'var(--sp-3)' }}>
+                      <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+                        <input
+                          className={'ff-input' + (showInviteErr ? ' err' : '')}
+                          style={{ minHeight: 44, padding: 'var(--sp-2) var(--sp-3)', flex: 1 }}
+                          placeholder="name@mail.ru"
+                          type="email"
+                          value={inviteEmail}
+                          autoFocus
+                          onChange={e => setInviteEmail(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') sendInvite() }}
+                        />
+                        <button type="button" className={'fbtn sm' + (emailOk ? '' : ' disabled')} onClick={sendInvite}>Пригласить</button>
+                      </div>
+                      {showInviteErr && <div className="ff-err">{inviteErr}</div>}
                     </div>
                   )}
-                  <div className="ff-hint" style={{ marginTop: 12 }}>
+                  <div className="ff-hint" style={{ marginTop: 'var(--sp-3)' }}>
                     Приглашение бессрочно. Участник может пересылать ссылку другим, но каждый должен подтвердить участие со своего email.
                   </div>
                 </>
@@ -339,7 +361,7 @@ export default function ApplyForm() {
 
             {/* 04 ── Согласия и подача */}
             <FSection num="04" title="Согласия и подача" st={sectionState(app, 4)}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
                 <Check on={app.consents[0]} onChange={v => patch({ consents: [v, app.consents[1]] })}>
                   С правилами фестиваля ознакомлен и согласен — <a onClick={e => e.stopPropagation()}>Положение</a>
                 </Check>
@@ -366,48 +388,36 @@ export default function ApplyForm() {
                 )
               })}
             </div>
-            <div className="cluster" style={{ marginTop: 20 }}>
+            <div className="cluster" style={{ marginTop: 'var(--sp-5)' }}>
               <span className="lab">Готовность</span><br />
               заполнено {filled} из 4{todos.length === 0 ? ' · можно подавать' : ''}
             </div>
-            <div className="ff-hint" style={{ marginTop: 10 }}>Черновик сохраняется автоматически.</div>
+            <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>Черновик сохраняется автоматически.</div>
           </div>
         </div>
 
         {/* Sticky-футер подачи */}
         <div className="ff-foot">
           {editingSubmitted ? (
-            <button type="button" className="mlink" onClick={() => nav('/cabinet')}>← в кабинет</button>
+            <>
+              <button type="button" className="mlink" onClick={() => nav('/cabinet')}>← в кабинет</button>
+              <span className="todo" style={{ marginLeft: 'auto' }}>{statusHint}</span>
+              {todos.length === 0 ? (
+                <button type="button" className="fbtn" onClick={() => { toast('Изменения сохранены'); nav('/cabinet') }}>Сохранить изменения</button>
+              ) : (
+                <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Сохранить изменения</span>
+              )}
+            </>
           ) : (
-            <button type="button" className="fbtn sm line" onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
-          )}
-          <span className="todo" style={{ marginLeft: 'auto' }}>
-            {limitReached ? (
-              <span className="cluster" style={{ color: 'var(--gray-2)' }}>достигнут лимит — 2 заявки на участника</span>
-            ) : todos.length === 0 ? (
-              <span className="cluster" style={{ color: 'var(--ink)' }}>всё заполнено · заявку можно подать</span>
-            ) : (
-              <span className="cluster" style={{ color: 'var(--gray-2)' }}>
-                Осталось:{' '}
-                {todos.map((t, i) => (
-                  <React.Fragment key={t.label + i}>
-                    {i > 0 && ' · '}
-                    <button type="button" onClick={() => goTo(t.anchor)}>{t.label}</button>
-                  </React.Fragment>
-                ))}
-              </span>
-            )}
-          </span>
-          {editingSubmitted ? (
-            todos.length === 0 ? (
-              <button type="button" className="fbtn" onClick={() => { toast('Изменения сохранены'); nav('/cabinet') }}>Сохранить изменения</button>
-            ) : (
-              <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Сохранить изменения</span>
-            )
-          ) : todos.length === 0 && !limitReached ? (
-            <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
-          ) : (
-            <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
+            <>
+              {todos.length === 0 && !limitReached ? (
+                <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
+              ) : (
+                <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
+              )}
+              <span className="todo">{statusHint}</span>
+              <button type="button" className="fbtn sm line" style={{ marginLeft: 'auto' }} onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
+            </>
           )}
         </div>
       </div>

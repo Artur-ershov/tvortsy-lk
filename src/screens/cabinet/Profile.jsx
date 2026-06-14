@@ -1,33 +1,38 @@
 // Профиль — визуал ScrProfile/ScrPasswordModal, данные и флоу it3-cabinet
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../../state/store.jsx'
+import { useStore, initialsOf, fullName } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Modal, PasswordInput } from '../../components/ui.jsx'
+import { useField, vName, vNameOpt, vPhone, vRequired, vPassword, vMatch, maskPhone } from '../../state/validation.js'
 
 // Строка анкеты: label | значение | действие (PRow из ScrProfile).
 // Объявлена на уровне модуля, чтобы React не пересоздавал тип компонента
 // на каждый ввод (иначе input ремоунтится и теряет каретку).
-const PRow = ({ label, value, editable, editing, editVal, onEditVal, onStart, onSave, onCancel }) => {
+const PRow = ({ label, value, editable, editing, editVal, onEditVal, onStart, onSave, onCancel, validate, mask }) => {
   const empty = !value.trim()
+  const err = editing && validate ? (validate(editVal) || {}).error : null
   return (
     <div className="prow">
       <span className="cluster" style={{ color: 'var(--gray-2)' }}>{label}</span>
       {editing ? (
-        <input
-          className="ff-input focus"
-          style={{ padding: '10px 14px', fontSize: 16 }}
-          value={editVal}
-          autoFocus
-          onChange={e => onEditVal(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') onSave(); if (e.key === 'Escape') onCancel() }}
-        />
+        <div>
+          <input
+            className={'ff-input focus' + (err ? ' err' : '')}
+            style={{ padding: 'var(--sp-2) var(--sp-3)', fontSize: 16 }}
+            value={editVal}
+            autoFocus
+            onChange={e => onEditVal(mask ? mask(e.target.value) : e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !err) onSave(); if (e.key === 'Escape') onCancel() }}
+          />
+          {err && <span className="ff-err">{err}</span>}
+        </div>
       ) : (
         <span style={{ fontSize: 16, color: empty ? 'var(--gray-2)' : 'var(--ink)' }}>{empty ? 'не указано' : value}</span>
       )}
       {editing ? (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="fbtn sm dark" style={{ color: '#fff', fontWeight: 400 }} onClick={onSave}>Сохранить</button>
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <button className={'fbtn sm' + (err ? ' disabled' : '')} onClick={() => { if (!err) onSave() }}>Сохранить</button>
           <button className="fbtn sm line" onClick={onCancel}>Отмена</button>
         </div>
       ) : editable ? (
@@ -65,25 +70,25 @@ export default function Profile() {
   const cancelEdit = () => setEditKey(null)
   const saveEdit = () => {
     dispatch({ type: 'profile-patch', patch: { [editKey]: editVal } })
-    toast('Сохранено')
+    toast('Данные сохранены')
     setEditKey(null)
   }
 
   // Модалка смены пароля
   const [pwOpen, setPwOpen] = useState(false)
-  const [oldPw, setOldPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [repPw, setRepPw] = useState('')
-  const pwValid = newPw.length >= 8 && newPw === repPw
-  const openPw = () => { setOldPw(''); setNewPw(''); setRepPw(''); setPwOpen(true) }
+  const oldF = useField('', vRequired('Введи текущий пароль'))
+  const newF = useField('', vPassword)
+  const repF = useField('', v => vMatch(newF.value)(v))
+  const pwValid = oldF.valid && newF.valid && repF.valid
+  const openPw = () => { oldF.reset(); newF.reset(); repF.reset(); setPwOpen(true) }
   const savePw = () => {
-    if (!pwValid) return
+    if (!pwValid) { oldF.show(); newF.show(); repF.show(); return }
     toast('Пароль обновлён')
     setPwOpen(false)
   }
 
   // Пропсы строки анкеты для вынесенного на уровень модуля PRow
-  const prow = (field) => ({
+  const prow = (field, validate, mask) => ({
     value: state.profile[field] || '',
     editing: editKey === field,
     editVal,
@@ -91,59 +96,67 @@ export default function Profile() {
     onStart: () => startEdit(field),
     onSave: saveEdit,
     onCancel: cancelEdit,
+    validate,
+    mask,
   })
 
   return (
     <div className="app-root">
       <style>{`
-        .profile-wrap{padding:0 30px 60px;flex:1 0 auto}
         .profile-grid{display:grid;grid-template-columns:1fr 400px;gap:16px;margin-top:28px;align-items:start}
         @media(max-width:920px){.profile-grid{grid-template-columns:1fr}}
-        @media(max-width:720px){.profile-wrap{padding:0 16px 60px}}
       `}</style>
       <Nav tab="profile" />
-      <div className="profile-wrap">
+      <div className="sheet" style={{ flex: '1 0 auto', paddingBottom: 60 }}>
 
         {/* Шапка */}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,.18)', paddingTop: 26 }}>
-          <span className="kick">Аккаунт</span>
-          <h1 style={{ margin: 0, fontSize: 'clamp(40px, 6vw, 56px)', fontWeight: 500, letterSpacing: '-.03em', marginTop: 14, lineHeight: 1 }}>Профиль</h1>
+        <div className="rule-strong" style={{ paddingTop: 'var(--sp-6)' }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(40px, 6vw, 56px)', fontWeight: 500, letterSpacing: '-.03em', lineHeight: 1 }}>Профиль</h1>
         </div>
 
         <div className="profile-grid">
           {/* Анкета участника */}
           <div className="card-white">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', marginBottom: 'var(--sp-5)' }}>
+              <span style={{ width: 64, height: 64, borderRadius: 'var(--r-md)', background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-jbm)', fontWeight: 700, fontSize: 22, color: 'var(--ink-blue)', flexShrink: 0 }}>{initialsOf(fullName(state.profile)) || '··'}</span>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-.015em' }}>{fullName(state.profile) || 'Участник'}</div>
+                <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 'var(--sp-1)' }}>{[state.profile.city, state.email].filter(Boolean).join(' · ')}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Анкета участника</span>
               <span className="cluster" style={{ color: 'var(--gray-2)' }}>подставляется в заявки</span>
             </div>
-            <div style={{ marginTop: 8 }}>
-              <PRow label="ФИО" editable {...prow('fio')} />
+            <div style={{ marginTop: 'var(--sp-2)' }}>
+              <PRow label="Фамилия" editable {...prow('lastName', vName('Укажи фамилию'))} />
+              <PRow label="Имя" editable {...prow('firstName', vName('Укажи имя'))} />
+              <PRow label="Отчество" editable {...prow('middleName', vNameOpt)} />
               <PRow label="Дата рождения" {...prow('dob')} />
-              <PRow label="Национальность" {...prow('nationality')} />
+              <PRow label="Национальность" {...prow('nationality', vRequired('Укажи национальность'))} />
               <PRow label="Место работы / учёбы" editable {...prow('work')} />
-              <PRow label="Телефон" editable {...prow('phone')} />
-              <PRow label="Город" editable {...prow('city')} />
+              <PRow label="Телефон" editable {...prow('phone', vPhone, maskPhone)} />
+              <PRow label="Город" editable {...prow('city', vRequired('Укажи город'))} />
             </div>
           </div>
 
           {/* Правая колонка */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
             {/* Вход в аккаунт */}
             <div className="card-white">
               <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Вход в аккаунт</span>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16, alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.1)', padding: '16px 0', marginTop: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 'var(--sp-4)', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0', marginTop: 'var(--sp-2)' }}>
                 <span className="cluster" style={{ color: 'var(--gray-2)' }}>Email</span>
                 <span style={{ fontSize: 15.5 }}>{state.email}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTop: '1px solid rgba(0,0,0,.1)', padding: '16px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-3)', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span className="cluster" style={{ color: 'var(--gray-2)' }}>Пароль</span>
-                  <span className="cluster" style={{ color: 'var(--gray-2)', marginTop: 4 }}>изменён 12.05.2026</span>
+                  <span className="cluster" style={{ color: 'var(--gray-2)', marginTop: 'var(--sp-1)' }}>изменён 12.05.2026</span>
                 </div>
                 <button className="fbtn sm line" onClick={openPw}>Сменить пароль</button>
               </div>
-              <div style={{ borderTop: '1px solid rgba(0,0,0,.1)', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid rgba(0,0,0,.1)', paddingTop: 'var(--sp-4)' }}>
                 <button className="mlink" onClick={() => { dispatch({ type: 'logout' }); nav('/login') }}>Выйти из аккаунта</button>
               </div>
             </div>
@@ -151,11 +164,11 @@ export default function Profile() {
             {/* Быстрые входы */}
             <div className="card-white">
               <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Быстрые входы</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)', marginTop: 'var(--sp-4)' }}>
                 {SOCIALS.map(([name, icon, key]) => {
                   const on = !!state.socials[key]
                   return (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)' }}>
                       {icon}
                       <span style={{ fontSize: 15.5, fontWeight: 500, flex: 1 }}>{name}</span>
                       {on && <span className="mtag ok">подключён</span>}
@@ -163,7 +176,7 @@ export default function Profile() {
                         className="mlink"
                         onClick={() => {
                           dispatch({ type: 'social-toggle', key })
-                          toast(on ? 'Отвязано' : 'Подключено')
+                          toast(on ? `${name} отвязан` : `${name} подключён`)
                         }}
                       >{on ? 'Отвязать' : 'Подключить'}</button>
                     </div>
@@ -178,7 +191,7 @@ export default function Profile() {
       {/* Модалка смены пароля */}
       {pwOpen && (
         <Modal onClose={() => setPwOpen(false)}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-6)' }}>
             <span style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.015em' }}>Сменить пароль</span>
             <button
               style={{ fontSize: 28, color: 'var(--gray-2)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -186,23 +199,27 @@ export default function Profile() {
               onClick={() => setPwOpen(false)}
             >×</button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
             <div>
-              <span className="ff-label">Старый пароль</span>
-              <PasswordInput value={oldPw} onChange={setOldPw} placeholder="••••••••" autoComplete="current-password" />
+              <span className="ff-label">Текущий пароль</span>
+              <PasswordInput {...oldF.bind} ok={false} placeholder="••••••••" autoComplete="current-password" />
+              {oldF.error && <div className="ff-err">{oldF.error}</div>}
             </div>
             <div>
               <span className="ff-label">Новый пароль</span>
-              <PasswordInput value={newPw} onChange={setNewPw} />
+              <PasswordInput {...newF.bind} />
+              {newF.error
+                ? <div className="ff-err">{newF.error}</div>
+                : <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>Не короче 8 символов · буквы и цифры</div>}
             </div>
             <div>
-              <span className="ff-label">Повторите новый пароль</span>
-              <PasswordInput value={repPw} onChange={setRepPw} />
+              <span className="ff-label">Повтори новый пароль</span>
+              <PasswordInput {...repF.bind} />
+              {repF.error && <div className="ff-err">{repF.error}</div>}
             </div>
-            <div className="ff-hint">не короче 8 символов · буквы и цифры</div>
             <button
-              className={'fbtn submit' + (pwValid ? '' : ' disabled')}
-              style={{ height: 58, marginTop: 4 }}
+              className="fbtn submit"
+              style={{ height: 58, marginTop: 'var(--sp-1)' }}
               onClick={savePw}
             >Сохранить пароль</button>
           </div>

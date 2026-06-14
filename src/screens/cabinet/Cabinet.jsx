@@ -2,11 +2,10 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, ageFrom, ageWord, shortName,
+  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, shortName,
 } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
-import { StatusTag, StatusTimeline, Modal } from '../../components/ui.jsx'
-import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
+import { Pix, PIX_A, StatusTag, StatusTimeline, Modal } from '../../components/ui.jsx'
 
 /* Склонения */
 const memberWord = (n) => {
@@ -14,6 +13,12 @@ const memberWord = (n) => {
   if (m10 === 1 && m100 !== 11) return 'участник'
   if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'участника'
   return 'участников'
+}
+const draftWord = (n) => {
+  const m10 = n % 10, m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return 'черновик'
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'черновика'
+  return 'черновиков'
 }
 
 /* Пояснение статуса в правой колонке */
@@ -38,7 +43,7 @@ export default function Cabinet() {
 
   const acceptInvite = (app) => {
     dispatch({ type: 'respond-invite', id: app.id, tag: 'confirmed' })
-    toast(`Вы в команде «${app.teamName}»`)
+    toast(`Готово — ты в команде «${app.teamName}»`)
   }
   const declineInvite = (app) => {
     dispatch({ type: 'respond-invite', id: app.id, tag: 'declined' })
@@ -66,12 +71,9 @@ export default function Cabinet() {
     nav('/apply/' + id)
   }
 
-  const age = ageFrom(state.profile.dob)
   const meta = [
-    state.email,
-    state.profile.city,
-    age != null ? `${age} ${ageWord(age)}` : null,
-    `заявки: ${subCount} из 2`,
+    `${subCount} из ${APP_LIMIT} заявок`,
+    drafts.length ? `${drafts.length} ${draftWord(drafts.length)}` : null,
   ].filter(Boolean).join(' · ')
 
   let sectionIdx = 0 // для marginTop: первая секция 52, дальше 10 (паддинг 30 даёт зазор 40 как в FgV9)
@@ -90,12 +92,12 @@ export default function Cabinet() {
         <div className="rule-strong cab-head">
           <span className="kick">Кабинет</span>
           <h1 style={{ margin: 0, fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9 }}>
-            {state.profile.fio}
+            Мои заявки
           </h1>
           {limitReached ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-              <span className="fbtn disabled">+ Подать заявку</span>
-              <span className="ff-hint" style={{ textAlign: 'right' }}>достигнут лимит — 2 заявки на участника</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--sp-1)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', background: 'var(--sky)', color: 'var(--ink-blue)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)', fontWeight: 500, fontSize: 15 }}>Все места заняты · 2 из 2</span>
+              <span className="ff-hint" style={{ textAlign: 'right' }}>обе заявки поданы — чтобы подать новую, сначала отзови одну</span>
             </div>
           ) : (
             <button className="fbtn" onClick={() => startApply()}>+ Подать заявку</button>
@@ -108,14 +110,14 @@ export default function Cabinet() {
           const captain = app.members.find(m => m.role === 'captain')
           return (
             <div key={'bn' + app.id} style={{
-              marginTop: 28, border: '1px solid var(--ink)', borderRadius: 16, padding: '16px 22px',
-              display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap',
+              marginTop: 'var(--sp-7)', border: '1px solid rgba(91,155,201,.4)', background: 'var(--paper)', borderRadius: 'var(--r-md)', padding: 'var(--sp-4) var(--sp-5)',
+              display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', flexWrap: 'wrap',
             }}>
               <span className="kick">Приглашение</span>
               <span style={{ flex: 1, minWidth: 220, fontSize: 16.5 }}>
-                {captain ? shortName(captain.name) : 'Капитан'} зовёт вас в команду «{app.teamName}» — «{app.title || 'Без названия'}»
+                {captain ? shortName(captain.name) : 'Капитан'} зовёт тебя в команду «{app.teamName}» — «{app.title || 'Без названия'}»
               </span>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
                 <button className="fbtn sm" onClick={() => acceptInvite(app)}>Принять</button>
                 <button className="fbtn sm line" onClick={() => declineInvite(app)}>Отклонить</button>
               </div>
@@ -123,34 +125,30 @@ export default function Cabinet() {
           )
         })}
 
-        {/* Пустое состояние — витрина номинаций. Карточка ведёт сразу в форму с предвыбором. */}
+        {/* Пустое состояние — спокойный экран: одна задача (подать заявку) + подсказка про приглашения */}
         {state.apps.length === 0 && (
-          <div className="rule-soft" style={{ marginTop: 40, paddingTop: 30, paddingBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
-              <div>
-                <span className="kick">Заявок пока нет</span>
-                <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', marginTop: 8 }}>Выбери номинацию</div>
-                <p style={{ margin: '8px 0 0', fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 460 }}>
-                  Бейдж подскажет, подходит ли работа по формату. Номинацию можно сменить уже в форме. Черновик сохраняется.
-                </p>
-              </div>
-              <span className="jbm" style={{ fontSize: 11.5, letterSpacing: '.04em', color: 'var(--gray-2)', textAlign: 'right', lineHeight: 1.7 }}>
-                до 1 июня · осталось 12 дней<br />не более 2 заявок на участника<br />14–35 лет · бесплатно · ~12 мин
-              </span>
+          <div className="rule-soft" style={{ marginTop: 'var(--sp-10)', paddingTop: 'var(--sp-10)', paddingBottom: 'var(--sp-12)' }}>
+            <div style={{ border: '1.5px dashed rgba(0,0,0,.18)', borderRadius: 'var(--r-lg)', padding: '56px var(--sp-10)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--sp-4)', textAlign: 'center' }}>
+              <Pix map={PIX_A} cell={20} gap={5} />
+              <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-.02em' }}>Заявок пока нет</div>
+              <p style={{ margin: 0, fontSize: 16.5, lineHeight: 1.5, color: 'var(--gray-2)', maxWidth: 460 }}>
+                Подать работу — минут на десять: выбираешь номинацию, описываешь идею, прикладываешь файлы. Черновик сохраняется сам, заполнять можно в несколько подходов.
+              </p>
+              <button className="fbtn" style={{ marginTop: 'var(--sp-2)' }} onClick={() => startApply()}>Подать заявку</button>
+              <span className="cluster" style={{ color: 'var(--gray-2)' }}>одному или с командой · 14–35 лет · до 2 заявок · бесплатно</span>
             </div>
-            <div className="nom-grid">
-              {NOM_CARD_KEYS.map(k => <NomCard key={k} k={k} onClick={startApply} />)}
-            </div>
-            <SynthCard onClick={startApply} />
+            <p style={{ margin: 'var(--sp-5) auto 0', textAlign: 'center', maxWidth: 460, fontSize: 14.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
+              Тебя позвали в команду? Приглашение появится здесь — даже если письмо потерялось.
+            </p>
           </div>
         )}
 
         {/* Черновики — компактная секция */}
         {drafts.map(app => (
-          <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
+          <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
             <div>
               <span className="kick">Черновик</span>
-              <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 14, lineHeight: 1.7 }}>
+              <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                 {app.num}<br />изменён {app.updatedAt}
                 {app.nomination ? <><br />{NOMINATIONS[app.nomination].label.toLowerCase()}</> : null}
               </div>
@@ -159,7 +157,7 @@ export default function Cabinet() {
               <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1, color: app.title.trim() ? 'var(--ink)' : 'var(--gray-2)' }}>
                 {app.title.trim() || 'Без названия'}
               </div>
-              <div className="ff-hint" style={{ marginTop: 10 }}>заполнено {filledCount(app)} из 4 разделов</div>
+              <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>заполнено {filledCount(app)} из 4 разделов</div>
             </div>
             <div className="cab-side">
               <StatusTag status="draft" />
@@ -173,10 +171,10 @@ export default function Cabinet() {
         {invites.map(app => {
           const captain = app.members.find(m => m.role === 'captain')
           return (
-            <div key={'inv' + app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
+            <div key={'inv' + app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
               <div>
                 <span className="kick">Приглашение</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 14, lineHeight: 1.7 }}>
+                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   капитан {captain ? shortName(captain.name) : '—'}<br />
                   {app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''} · {app.members.length} {memberWord(app.members.length)}
@@ -186,15 +184,15 @@ export default function Cabinet() {
                 <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   «{app.teamName}» · {app.title || 'Без названия'}
                 </div>
-                <div className="ff-hint" style={{ marginTop: 10 }}>
-                  {captain ? shortName(captain.name) : 'капитан'} приглашает вас в команду — участие подтверждается с вашего email
+                <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>
+                  {captain ? shortName(captain.name) : 'капитан'} приглашает тебя в команду — нажми «Принять», и участие закрепится за твоей почтой
                 </div>
               </div>
               <div className="cab-side">
                 <span className="fst wait">Ждёт ответа</span>
                 <button className="fbtn sm" onClick={() => acceptInvite(app)}>Принять</button>
                 <button className="fbtn sm line" onClick={() => declineInvite(app)}>Отклонить</button>
-                <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => nav('/join/' + app.id)}>подробнее</button>
+                <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => nav('/join/' + app.id)}>о приглашении</button>
               </div>
             </div>
           )
@@ -204,10 +202,10 @@ export default function Cabinet() {
         {memberships.map(app => {
           const captain = app.members.find(m => m.role === 'captain')
           return (
-            <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
+            <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
               <div>
                 <span className="kick">Команда</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 14, lineHeight: 1.7 }}>
+                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   капитан {captain ? shortName(captain.name) : '—'}<br />
                   {app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''} · {app.members.length} {memberWord(app.members.length)}
@@ -217,14 +215,14 @@ export default function Cabinet() {
                 <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   «{app.teamName}» · {app.title || 'Без названия'}
                 </div>
-                <div className="ff-hint" style={{ marginTop: 10 }}>
-                  вы участник команды — заявку заполняет и подаёт капитан
+                <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>
+                  ты участник команды — заявку заполняет и подаёт капитан
                 </div>
               </div>
               <div className="cab-side">
                 <StatusTag status={app.status} />
                 <div style={{ fontSize: 15.5, lineHeight: 1.4, color: 'var(--gray-2)' }}>
-                  Статус заявки виден здесь, изменения — на email.
+                  Статус заявки увидишь здесь, а об изменениях напишем на почту.
                 </div>
                 <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => setLeaveApp(app)}>покинуть команду</button>
               </div>
@@ -237,11 +235,11 @@ export default function Cabinet() {
           const nn = String(i + 1).padStart(2, '0')
           const nomLabel = app.nomination ? NOMINATIONS[app.nomination].label : ''
           return (
-            <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 30 }}>
+            <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
               {/* Левая колонка */}
               <div>
-                <span className="kick" style={app.status === 'rework' ? { color: 'var(--err)' } : undefined}>{nn} / Заявка</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 14, lineHeight: 1.7 }}>
+                <span className="kick">{nn} / Заявка</span>
+                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   подана {app.submittedAt}<br />
                   {nomLabel.toLowerCase()} · {app.mode === 'solo' ? 'соло' : 'команда ' + app.members.length}
@@ -254,9 +252,9 @@ export default function Cabinet() {
                   {app.title}
                 </div>
                 {app.status === 'rework' && (
-                  <div style={{ fontSize: 16, color: 'var(--err)', marginTop: 12 }}>{app.reworkNote}</div>
+                  <div style={{ fontSize: 15, color: 'var(--ink-blue)', background: 'var(--paper)', border: '1px solid rgba(91,155,201,.3)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-3)', marginTop: 'var(--sp-3)', lineHeight: 1.4 }}>{app.reworkNote}</div>
                 )}
-                <div style={{ marginTop: 28, maxWidth: 720 }}>
+                <div style={{ marginTop: 'var(--sp-7)', maxWidth: 720 }}>
                   <StatusTimeline status={app.status} submittedAt={app.submittedAt} />
                 </div>
               </div>
@@ -270,7 +268,7 @@ export default function Cabinet() {
                 )}
                 {app.status === 'review' && (
                   <span className="tipwrap">
-                    <span className="tip">Редактирование доступно только в статусе «Подана»</span>
+                    <span className="tip">Редактировать можно, пока заявка в статусе «Подана»</span>
                     <span className="fbtn sm disabled" style={{ flex: 1 }}>Редактировать</span>
                   </span>
                 )}
@@ -287,19 +285,19 @@ export default function Cabinet() {
 
         {/* Подвал листа */}
         <div className="rule-strong sheet-foot">
-          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', textTransform: 'uppercase' }}>заявки до 1 июня · осталось 12 дней</span>
-          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', color: 'var(--gray-2)' }}>вопрос-ответ → help@tvorcy.ru</span>
+          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', textTransform: 'uppercase' }}>приём заявок открыт</span>
+          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', color: 'var(--gray-2)' }}>вопросы → help@liderybuduschego.ru</span>
         </div>
       </div>
 
       {/* Модалка «Отозвать заявку?» */}
       {withdrawApp && (
         <Modal onClose={() => setWithdrawApp(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 12 }}>Отозвать заявку?</div>
+          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Отозвать заявку?</div>
           <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
-            «{withdrawApp.title}» · {withdrawApp.nomination ? NOMINATIONS[withdrawApp.nomination].label : ''} · от {withdrawApp.submittedAt}. Заявка будет удалена, освобождённый слот можно использовать повторно.
+            «{withdrawApp.title}» · {withdrawApp.nomination ? NOMINATIONS[withdrawApp.nomination].label : ''} · от {withdrawApp.submittedAt}. Заявку удалим, а освободившееся место сможешь занять новой работой.
           </p>
-          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
             <button className="fbtn sm line" style={{ flex: 1 }} onClick={() => setWithdrawApp(null)}>Отмена</button>
             <button
               className="fbtn sm"
@@ -317,18 +315,18 @@ export default function Cabinet() {
       {/* Модалка «Покинуть команду?» */}
       {leaveApp && (
         <Modal onClose={() => setLeaveApp(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 12 }}>Покинуть команду?</div>
+          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Покинуть команду?</div>
           <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
-            «{leaveApp.teamName}» · {leaveApp.title || 'Без названия'}. Капитан увидит, что вы вышли. Вернуться можно по новому приглашению.
+            «{leaveApp.teamName}» · {leaveApp.title || 'Без названия'}. Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.
           </p>
-          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
             <button className="fbtn sm line" style={{ flex: 1 }} onClick={() => setLeaveApp(null)}>Отмена</button>
             <button
               className="fbtn sm"
               style={{ flex: 1, background: 'var(--err)', color: '#fff' }}
               onClick={() => {
                 dispatch({ type: 'leave-team', id: leaveApp.id })
-                toast('Вы покинули команду')
+                toast('Ты вышел из команды')
                 setLeaveApp(null)
               }}
             >Покинуть</button>
@@ -339,11 +337,11 @@ export default function Cabinet() {
       {/* Модалка «Удалить черновик?» */}
       {deleteDraft && (
         <Modal onClose={() => setDeleteDraft(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 12 }}>Удалить черновик?</div>
+          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Удалить черновик?</div>
           <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
-            «{deleteDraft.title.trim() || 'Без названия'}». Черновик будет удалён без возможности восстановления.
+            «{deleteDraft.title.trim() || 'Без названия'}». Удалим черновик навсегда — восстановить не получится.
           </p>
-          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
             <button className="fbtn sm line" style={{ flex: 1 }} onClick={() => setDeleteDraft(null)}>Отмена</button>
             <button
               className="fbtn sm"

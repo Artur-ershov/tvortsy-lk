@@ -31,16 +31,16 @@
 /* Кнопки макета: sky, r16, высокие, Golos bold */
 .fbtn {
   display: inline-flex; align-items: center; justify-content: center;
-  height: 64px; padding: 0 32px; border-radius: 16px;
-  background: var(--sky); color: #0C0C0D;
+  height: 64px; padding: 0 var(--sp-8); border-radius: var(--r-md);
+  background: var(--sky); color: var(--ink-soft);
   font-family: var(--font-sans);
   font-weight: 700; font-size: 20px; cursor: pointer;
   border: none; white-space: nowrap;
 }
-.fbtn.lg   { height: 84px; font-size: 24px; padding: 0 40px; }
+.fbtn.lg   { height: 84px; font-size: 24px; padding: 0 var(--sp-10); }
 .fbtn.dark { background: var(--plate); color: var(--sky); }
 .fbtn.line { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.22); }
-.fbtn.sm   { height: 44px; font-size: 15px; padding: 0 20px; border-radius: 12px; font-weight: 500; }
+.fbtn.sm   { height: 44px; font-size: 15px; padding: 0 var(--sp-5); border-radius: var(--r-sm); font-weight: 500; }
 .fbtn.disabled { opacity: .45; cursor: default; pointer-events: none; }
 /* Главные кнопки форм: тёмные, не жирные (правка Артура) */
 .fbtn.submit { background: var(--plate); color: #fff; font-weight: 400; width: 100%; height: 60px; }
@@ -48,32 +48,32 @@
 /* Хедер кабинета (как на лендинге) */
 .fnav {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 28px 30px; background: var(--w);
+  padding: var(--sp-7) var(--sp-7); background: var(--w);
 }
 .umenu { position: relative; }
 .umenu-trigger {
-  display: inline-flex; align-items: center; gap: 12px;
+  display: inline-flex; align-items: center; gap: var(--sp-3);
   background: none; border: none; cursor: pointer; padding: 0;
 }
 .umenu-name { font-size: 15px; color: var(--ink); }
 .umenu-ava {
-  width: 40px; height: 40px; border-radius: 12px; background: var(--sky);
+  width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--sky);
   display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 15px; color: #23425A;
+  font-weight: 700; font-size: 15px; color: var(--ink-blue);
 }
-.umenu-head { padding: 10px 14px 8px; }
+.umenu-head { padding: var(--sp-2) var(--sp-3) var(--sp-2); }
 .umenu-head-name { font-size: 15px; font-weight: 600; color: var(--ink); }
-.umenu-head-mail { font-size: 12px; letter-spacing: .04em; color: var(--gray-2); margin-top: 3px; }
+.umenu-head-mail { font-size: 12px; letter-spacing: .04em; color: var(--gray-2); margin-top: var(--sp-1); }
 .umenu-drop {
   position: absolute; top: calc(100% + 10px); right: 0; z-index: 30;
-  min-width: 220px; padding: 6px; background: var(--w);
-  border-radius: 14px; box-shadow: 0 10px 36px rgba(0,0,0,.14), inset 0 0 0 1px rgba(0,0,0,.06);
+  min-width: 220px; padding: var(--sp-1); background: var(--w);
+  border-radius: var(--r-md); box-shadow: 0 10px 36px rgba(0,0,0,.14), inset 0 0 0 1px rgba(0,0,0,.06);
   display: flex; flex-direction: column;
 }
 .umenu-item {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: var(--sp-2);
   font-size: 15px; color: var(--ink); text-align: left;
-  padding: 10px 14px; border-radius: 10px; cursor: pointer;
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer;
   background: none; border: none; opacity: .75;
 }
 .umenu-item svg { flex-shrink: 0; opacity: .7; }
@@ -81,7 +81,7 @@
 .umenu-item.on { font-weight: 600; opacity: 1; }
 .umenu-item.danger { color: var(--err); opacity: 1; }
 .umenu-item.danger:hover { background: rgba(179, 64, 46, .08); }
-.umenu-sep { height: 1px; margin: 4px 8px; background: rgba(0,0,0,.08); }
+.umenu-sep { height: 1px; margin: var(--sp-1) var(--sp-2); background: rgba(0,0,0,.08); }
 
 .logo {
   font-family: var(--font-mono); font-weight: 700; font-size: 15px;
@@ -89,8 +89,8 @@
 }
 
 /* Пиксельная мозаика (кластеры лендинга) */
-.pix { display: grid; gap: 6px; pointer-events: none; }
-.pix i { width: 22px; height: 22px; border-radius: 6px; background: var(--sky); }
+.pix { display: grid; gap: var(--sp-1); pointer-events: none; }
+.pix i { width: 22px; height: 22px; border-radius: var(--r-xs); background: var(--sky); }
 .pix i.x { background: transparent; }
 .pix.on-dark i { background: var(--sky-2); }
 .pix.on-dark i.x { background: transparent; }
@@ -99,12 +99,12 @@
 .fst {
   font-family: var(--font-jbm); font-size: 14px;
   letter-spacing: .05em; text-transform: uppercase;
-  display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
 }
 .fst::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--ink); flex-shrink: 0; }
 .fst.ok   { color: var(--ok); }     .fst.ok::before   { background: var(--ok); }
 .fst.err  { color: var(--err); }    .fst.err::before  { background: var(--err); }
-.fst.wait { color: var(--gray-2); } .fst.wait::before { background: var(--sky-2); }
+.fst.wait { color: var(--ink-blue); }      .fst.wait::before { background: var(--accent); }
 .fst.warn { color: var(--warn); }   .fst.warn::before { background: var(--warn); }
 
 /* Mono-ссылка действия */
@@ -117,23 +117,23 @@
 /* Mono-тег статуса участника/документа */
 .mtag {
   font-family: var(--font-jbm); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
-  padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+  padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); white-space: nowrap;
   color: var(--gray-2); background: rgba(0, 0, 0, .06);
 }
 .mtag.ok   { color: var(--ok); background: rgba(31, 138, 91, .08); }
 .mtag.err  { color: var(--err); background: rgba(179, 64, 46, .08); }
 .mtag.warn { color: var(--warn); background: rgba(255, 185, 0, .18); }
-.mtag.wait { color: var(--gray-2); background: rgba(0, 0, 0, .06); }
+.mtag.wait { color: var(--ink-blue); background: rgba(91, 155, 201, .16); }
 
 /* Тултип */
 .tipwrap { position: relative; display: inline-flex; }
 .tipwrap .tip {
   position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   background: var(--plate); color: #fff; font-size: 12.5px; line-height: 1.35;
-  padding: 8px 12px; border-radius: 8px; white-space: nowrap;
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-xs); white-space: nowrap;
   opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 30;
 }
 .tipwrap:hover .tip { opacity: 1; }
 
 /* Плита (для тёмных полотен) */
-.plate-dark { background: var(--plate); color: #fff; border-radius: 36px; overflow: hidden; }
+.plate-dark { background: var(--plate); color: #fff; border-radius: var(--r-2xl); overflow: hidden; }

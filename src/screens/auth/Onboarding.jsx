@@ -1,74 +1,66 @@
-// Онбординг — данные участника, шаг 2 из 2 (структура: lk3/it3-auth I3Onboarding, стиль: screens-reg/auth)
-import React, { useState } from 'react'
+// Онбординг — данные участника (структура: lk3/it3-auth I3Onboarding, стиль: screens-reg/auth).
+// Дата рождения собрана на регистрации — здесь только остальная анкета.
+import React, { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore, dobVerdict } from '../../state/store.jsx'
+import { useStore } from '../../state/store.jsx'
 import { AuthSplit } from '../../components/AuthSplit.jsx'
-import { Field, Wing } from '../../components/ui.jsx'
+import { Field } from '../../components/ui.jsx'
+import { useField, revealInvalid, vName, vNameOpt, vPhone, vRequired, maskPhone } from '../../state/validation.js'
+import g559 from '../../assets/group559.png'
 
 export default function Onboarding() {
   const { state, dispatch } = useStore()
   const nav = useNavigate()
-  const [fio, setFio] = useState('')
-  const [dob, setDob] = useState('')
-  const [phone, setPhone] = useState('')
-  const [nationality, setNationality] = useState('')
-  const [city, setCity] = useState('')
-  const [work, setWork] = useState('')
-  const [dobTouched, setDobTouched] = useState(false)
+  const formRef = useRef(null)
 
-  const verdict = dobVerdict(dob)
-  const dobErr = !dob.trim() ? null
-    : verdict === 'young' ? 'Участникам конкурса должно быть не менее 14 лет'
-    : verdict === 'old' ? 'Участие открыто для людей до 35 лет включительно'
-    : verdict === 'invalid' && (dobTouched || dob.trim().length >= 10) ? 'Формат: ДД.ММ.ГГГГ'
-    : null
+  const lastName = useField(state.profile.lastName || '', vName('Укажи фамилию'))
+  const firstName = useField(state.profile.firstName || '', vName('Укажи имя'))
+  const middleName = useField(state.profile.middleName || '', vNameOpt) // необязательно
+  const phone = useField(state.profile.phone || '', vPhone, { mask: maskPhone })
+  const nationality = useField(state.profile.nationality || '', vRequired('Укажи национальность'))
+  const city = useField(state.profile.city || '', vRequired('Укажи город'))
+  const work = useField(state.profile.work || '') // необязательно
 
-  const filled = fio.trim() && dob.trim() && phone.trim() && nationality.trim() && city.trim()
-  const ok = filled && (verdict === 'ok' || verdict === 'minor')
+  const required = [lastName, firstName, middleName, phone, nationality, city]
+  const ready = required.every(f => f.valid)
 
   const submit = () => {
-    if (!ok) return
-    const profile = { fio: fio.trim(), dob: dob.trim(), phone: phone.trim(), nationality: nationality.trim(), city: city.trim(), work: work.trim() }
+    if (!ready) { revealInvalid(required, formRef.current); return }
+    const profile = {
+      lastName: lastName.value.trim(), firstName: firstName.value.trim(), middleName: middleName.value.trim(),
+      phone: phone.value.trim(), nationality: nationality.value.trim(), city: city.value.trim(), work: work.value.trim(),
+    }
     dispatch({ type: 'onboarding', profile })
-    // 18+ с отложенным приглашением — сразу на экран ответа; минор сперва проходит Стену
-    nav(verdict === 'minor' ? '/wall' : state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet')
+    // возраст/согласие уже пройдены — дальше кабинет или отложенное приглашение
+    nav(state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet')
   }
 
   return (
     <AuthSplit
-      kicker="Путь участника · шаг 2 из 2"
+      kicker="Путь участника · шаг 2 из 2"
       title="Данные участника"
       titleSize="clamp(42px, 6.5vw, 84px)"
       lede="Эти данные подставятся в заявку автоматически — заполнишь один раз."
-      art={<Wing cols={18} rows={6} tile={20} waves={1} glass />}
+      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
     >
-      <div className="form-grid2">
+      <div className="form-grid2" ref={formRef}>
+        <Field label="Фамилия" {...lastName.bind} placeholder="Соколова" autoComplete="family-name" />
+        <Field label="Имя" {...firstName.bind} placeholder="Мария" autoComplete="given-name" />
+        <Field label="Отчество" optional {...middleName.bind} placeholder="Андреевна" autoComplete="additional-name" />
+        <Field label="Телефон" type="tel" {...phone.bind} placeholder="+7 917 240-18-66" autoComplete="tel" />
+        <Field label="Национальность" {...nationality.bind} placeholder="Русская" />
+        <Field label="Город" {...city.bind} placeholder="Казань" />
         <div className="full">
-          <Field label="ФИО" value={fio} onChange={setFio} autoComplete="name" />
+          <Field label="Место работы или учёбы" optional {...work.bind} placeholder="Школа, вуз или работодатель" />
         </div>
-        <div onBlur={() => setDobTouched(true)}>
-          <Field
-            label="Дата рождения"
-            value={dob}
-            onChange={setDob}
-            placeholder="ДД.ММ.ГГГГ"
-            hint="от 14 до 35 лет на момент подачи"
-            error={dobErr}
-          />
-        </div>
-        <Field label="Телефон" type="tel" value={phone} onChange={setPhone} autoComplete="tel" />
-        <Field label="Национальность" value={nationality} onChange={setNationality} />
-        <Field label="Город" value={city} onChange={setCity} />
-        <Field label="Место работы или учёбы" optional value={work} onChange={setWork} placeholder="Университет или работодатель" />
       </div>
 
       <button
         type="button"
-        className={'fbtn submit' + (ok ? '' : ' disabled')}
-        disabled={!ok}
-        style={{ marginTop: 4 }}
+        className="fbtn submit"
+        style={{ marginTop: 'var(--sp-1)' }}
         onClick={submit}
-      >Перейти в кабинет</button>
+      >Сохранить и продолжить</button>
     </AuthSplit>
   )
 }

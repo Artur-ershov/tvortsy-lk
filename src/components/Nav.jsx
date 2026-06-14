@@ -1,19 +1,25 @@
 // Хедер кабинета (FgNav из fig-shared)
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore, initialsOf } from '../state/store.jsx'
-
-// Имя без канцелярита: «Мария», не «Соколова М.А.» (в fio порядок Фамилия Имя Отчество)
-const firstNameOf = fio => (fio || '').trim().split(/\s+/)[1] || (fio || '').trim()
+import { useStore, initialsOf, fullName } from '../state/store.jsx'
 
 export const Logo = ({ dark = false, style }) => (
-  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />будущего</div>
+  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы РФ 2026</div>
 )
 
 const IconUser = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="8" r="4" />
     <path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" />
+  </svg>
+)
+
+const IconDoc = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+    <path d="M14 3v5h5" />
+    <path d="M9 13h6" />
+    <path d="M9 17h5" />
   </svg>
 )
 
@@ -40,7 +46,7 @@ export const Nav = ({ tab = 'apps' }) => {
   }, [open])
   return (
     <div className="fnav">
-      <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }} aria-label="К заявкам"><Logo /></button>
+      <button onClick={() => nav('/cabinet')} style={{ textAlign: 'left' }} aria-label="На главную"><Logo /></button>
       <div ref={menuRef} className="umenu">
         <button
           className="umenu-trigger"
@@ -48,16 +54,19 @@ export const Nav = ({ tab = 'apps' }) => {
           aria-label="Меню профиля"
           aria-expanded={open}
         >
-          <span className="umenu-ava">{initialsOf(state.profile.fio) || '·'}</span>
-          <span className="umenu-name">{firstNameOf(state.profile.fio) || 'Профиль'}</span>
+          <span className="umenu-ava">{initialsOf(fullName(state.profile)) || '·'}</span>
+          <span className="umenu-name">{state.profile.firstName || 'Профиль'}</span>
         </button>
         {open && (
           <div className="umenu-drop">
             <div className="umenu-head">
-              <div className="umenu-head-name">{state.profile.fio}</div>
+              <div className="umenu-head-name">{fullName(state.profile)}</div>
               <div className="umenu-head-mail jbm">{state.email}</div>
             </div>
             <div className="umenu-sep" />
+            <button className={'umenu-item' + (tab === 'apps' ? ' on' : '')} onClick={() => { setOpen(false); nav('/cabinet') }}>
+              <IconDoc />Мои заявки
+            </button>
             <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>
               <IconUser />Мой профиль
             </button>

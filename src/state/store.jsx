@@ -27,7 +27,7 @@ export const STATUS = {
 }
 // Статус-цикл заявки (it3: 4 шага, черновик вне цикла)
 export const CYCLE = ['submitted', 'review', 'admitted', 'results']
-export const CYCLE_DATES = { submitted: 'июнь', review: 'июнь', admitted: 'июль — сент', results: 'ноябрь' }
+export const CYCLE_DATES = { submitted: 'июнь', review: 'июнь', admitted: 'июль — сентябрь', results: 'ноябрь' }
 
 /* ───────── Утилиты ───────── */
 
@@ -68,6 +68,11 @@ export function fmtMB(mb) {
   return Math.round(mb) + ' МБ'
 }
 
+// Полное имя из раздельных полей профиля — порядок «Фамилия Имя Отчество»
+export function fullName(profile) {
+  return [profile?.lastName, profile?.firstName, profile?.middleName].filter(Boolean).join(' ')
+}
+
 // Инициалы: Имя + Фамилия («Соколова Мария Андреевна» → «МС»)
 export function initialsOf(fio) {
   const p = (fio || '').trim().split(/\s+/)
@@ -77,8 +82,7 @@ export function initialsOf(fio) {
 
 export function firstNameCity(profile) {
   // «Соколова Мария, 22 года, Казань»
-  const p = (profile.fio || '').trim().split(/\s+/)
-  const short = p.slice(0, 2).join(' ')
+  const short = [profile.lastName, profile.firstName].filter(Boolean).join(' ')
   const age = ageFrom(profile.dob)
   const years = age == null ? '' : `, ${age} ${ageWord(age)}`
   return `${short}${years}${profile.city ? ', ' + profile.city : ''}`
@@ -129,7 +133,7 @@ export function computeTodos(app) {
   const over = app.files.find(f => f.state === 'over')
   if (loading) todos.push({ label: `файл загружается — ${loading.pct || 0}%`, anchor: 's02' })
   else if (broken) todos.push({ label: 'докачать файл', anchor: 's02' })
-  else if (over && !app.link.trim()) todos.push({ label: 'файл больше лимита — приложи ссылку', anchor: 's02' })
+  else if (over && !app.link.trim()) todos.push({ label: 'файл больше лимита — дай ссылку на облако', anchor: 's02' })
   else if (!done.length && !(over && app.link.trim())) todos.push({ label: 'файлы работы', anchor: 's02' })
   else if (misfitFiles(app).length) todos.push({ label: 'файлы не подходят под номинацию — замени', anchor: 's02' })
 
@@ -177,7 +181,7 @@ export const filledCount = app => [1, 2, 3, 4].filter(n => sectionState(app, n) 
 /* ───────── Сиды (данные из FgV9 / it3) ───────── */
 
 const PROFILE_MARIA = {
-  fio: 'Соколова Мария Андреевна',
+  lastName: 'Соколова', firstName: 'Мария', middleName: 'Андреевна',
   dob: '14.03.2004',
   phone: '+7 917 240-18-66',
   nationality: 'русская',
@@ -208,7 +212,7 @@ const seedApps = () => {
     files: [{ id: nextId(), name: 'steklo_v2.mp4', sizeMB: 498, state: 'done', pct: 100 }],
     consents: [true, true],
     submittedAt: '30.05.2026',
-    reworkNote: 'Видео превышает 3 минуты. Загрузите версию до 3:00 и подайте снова — дедлайн не сгорает.',
+    reworkNote: 'Видео длиннее 3 минут. Загрузи версию до 3:00 и подай снова — дедлайн не сгорит.',
   }
   const draft = {
     ...newDraft('ТВ-2026-0848'),
@@ -247,7 +251,7 @@ const teamShumApp = (members = TEAM_SEED()) => ({
 })
 
 const PROFILE_KIRILL = {
-  fio: 'Дмитриев Кирилл Олегович',
+  lastName: 'Дмитриев', firstName: 'Кирилл', middleName: 'Олегович',
   dob: '21.07.2001',
   phone: '+7 903 118-42-90',
   nationality: 'русский',
@@ -256,7 +260,7 @@ const PROFILE_KIRILL = {
 }
 
 const PROFILE_TIMUR = {
-  fio: 'Гарипов Тимур Маратович',
+  lastName: 'Гарипов', firstName: 'Тимур', middleName: 'Маратович',
   dob: '02.11.2011',
   phone: '+7 917 555-31-07',
   nationality: 'татарин',
@@ -267,10 +271,10 @@ const PROFILE_TIMUR = {
 /* ───────── Начальное состояние ───────── */
 
 const initialState = {
-  // guest → registered (ждёт код) → confirmed (онбординг) → active | minor-wall
+  // guest → registered (почта+пароль+дата рождения, ждёт код) → confirmed (анкета) → active; ветка 14–17: → minor-wall → (согласие) → confirmed
   stage: 'guest',
   email: '',
-  profile: { fio: '', dob: '', phone: '', nationality: '', city: '', work: '' },
+  profile: { lastName: '', firstName: '', middleName: '', dob: '', phone: '', nationality: '', city: '', work: '' },
   minorDocs: { participation: 'none', pdn: 'none' }, // none | review | ok | replace
   socials: { vk: true, yandex: false },
   apps: [],
@@ -287,20 +291,20 @@ function patchApp(state, id, patch) {
 function reducer(state, action) {
   switch (action.type) {
     case 'register':
-      // новый аккаунт начинает с чистого кабинета — демо-данные только через демо-панель
-      return { ...initialState, appSeq: state.appSeq, stage: 'registered', email: action.email }
-    case 'confirm-email':
-      return { ...state, stage: 'confirmed' }
+      // новый аккаунт начинает с чистого кабинета — демо-данные только через демо-панель.
+      // дату рождения собираем уже здесь: возраст определяет путь сразу после подтверждения почты.
+      // pendingInvite переживает регистрацию: гость по ссылке-приглашению вернётся к нему после анкеты
+      return { ...initialState, appSeq: state.appSeq, pendingInvite: state.pendingInvite, stage: 'registered', email: action.email, profile: { ...initialState.profile, dob: action.dob || '' } }
+    case 'confirm-email': {
+      // возраст известен с регистрации: 14–17 — сперва согласие представителя, остальным сразу анкета
+      const verdict = dobVerdict(state.profile.dob)
+      return { ...state, stage: verdict === 'minor' ? 'minor-wall' : 'confirmed' }
+    }
     case 'change-email':
       return { ...state, stage: 'guest' }
-    case 'onboarding': {
-      const verdict = dobVerdict(action.profile.dob)
-      return {
-        ...state,
-        profile: action.profile,
-        stage: verdict === 'minor' ? 'minor-wall' : 'active',
-      }
-    }
+    case 'onboarding':
+      // возраст уже проверен на шаге age-gate — здесь просто сохраняем анкету
+      return { ...state, profile: { ...state.profile, ...action.profile }, stage: 'active' }
     case 'upload-minor-doc':
       return {
         ...state,
@@ -310,7 +314,8 @@ function reducer(state, action) {
     case 'replace-minor-doc': // модератор: «нужна замена документов» (handoff)
       return { ...state, minorDocs: { ...state.minorDocs, [action.doc]: 'replace' } }
     case 'accept-docs':
-      return { ...state, minorDocs: { participation: 'ok', pdn: 'ok' }, stage: 'active' }
+      // согласие принято → минор дозаполняет анкету (профиль собираем только после согласия)
+      return { ...state, minorDocs: { participation: 'ok', pdn: 'ok' }, stage: 'confirmed' }
     case 'login': {
       // статусная модель handoff: незавершённые стадии сохраняются —
       // вход не перепрыгивает подтверждение email и онбординг
@@ -354,7 +359,7 @@ function reducer(state, action) {
         return { status: CYCLE[i + 1] }
       })
     case 'rework-app': // демо: вернуть на доработку
-      return patchApp(state, action.id, { status: 'rework', reworkNote: action.note || 'Работа требует доработки — подробности на email.' })
+      return patchApp(state, action.id, { status: 'rework', reworkNote: action.note || 'Заявку вернули на доработку — что поправить, написали тебе на почту.' })
 
     /* файлы */
     case 'add-file':
@@ -384,11 +389,11 @@ function reducer(state, action) {
         const known = a.members.some(m => m.email === email)
         if (!known && action.tag === 'confirmed') {
           // пришёл по пересланной ссылке — добавляем себя в состав
-          return { members: [...a.members, { id: nextId(), name: state.profile.fio, email, role: 'member', tag: 'confirmed' }] }
+          return { members: [...a.members, { id: nextId(), name: fullName(state.profile), email, role: 'member', tag: 'confirmed' }] }
         }
         return {
           members: a.members.map(m => (m.email === email
-            ? { ...m, tag: action.tag, ...(action.tag === 'confirmed' ? { name: state.profile.fio } : {}) }
+            ? { ...m, tag: action.tag, ...(action.tag === 'confirmed' ? { name: fullName(state.profile) } : {}) }
             : m)),
         }
       })
@@ -401,7 +406,7 @@ function reducer(state, action) {
         if (a.members.some(m => m.role === 'captain')) return {}
         return {
           members: [
-            { id: nextId(), name: state.profile.fio, email: state.email, role: 'captain', tag: 'in' },
+            { id: nextId(), name: fullName(state.profile), email: state.email, role: 'captain', tag: 'in' },
             ...a.members,
           ],
         }
@@ -469,7 +474,7 @@ function reducer(state, action) {
 const StoreCtx = createContext(null)
 const ToastCtx = createContext(() => {})
 
-const LS_KEY = 'tvortsy-lk-state'
+export const LS_KEY = 'tvortsy-lk-state-v2' // bump: профиль перешёл на раздельные lastName/firstName/middleName
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
@@ -547,19 +552,21 @@ export function classifyFile(name, sizeMB, nomination, files = []) {
   const ext = (name.split('.').pop() || '').toLowerCase()
   const formats = nom.formats || SYNTH_FORMATS
   if (!formats.includes(ext)) {
-    return { state: 'error', errText: `Формат ${ext.toUpperCase()} не поддерживается — загрузи ${(nom.formats || ['MP3', 'WAV', 'MP4', 'PDF', 'PNG'].map(f => f.toLowerCase())).map(f => f.toUpperCase()).join(' или ')}` }
+    const all = (nom.formats || ['MP3', 'WAV', 'MP4', 'PDF', 'PNG'].map(f => f.toLowerCase())).map(f => f.toUpperCase())
+    const list = all.length > 1 ? `${all.slice(0, -1).join(', ')} или ${all[all.length - 1]}` : all[0]
+    return { state: 'error', errText: `Формат ${ext.toUpperCase()} не подходит — загрузи файл в формате ${list}` }
   }
   if (nomination === 'synth') {
     const total = files
       .filter(f => ['done', 'progress', 'queue', 'broken'].includes(f.state))
       .reduce((s, f) => s + (f.sizeMB || 0), 0) + sizeMB
     if (total > nom.maxMB) {
-      return { state: 'over', errText: `Суммарный размер материалов превышает ${nom.maxMB} МБ — сожми файлы или приложи ссылку` }
+      return { state: 'over', errText: `Материалы весят больше ${nom.maxMB} МБ — сожми файлы или дай ссылку на облако.` }
     }
   } else if (sizeMB > nom.maxMB) {
-    return { state: 'over', errText: `Файл превышает лимит ${nom.maxMB} МБ — сожми или приложи ссылку` }
+    return { state: 'over', errText: `Файл больше ${nom.maxMB} МБ — сожми его или дай ссылку на облако.` }
   }
-  return { state: 'queue', note: 'в очереди — начнётся после текущего файла' }
+  return { state: 'queue', note: 'в очереди — загрузка начнётся автоматически' }
 }
 
 // Загруженные файлы, не подходящие под текущую номинацию (после смены номинации)

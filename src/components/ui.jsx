@@ -55,16 +55,16 @@ export const StatusTimeline = ({ status = 'submitted', dark = false, submittedAt
       {CYCLE.map((key, i) => {
         const done = i < idx, cur = i === idx
         return (
-          <div key={key} style={{ position: 'relative', paddingRight: 12 }}>
+          <div key={key} style={{ position: 'relative', paddingRight: 'var(--sp-3)' }}>
             <span style={{
               display: 'block', width: 11, height: 11, borderRadius: 3,
-              background: cur ? 'var(--accent)' : done ? (dark ? 'var(--sky-2)' : 'var(--ink)') : (dark ? '#3A3A42' : '#D6DCE1'),
+              background: cur ? 'var(--accent)' : done ? (dark ? 'var(--sky-2)' : 'var(--ink)') : (dark ? 'var(--plate-2)' : 'var(--mute-2)'),
               outline: cur ? '2px solid var(--sky-2)' : 'none', outlineOffset: 2,
             }}></span>
-            <div className="jbm" style={{ fontSize: 11.5, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 14, opacity: .6 }}>
+            <div className="jbm" style={{ fontSize: 11.5, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 'var(--sp-3)', opacity: .6 }}>
               {i === 0 && submittedAt ? submittedAt : CYCLE_DATES[key]}
             </div>
-            <div style={{ fontSize: 16.5, fontWeight: cur ? 600 : 400, marginTop: 6, lineHeight: 1.25, color: cur ? 'var(--accent)' : undefined }}>{STATUS[key].label}</div>
+            <div style={{ fontSize: 16.5, fontWeight: cur ? 600 : 400, marginTop: 'var(--sp-1)', lineHeight: 1.25, color: cur ? 'var(--accent)' : undefined }}>{STATUS[key].label}</div>
           </div>
         )
       })}
@@ -85,19 +85,33 @@ export const EyeIcon = ({ size = 18, style }) => (
   </svg>
 )
 
+/* ── Иконка статуса валидации (галочка / «!») ── */
+export const StatusIcon = ({ kind, size = 18 }) => kind === 'ok' ? (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M5 12.5l4.4 4.4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+) : (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M12 7.5v5.2M12 16.2v.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+
 /* ── Поле пароля с глазиком ── */
-export const PasswordInput = ({ value, onChange, placeholder = '••••••••••', error, autoComplete = 'new-password' }) => {
+export const PasswordInput = ({ value, onChange, onBlur, placeholder = '••••••••••', error, ok, autoComplete = 'new-password' }) => {
   const [show, setShow] = useState(false)
   return (
     <div className="ff-wrap">
       <input
-        className={'ff-input' + (error ? ' err' : '')}
+        className={'ff-input' + (error ? ' err' : ok ? ' ok' : '')}
         type={show ? 'text' : 'password'}
         value={value}
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={e => onChange(e.target.value)}
+        onBlur={onBlur}
       />
+      {ok && !error && <span className="ff-status ok pw"><StatusIcon kind="ok" /></span>}
       <button type="button" className="ff-eye" onClick={() => setShow(s => !s)} aria-label="Показать пароль">
         <EyeIcon />
       </button>
@@ -106,42 +120,51 @@ export const PasswordInput = ({ value, onChange, placeholder = '•••••�
 }
 
 /* ── Текстовое поле с лейблом/хинтом/счётчиком/ошибкой ── */
-export const Field = ({ label, value, onChange, placeholder, hint, count, max, error, area, disabled, type = 'text', optional, autoComplete }) => (
-  <div>
-    <span className="ff-label" style={optional ? { display: 'flex', justifyContent: 'space-between' } : undefined}>
-      {label}
-      {optional && <span style={{ textTransform: 'none', letterSpacing: 0 }}>необязательно</span>}
-    </span>
-    {area ? (
-      <textarea
-        className={'ff-input area' + (error ? ' err' : '')}
-        value={value}
-        placeholder={placeholder}
-        maxLength={max}
-        disabled={disabled}
-        onChange={e => onChange?.(e.target.value)}
-      />
-    ) : (
-      <input
-        className={'ff-input' + (error ? ' err' : '')}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        maxLength={max}
-        disabled={disabled}
-        autoComplete={autoComplete}
-        onChange={e => onChange?.(e.target.value)}
-      />
-    )}
-    {error && <span className="ff-err">{error}</span>}
-    {(hint || count) && !error && (
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 8 }}>
-        {hint ? <span className="ff-hint">{hint}</span> : <span></span>}
-        {count && <span className="ff-hint" style={{ whiteSpace: 'nowrap' }}>{count}</span>}
+export const Field = ({ label, value, onChange, onBlur, placeholder, hint, count, max, error, warn, ok, area, disabled, type = 'text', optional, autoComplete }) => {
+  const kind = error ? 'err' : warn ? 'warn' : ok ? 'ok' : null
+  return (
+    <div>
+      <span className="ff-label" style={optional ? { display: 'flex', justifyContent: 'space-between' } : undefined}>
+        {label}
+        {optional && <span style={{ textTransform: 'none', letterSpacing: 0 }}>необязательно</span>}
+      </span>
+      <div className={'ff-ctrl' + (area ? ' area' : '') + (kind ? ' has-status' : '')}>
+        {area ? (
+          <textarea
+            className={'ff-input area' + (kind ? ' ' + kind : '')}
+            value={value}
+            placeholder={placeholder}
+            maxLength={max}
+            disabled={disabled}
+            onChange={e => onChange?.(e.target.value)}
+            onBlur={onBlur}
+          />
+        ) : (
+          <input
+            className={'ff-input' + (kind ? ' ' + kind : '')}
+            type={type}
+            value={value}
+            placeholder={placeholder}
+            maxLength={max}
+            disabled={disabled}
+            autoComplete={autoComplete}
+            onChange={e => onChange?.(e.target.value)}
+            onBlur={onBlur}
+          />
+        )}
+        {kind && <span className={'ff-status ' + kind}><StatusIcon kind={kind === 'ok' ? 'ok' : 'alert'} /></span>}
       </div>
-    )}
-  </div>
-)
+      {error && <span className="ff-err">{error}</span>}
+      {!error && warn && <span className="ff-warn">{warn}</span>}
+      {(hint || count) && !error && !warn && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-4)', marginTop: 'var(--sp-2)' }}>
+          {hint ? <span className="ff-hint">{hint}</span> : <span></span>}
+          {count && <span className="ff-hint" style={{ whiteSpace: 'nowrap' }}>{count}</span>}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /* ── Чип-группа ── */
 export const Chips = ({ options, value, onChange, multi = false }) => (
@@ -198,33 +221,35 @@ export const SocialRow = ({ onClick }) => (
 /* ── Строка файла со всеми состояниями (FileRow из screens-form-extra) ── */
 export const FileRow = ({ file, onResume, onRemove, onReplace }) => {
   const { name, sizeMB, state, pct, errText, note } = file
-  const cls = state === 'done' ? ' done' : (state === 'error' || state === 'broken' || state === 'over') ? ' err' : ''
+  const cls = state === 'done' ? ' done' : state === 'over' ? ' warn' : (state === 'error' || state === 'broken') ? ' err' : ''
   return (
     <div className={'ff-file' + cls}>
       <span className="ic">
         {state === 'done'
-          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#23425A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          : (state === 'error' || state === 'over' || state === 'broken')
-            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 8v4m0 4h.01" stroke="#B3402E" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="9" stroke="#B3402E" strokeWidth="1.5" /></svg>
-            : (name.split('.').pop() || '').toUpperCase().slice(0, 4)}
+          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          : (state === 'error' || state === 'broken')
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 8v4m0 4h.01" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="9" strokeWidth="1.5" /></svg>
+            : state === 'over'
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 8v4m0 4h.01" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="9" strokeWidth="1.5" /></svg>
+              : (name.split('.').pop() || '').toUpperCase().slice(0, 4)}
       </span>
       <div style={{ flex: 1, minWidth: 180 }}>
         <div style={{ fontSize: 15.5, fontWeight: 500, overflowWrap: 'anywhere' }}>{name}</div>
-        <div className="ff-hint" style={{ marginTop: 3 }}>
+        <div className="ff-hint" style={{ marginTop: 'var(--sp-1)' }}>
           {state === 'done' && `${fmtMB(sizeMB)} · загружено`}
           {state === 'queue' && (note || 'в очереди — начнётся после текущего файла')}
-          {state === 'progress' && `загружается · ${pct || 0}% · заполняй дальше`}
+          {state === 'progress' && `загружается · ${pct || 0}% · можно заполнять анкету дальше`}
           {state === 'broken' && `соединение прервалось на ${pct || 0}% — продолжим с этого места`}
           {(state === 'error' || state === 'over') && fmtMB(sizeMB)}
         </div>
         {(state === 'progress' || state === 'broken') && (
           <div className={'ff-bar' + (state === 'broken' ? ' err' : '')}><i style={{ width: (pct || 0) + '%' }}></i></div>
         )}
-        {errText && <div style={{ fontSize: 13.5, color: 'var(--err)', marginTop: 4, lineHeight: 1.35 }}>{errText}</div>}
+        {errText && <div style={{ fontSize: 13.5, color: state === 'over' ? 'var(--warn)' : 'var(--err)', marginTop: 'var(--sp-1)', lineHeight: 1.35 }}>{errText}</div>}
       </div>
       {state === 'broken' && <button className="fbtn sm line" type="button" onClick={onResume}>Докачать</button>}
-      {(state === 'error' || state === 'over') && onReplace && <button className="mlink" type="button" onClick={onReplace}>Заменить файл</button>}
-      {state === 'done' && onReplace && <button className="ff-act" type="button" onClick={onReplace}>заменить</button>}
+      {(state === 'error' || state === 'over') && onReplace && <button className="mlink" type="button" onClick={onReplace}>заменить файл</button>}
+      {state === 'done' && onReplace && <button className="ff-act" type="button" onClick={onReplace}>заменить файл</button>}
       {onRemove && <button className="mlink" type="button" onClick={onRemove} aria-label="Убрать файл">убрать</button>}
     </div>
   )
@@ -235,7 +260,7 @@ const MEMBER_TAGS = {
   in:        { label: 'в команде', cls: 'ok' },
   confirmed: { label: 'подтвердил', cls: 'ok' },
   invited:   { label: 'не ответил', cls: 'wait' },
-  declined:  { label: 'отклонил', cls: 'err' },
+  declined:  { label: 'отклонил', cls: '' },
 }
 
 export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabel, children }) => {
@@ -250,7 +275,7 @@ export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabe
         {/* имя приглашённого неизвестно до принятия — показываем email */}
         <div style={{ fontSize: 15.5, fontWeight: 500 }}>{member.name || member.email}</div>
         <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 2 }}>
-          {member.role === 'captain' ? `капитан${you ? ' · вы' : ''}` : member.name ? member.email : 'имя появится после принятия'}
+          {member.role === 'captain' ? `капитан${you ? ' · ты' : ''}` : member.name ? member.email : 'имя появится, когда участник примет приглашение'}
         </div>
       </div>
       {member.tag === 'invited' && onRemind && <button className="mlink" type="button" onClick={onRemind}>напомнить</button>}
