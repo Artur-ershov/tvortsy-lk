@@ -129,6 +129,10 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
   z-index: 20;
 }
 .ff-foot .todo a, .ff-foot .todo button { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font: inherit; }
+.ff-foot .fbtn.line { margin-left: auto; }
+
+/* Соло-режим: реквизиты участника из профиля — две колонки на десктопе */
+.solo-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 var(--sp-6); }
 
 /* Якорная навигация формы */
 .ff-anchor { display: flex; flex-direction: column; gap: 2px; }

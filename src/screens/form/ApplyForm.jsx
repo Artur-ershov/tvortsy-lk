@@ -7,7 +7,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   useStore, NOMINATIONS, SYNTH_DIR_KEYS,
   computeTodos, sectionState, filledCount, fullName, initialsOf,
-  classifyFile, nextId, countSubmitted, APP_LIMIT,
+  classifyFile, nextId, countSubmitted, APP_LIMIT, takenNominations,
 } from '../../state/store.jsx'
 import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 import { Nav } from '../../components/Nav.jsx'
@@ -86,6 +86,9 @@ export default function ApplyForm() {
   const nomDef = NOMINATIONS[app.nomination] || NOMINATIONS.media
   const filled = filledCount(app)
   const limitReached = countSubmitted(state.apps) >= APP_LIMIT
+  // одна заявка на номинацию: номинации, занятые другими поданными заявками
+  const taken = takenNominations(state.apps, app.id)
+  const nomTaken = app.nomination && taken.includes(app.nomination)
 
   /* ── файлы ── */
   const addFiles = (list) => {
@@ -136,6 +139,8 @@ export default function ApplyForm() {
 
   const statusHint = limitReached ? (
     <span className="cluster" style={{ color: 'var(--gray-2)' }}>ты подал 2 заявки — это максимум. Чтобы освободить место, <button type="button" onClick={() => nav('/cabinet')}>отзови одну в кабинете</button>.</span>
+  ) : nomTaken ? (
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>в номинации «{nomDef.label}» у тебя уже есть поданная заявка — выбери другую номинацию или <button type="button" onClick={() => nav('/cabinet')}>отзови ту в кабинете</button>.</span>
   ) : todos.length === 0 ? (
     <span className="cluster" style={{ color: 'var(--ink)' }}>всё готово — можно подавать заявку</span>
   ) : (
@@ -195,12 +200,14 @@ export default function ApplyForm() {
                     key={k}
                     k={k}
                     selected={app.nomination === k}
+                    disabled={taken.includes(k)}
                     onClick={kk => patch({ nomination: kk, synthDirs: [] })}
                   />
                 ))}
               </div>
               <SynthCard
                 selected={app.nomination === 'synth'}
+                disabled={taken.includes('synth')}
                 onClick={() => patch({ nomination: 'synth' })}
               >
                 <span className="ff-label" style={{ color: 'var(--accent-2)', marginBottom: 'var(--sp-2)' }}>
@@ -308,7 +315,7 @@ export default function ApplyForm() {
                     </div>
                     <button type="button" className="mlink" onClick={() => nav('/profile')}>изменить в профиле</button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0 var(--sp-6)', marginTop: 'var(--sp-4)' }}>
+                  <div className="solo-facts" style={{ marginTop: 'var(--sp-4)' }}>
                     {[
                       ['Дата рождения', state.profile.dob],
                       ['Телефон', state.profile.phone],
@@ -422,13 +429,13 @@ export default function ApplyForm() {
 
         {/* Sticky-футер подачи */}
         <div className="ff-foot">
-          {todos.length === 0 && !limitReached ? (
+          {todos.length === 0 && !limitReached && !nomTaken ? (
             <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
           ) : (
             <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
           )}
           <span className="todo">{statusHint}</span>
-          <button type="button" className="fbtn sm line" style={{ marginLeft: 'auto' }} onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
+          <button type="button" className="fbtn sm line" onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
         </div>
       </div>
 

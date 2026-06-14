@@ -178,6 +178,11 @@ export function sectionState(app, n) {
 export const countSubmitted = apps => apps.filter(a => a.status !== 'draft').length
 export const filledCount = app => [1, 2, 3, 4].filter(n => sectionState(app, n) === 'done').length
 
+// Номинации, уже занятые поданными заявками: нельзя подать две заявки в одну номинацию.
+// exceptId исключает саму редактируемую заявку (черновики в расчёт не идут — они вне статусов).
+export const takenNominations = (apps, exceptId = null) =>
+  apps.filter(a => a.status !== 'draft' && a.id !== exceptId && a.nomination).map(a => a.nomination)
+
 /* ───────── Сиды (данные из FgV9 / it3) ───────── */
 
 const PROFILE_MARIA = {
@@ -340,6 +345,9 @@ function reducer(state, action) {
     case 'submit-app': {
       // handoff: «Проверяется на сервере при submit» — лимит 2 поданных, черновики не в счёт
       if (countSubmitted(state.apps) >= APP_LIMIT) return state
+      // одна заявка на номинацию: нельзя подать две заявки в одну и ту же номинацию
+      const me = state.apps.find(a => a.id === action.id)
+      if (me && takenNominations(state.apps, action.id).includes(me.nomination)) return state
       const now = new Date()
       return patchApp(state, action.id, {
         status: 'submitted',

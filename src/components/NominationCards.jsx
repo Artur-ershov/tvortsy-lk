@@ -12,25 +12,27 @@ import imgSynth from '../assets/noms/synth.png'
 export const NOM_IMG = { audio: imgAudio, visual: imgVisual, dance: imgDance, media: imgMedia }
 export const NOM_CARD_KEYS = ['audio', 'visual', 'dance', 'media'] // порядок как на лендинге; синтез — отдельной плитой
 
-export const NomCard = ({ k, selected = false, onClick, cta = 'Выбрать →' }) => {
+export const NomCard = ({ k, selected = false, disabled = false, onClick, cta = 'Выбрать →' }) => {
   const n = NOMINATIONS[k]
   return (
     <button
       type="button"
-      className={'nom-card' + (selected ? ' sel' : '')}
-      onClick={() => onClick(k)}
+      className={'nom-card' + (selected ? ' sel' : '') + (disabled ? ' disabled' : '')}
+      onClick={() => { if (!disabled) onClick(k) }}
+      disabled={disabled}
+      aria-disabled={disabled}
       style={{ backgroundImage: `url(${NOM_IMG[k]})` }}
     >
       <div className="nom-top">
         <span className="nom-kick jbm">{n.num} / {n.en}</span>
-        <span className="nom-badge">{n.badge}</span>
+        <span className="nom-badge">{disabled ? 'уже подана' : n.badge}</span>
       </div>
       <div>
         <div className="nom-title">{n.label}</div>
         <div className="nom-desc">{n.blurb}</div>
         <div className="nom-foot">
           <span className="nom-mode">соло или коллаб</span>
-          <span className="nom-cta">{selected ? '✓ Выбрано' : cta}</span>
+          <span className="nom-cta">{disabled ? 'уже подана' : selected ? '✓ Выбрано' : cta}</span>
         </div>
       </div>
     </button>
@@ -38,20 +40,21 @@ export const NomCard = ({ k, selected = false, onClick, cta = 'Выбрать �
 }
 
 // div, а не button: при selected внутрь раскрывается подвыбор направлений (children с кнопками)
-export const SynthCard = ({ selected = false, onClick, cta = 'Выбрать →', children }) => {
+export const SynthCard = ({ selected = false, disabled = false, onClick, cta = 'Выбрать →', children }) => {
   const n = NOMINATIONS.synth
   return (
     <div
       role="button"
-      tabIndex={0}
-      className={'nom-synth' + (selected ? ' sel' : '')}
-      onClick={() => onClick('synth')}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick('synth') } }}
-      style={{ cursor: 'pointer' }}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      className={'nom-synth' + (selected ? ' sel' : '') + (disabled ? ' disabled' : '')}
+      onClick={() => { if (!disabled) onClick('synth') }}
+      onKeyDown={e => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick('synth') } }}
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <div className="nom-top">
         <span className="nom-kick jbm" style={{ color: 'var(--accent-2)' }}>{n.num} / {n.en}</span>
-        <span className="nom-badge" style={{ borderColor: 'var(--accent)', color: 'var(--sky-2)' }}>{n.badge}</span>
+        <span className="nom-badge" style={{ borderColor: 'var(--accent)', color: 'var(--sky-2)' }}>{disabled ? 'уже подана' : n.badge}</span>
       </div>
       <img src={imgSynth} alt="" aria-hidden="true" className="nom-synth-art" />
       <div>
@@ -61,8 +64,8 @@ export const SynthCard = ({ selected = false, onClick, cta = 'Выбрать →
         <div className="nom-desc" style={{ color: 'var(--accent-3)' }}>{n.blurb}</div>
         <div className="nom-foot">
           <span className="nom-mode">соло или коллаб</span>
-          <span className="nom-cta" style={{ background: selected ? 'var(--ok)' : 'var(--sky-2)', color: selected ? '#fff' : 'var(--ink-soft)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)' }}>
-            {selected ? '✓ Выбрано' : cta}
+          <span className="nom-cta" style={{ background: disabled ? 'var(--plate-2)' : selected ? 'var(--ok)' : 'var(--sky-2)', color: disabled ? 'rgba(255,255,255,.7)' : selected ? '#fff' : 'var(--ink-soft)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)' }}>
+            {disabled ? 'уже подана' : selected ? '✓ Выбрано' : cta}
           </span>
         </div>
       </div>

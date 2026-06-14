@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, initialsOf, fullName } from '../state/store.jsx'
 
 export const Logo = ({ dark = false, style }) => (
-  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы РФ 2026</div>
+  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />РФ 2026</div>
 )
 
 const IconUser = () => (

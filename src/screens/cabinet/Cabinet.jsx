@@ -89,30 +89,28 @@ export default function Cabinet() {
 
   return (
     <div className="app-root">
-      <style>{`
-        .cab-meta{margin:16px 0 0 212px}
-        @media(max-width:1080px){.cab-meta{margin-left:182px}}
-        @media(max-width:920px){.cab-meta{margin-left:0}}
-      `}</style>
       <Nav tab="apps" />
       <div className="sheet" style={{ flex: '1 0 auto' }}>
 
-        {/* Шапка листа */}
+        {/* Шапка листа: кикер → заголовок → мета слева, действие справа (как в шапке формы) */}
         <div className="rule-strong cab-head">
-          <span className="kick">Кабинет</span>
-          <h1 style={{ margin: 0, fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9 }}>
-            Мои заявки
-          </h1>
-          {limitReached ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--sp-1)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', background: 'var(--sky)', color: 'var(--ink-blue)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)', fontWeight: 500, fontSize: 'var(--fs-base)' }}>Все места заняты · 2 из 2</span>
-              <span className="ff-hint" style={{ textAlign: 'right' }}>обе заявки поданы — чтобы подать новую, сначала отзови одну</span>
+          <div className="cab-head-row">
+            <div className="cab-head-title">
+              <h1 style={{ margin: 0, fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9 }}>
+                Мои заявки
+              </h1>
             </div>
-          ) : (
-            <button className="fbtn" onClick={() => startApply()}>+ Подать заявку</button>
-          )}
+            {limitReached ? (
+              <div className="cab-head-limit">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', background: 'var(--sky)', color: 'var(--ink-blue)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)', fontWeight: 500, fontSize: 'var(--fs-base)' }}>Все места заняты · 2 из 2</span>
+                <span className="ff-hint">обе заявки поданы — чтобы подать новую, сначала отзови одну</span>
+              </div>
+            ) : (
+              <button className="fbtn" onClick={() => startApply()}>+ Подать заявку</button>
+            )}
+          </div>
+          {meta && <div className="meta" style={{ marginTop: 'var(--sp-4)' }}>{meta}</div>}
         </div>
-        <div className="meta cab-meta">{meta}</div>
 
         {/* Вариант Б: баннер-полоска над заявками */}
         {invites.map(app => {

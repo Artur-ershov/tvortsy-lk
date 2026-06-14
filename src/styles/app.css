@@ -28,7 +28,11 @@
 .sheet { padding: 0 var(--sp-4); }
 .rule-strong { border-top: 1px solid rgba(0, 0, 0, .25); }
 .rule-soft   { border-top: 1px solid rgba(0, 0, 0, .15); }
-.cab-head { padding-top: var(--sp-6); display: grid; grid-template-columns: 200px 1fr auto; gap: var(--sp-3); align-items: baseline; }
+.cab-head { padding-top: var(--sp-6); }
+.cab-head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-5); flex-wrap: wrap; }
+.cab-head-title { min-width: 0; }
+.cab-head-limit { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-1); }
+.cab-head-limit .ff-hint { text-align: right; }
 .cab-section { padding-top: var(--sp-6); display: grid; grid-template-columns: 200px 1fr 392px; gap: var(--sp-3); }
 
 /* Карточки номинаций (витрина ЛК + выбор в форме) — общий компонент NominationCards.jsx */
@@ -49,6 +53,9 @@
 .nom-card:hover, .nom-synth:hover { transform: translateY(-3px); }
 .nom-card.sel { box-shadow: 0 0 0 3px var(--accent); }
 .nom-synth.sel { box-shadow: 0 0 0 3px var(--accent); }
+/* «уже подана» — номинация занята другой поданной заявкой (одна заявка на номинацию) */
+.nom-card.disabled, .nom-synth.disabled { opacity: .5; filter: grayscale(.7); cursor: not-allowed; }
+.nom-card.disabled:hover, .nom-synth.disabled:hover { transform: none; }
 .nom-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-2); }
 .nom-kick { font-size: 12px; font-weight: 500; letter-spacing: .06em; color: rgba(255,255,255,.85); }
 .nom-badge { font-family: var(--font-jbm); font-weight: 700; font-size: 10.5px; letter-spacing: .04em;
@@ -333,9 +340,16 @@
   .code-cell { width: 64px; height: 72px; font-size: 34px; }
   .ff-social { grid-template-columns: 1fr; }
   .sheet { padding: 0 var(--sp-3); }
+  .cab-head-row { flex-direction: column; align-items: flex-start; }
+  .cab-head-limit { align-items: flex-start; }
+  .cab-head-limit .ff-hint { text-align: left; }
   .sheet-foot { flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
   .modal-card { padding: var(--sp-7) var(--sp-6); }
-  .ff-foot { flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-3) 0 var(--sp-4); }
+  .solo-facts { grid-template-columns: 1fr; }
+  /* Футер подачи компактнее: подсказка отдельной строкой, обе кнопки в один ряд */
+  .ff-foot { flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); padding: var(--sp-3) 0 var(--sp-4); }
+  .ff-foot .todo { order: -1; flex-basis: 100%; }
+  .ff-foot > .fbtn { flex: 1 1 0; min-width: 0; margin-left: 0; }
   .recovery-row { flex-direction: column; }
 }
 
