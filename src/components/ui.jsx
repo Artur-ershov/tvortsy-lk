@@ -49,22 +49,31 @@ export const Wing = ({ tile = 22, gap, cols = 16, rows = 7, thickness = 2, waves
 /* ── Статус-таймлайн заявки: визуал FgTimeline, шаги I3Cycle ── */
 export const StatusTimeline = ({ status = 'submitted', dark = false, submittedAt }) => {
   const idx = Math.max(0, CYCLE.indexOf(status === 'rework' ? 'review' : status))
+  const N = CYCLE.length
+  const fill = dark ? '#fff' : 'var(--ink)'                      // залитый шаг (как на лендинге)
+  const ring = dark ? 'rgba(255,255,255,.40)' : 'rgba(0,0,0,.28)' // кольцо будущего шага
+  const hollowBg = dark ? 'transparent' : '#fff'                 // фон полого кружка перекрывает трек
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${CYCLE.length}, 1fr)`, position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 5, height: 1, background: dark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)' }}></div>
+    <div className="stl">
+      {/* серый трек по всей длине + чёрный прогресс до текущего шага (на узком экране трек скрыт) */}
+      <div className="stl-track" style={{ position: 'absolute', left: 0, right: 0, top: 7.5, height: 1, background: dark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)' }}></div>
+      <div className="stl-track" style={{ position: 'absolute', left: 0, top: 7.5, height: 1, width: `calc(${(idx / N) * 100}% + 7px)`, background: fill }}></div>
       {CYCLE.map((key, i) => {
-        const done = i < idx, cur = i === idx
+        const done = i < idx, cur = i === idx, filled = done || cur
         return (
           <div key={key} style={{ position: 'relative', paddingRight: 'var(--sp-3)' }}>
-            <span style={{
-              display: 'block', width: 11, height: 11, borderRadius: 3,
-              background: cur ? 'var(--accent)' : done ? (dark ? 'var(--sky-2)' : 'var(--ink)') : (dark ? 'var(--plate-2)' : 'var(--mute-2)'),
-              outline: cur ? '2px solid var(--sky-2)' : 'none', outlineOffset: 2,
-            }}></span>
-            <div className="jbm" style={{ fontSize: 11.5, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 'var(--sp-3)', opacity: .6 }}>
+            <div style={{ height: 16, display: 'flex', alignItems: 'center' }}>
+              <span style={{
+                display: 'block', boxSizing: 'border-box', borderRadius: '50%',
+                width: filled ? 14 : 12, height: filled ? 14 : 12,
+                background: filled ? fill : hollowBg,
+                border: filled ? 'none' : `1.5px solid ${ring}`,
+              }}></span>
+            </div>
+            <div className="jbm" style={{ fontSize: 'var(--fs-2xs)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 'var(--sp-2)', opacity: .6 }}>
               {i === 0 && submittedAt ? submittedAt : CYCLE_DATES[key]}
             </div>
-            <div style={{ fontSize: 16.5, fontWeight: cur ? 600 : 400, marginTop: 'var(--sp-1)', lineHeight: 1.25, color: cur ? 'var(--accent)' : undefined }}>{STATUS[key].label}</div>
+            <div style={{ fontSize: 'var(--fs-md)', fontWeight: cur ? 600 : 400, marginTop: 'var(--sp-1)', lineHeight: 1.25 }}>{STATUS[key].label}</div>
           </div>
         )
       })}
@@ -234,7 +243,7 @@ export const FileRow = ({ file, onResume, onRemove, onReplace }) => {
               : (name.split('.').pop() || '').toUpperCase().slice(0, 4)}
       </span>
       <div style={{ flex: 1, minWidth: 180 }}>
-        <div style={{ fontSize: 15.5, fontWeight: 500, overflowWrap: 'anywhere' }}>{name}</div>
+        <div style={{ fontSize: 'var(--fs-base)', fontWeight: 500, overflowWrap: 'anywhere' }}>{name}</div>
         <div className="ff-hint" style={{ marginTop: 'var(--sp-1)' }}>
           {state === 'done' && `${fmtMB(sizeMB)} · загружено`}
           {state === 'queue' && (note || 'в очереди — начнётся после текущего файла')}
@@ -245,7 +254,7 @@ export const FileRow = ({ file, onResume, onRemove, onReplace }) => {
         {(state === 'progress' || state === 'broken') && (
           <div className={'ff-bar' + (state === 'broken' ? ' err' : '')}><i style={{ width: (pct || 0) + '%' }}></i></div>
         )}
-        {errText && <div style={{ fontSize: 13.5, color: state === 'over' ? 'var(--warn)' : 'var(--err)', marginTop: 'var(--sp-1)', lineHeight: 1.35 }}>{errText}</div>}
+        {errText && <div style={{ fontSize: 'var(--fs-sm)', color: state === 'over' ? 'var(--warn)' : 'var(--err)', marginTop: 'var(--sp-1)', lineHeight: 1.35 }}>{errText}</div>}
       </div>
       {state === 'broken' && <button className="fbtn sm line" type="button" onClick={onResume}>Докачать</button>}
       {(state === 'error' || state === 'over') && onReplace && <button className="mlink" type="button" onClick={onReplace}>заменить файл</button>}
@@ -273,7 +282,7 @@ export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabe
       <span className="init">{init}</span>
       <div style={{ flex: 1, minWidth: 160 }}>
         {/* имя приглашённого неизвестно до принятия — показываем email */}
-        <div style={{ fontSize: 15.5, fontWeight: 500 }}>{member.name || member.email}</div>
+        <div style={{ fontSize: 'var(--fs-base)', fontWeight: 500 }}>{member.name || member.email}</div>
         <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 2 }}>
           {member.role === 'captain' ? `капитан${you ? ' · ты' : ''}` : member.name ? member.email : 'имя появится, когда участник примет приглашение'}
         </div>

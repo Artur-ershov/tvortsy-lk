@@ -39,6 +39,7 @@ export default function Onboarding() {
     <AuthSplit
       kicker="Путь участника · шаг 2 из 2"
       title="Данные участника"
+      header={<button type="button" className="mlink" onClick={() => { dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>}
       titleSize="clamp(42px, 6.5vw, 84px)"
       lede="Эти данные подставятся в заявку автоматически — заполнишь один раз."
       art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}

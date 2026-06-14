@@ -66,7 +66,7 @@ export default function Register() {
 
       {verdict === 'minor' && (
         <div className="locked-banner">
-          <span style={{ fontSize: 15, color: 'var(--ink-blue)', fontWeight: 500 }}>Понадобится согласие родителя</span>
+          <span style={{ fontSize: 'var(--fs-base)', color: 'var(--ink-blue)', fontWeight: 500 }}>Понадобится согласие родителя</span>
           <p className="ff-hint" style={{ margin: 'var(--sp-1) 0 0' }}>
             Тебе ещё нет 18 лет — по закону для участия нужно согласие родителя или опекуна. Аккаунт создадим сейчас, а согласие поможем оформить позже.
           </p>
@@ -92,7 +92,7 @@ export default function Register() {
       <SocialRow onClick={() => toast('Демо: быстрый вход недоступен в прототипе')} />
 
       <div style={{ height: 1, background: 'var(--line)', marginTop: 2 }}></div>
-      <div style={{ textAlign: 'center', fontSize: 15.5, color: 'var(--ink-blue)' }}>
+      <div style={{ textAlign: 'center', fontSize: 'var(--fs-base)', color: 'var(--ink-blue)' }}>
         Уже есть аккаунт?{' '}
         <a
           style={{ fontWeight: 600, color: 'var(--ink-blue-2)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}

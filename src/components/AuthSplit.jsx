@@ -23,7 +23,7 @@ export const AuthSplit = ({ header, kicker, title, titleSize = 92, lede, art, st
         <span className="cluster"><span className="lab" style={{ color: 'var(--sky-2)' }}>{kicker}</span></span>
         <h1 className="mega" style={{ fontSize: titleSize, color: '#fff', marginTop: 'var(--sp-5)' }}>{title}</h1>
         {lede && (
-          <p style={{ fontSize: 19, lineHeight: 1.4, maxWidth: 520, marginTop: 'var(--sp-5)', color: 'rgba(255,255,255,.8)' }}>{lede}</p>
+          <p style={{ fontSize: 'var(--fs-lg)', lineHeight: 1.4, maxWidth: 520, marginTop: 'var(--sp-5)', color: 'rgba(255,255,255,.8)' }}>{lede}</p>
         )}
         {art ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 'var(--sp-9) 0' }}>{art}</div>
@@ -49,7 +49,7 @@ export const AuthSplit = ({ header, kicker, title, titleSize = 92, lede, art, st
 export const PanelHead = ({ kicker, title, hint, kickerColor = 'var(--ink-blue)', titleColor = 'var(--ink-blue-2)' }) => (
   <div>
     <span className="kick" style={{ color: kickerColor }}>{kicker}</span>
-    {title && <div style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-.02em', marginTop: 'var(--sp-3)', color: titleColor }}>{title}</div>}
+    {title && <div style={{ fontSize: 'var(--fs-2xl)', fontWeight: 500, letterSpacing: '-.02em', marginTop: 'var(--sp-3)', color: titleColor }}>{title}</div>}
     {hint && <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>{hint}</div>}
   </div>
 )

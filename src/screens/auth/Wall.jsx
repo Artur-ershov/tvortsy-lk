@@ -1,62 +1,53 @@
-// Стена 14–17 — согласие представителя (структура: lk3/it3-auth I3Minor14Wall / I3Minor14Gosuslugi, стиль: fig)
-import React, { useRef, useState } from 'react'
+// Стена 14–17 — согласие представителя (структура: lk3/it3-auth I3Minor14Wall, стиль: fig)
+// Пока без сканов и Госуслуг: согласие оформляем вручную через фонд (правка Артура).
+import React from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from '../../state/store.jsx'
 import { Logo } from '../../components/Nav.jsx'
 
-const DOC_LABELS = {
-  participation: 'Согласие на участие',
-  pdn: 'Согласие на обработку персональных данных',
-}
-const DOC_STATUS = { none: 'Не загружено', review: 'На проверке', ok: 'Принято', replace: 'Нужна замена' }
+// Контакты фонда — плейсхолдеры, в проде подставит реальные адреса
+const FUND = { email: 'lk@tvortsy.online', tg: 'tvortsy_lk' }
 
-const DocRow = ({ doc, status, fileName, onUpload }) => {
-  const fileRef = useRef(null)
-  return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--sp-3)', flexWrap: 'wrap',
-      background: '#fff', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-3) var(--sp-4)',
-    }}>
-      <div style={{ fontSize: 15, fontWeight: 500, flex: 1, minWidth: 180 }}>{DOC_LABELS[doc]}</div>
-      <span className={'doc-status ' + status}>{DOC_STATUS[status]}</span>
-      {(status === 'review' || status === 'ok') && (
-        <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'baseline', gap: 'var(--sp-2)' }}>
-          <span style={{ fontSize: 15, fontWeight: 500 }}>{fileName || 'soglasie.pdf'}</span>
-          <span className="ff-hint">загружено</span>
-        </div>
-      )}
-      {(status === 'none' || status === 'replace') && (
-        <>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            style={{ display: 'none' }}
-            onChange={e => { if (e.target.files?.length) { onUpload(e.target.files[0].name); e.target.value = '' } }}
-          />
-          <button type="button" className="fbtn sm line" onClick={() => fileRef.current?.click()}>Загрузить</button>
-        </>
-      )}
-      {status === 'none' && (
-        <span className="ff-hint" style={{ flexBasis: '100%' }}>PDF, JPG или PNG · до 10 МБ</span>
-      )}
-    </div>
-  )
-}
+const MailIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </svg>
+)
+const TgIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.2 5.1 2.6 12.3c-.7.3-.7 1.2.1 1.4l4.6 1.4 1.8 5.1c.2.5.8.6 1.2.2l2.5-2.5 4.4 3.2c.5.4 1.3.1 1.4-.6l3-13.6c.2-.7-.5-1.3-1.4-.8z" />
+    <path d="m7.3 14.9 9.3-6.4-7.1 7.1" />
+  </svg>
+)
+
+const ClockIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7.5V12l3 1.8" />
+  </svg>
+)
+
+const ContactRow = ({ icon, label, value, href }) => (
+  <a className="contact-row" href={href} target="_blank" rel="noreferrer">
+    <span className="contact-ic">{icon}</span>
+    <span className="contact-tx">
+      <span className="contact-lab">{label}</span>
+      <span className="contact-val">{value}</span>
+    </span>
+    <svg className="contact-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  </a>
+)
 
 export default function Wall() {
-  const { state, dispatch, toast } = useStore()
+  const { state, dispatch } = useStore()
   const nav = useNavigate()
-  const [variant, setVariant] = useState('a')
 
-  // согласие принято → минор дозаполняет анкету; дальше кабинет/приглашение
+  // согласие принято (модератор) → минор дозаполняет анкету; дальше кабинет/приглашение
   if (state.stage === 'confirmed') return <Navigate to="/onboarding" replace />
   if (state.stage === 'active') return <Navigate to={state.pendingInvite ? '/join/' + state.pendingInvite : '/cabinet'} replace />
-
-  const upload = (doc, name) => {
-    dispatch({ type: 'upload-minor-doc', doc, name })
-    toast('Документ загружен — на проверке')
-  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--w)', padding: 'var(--sp-4)', display: 'flex', flexDirection: 'column' }}>
@@ -68,64 +59,39 @@ export default function Wall() {
       <div style={{ maxWidth: 620, width: '100%', margin: '0 auto', paddingBottom: 60 }}>
         <div style={{ textAlign: 'center', marginTop: 'var(--sp-7)' }}>
           <span className="kick">Кабинет участника</span>
-          <h1 style={{ fontSize: 48, fontWeight: 500, letterSpacing: '-.03em', lineHeight: 1.05, margin: 0, marginTop: 'var(--sp-3)' }}>Согласие представителя</h1>
+          <h1 style={{ fontSize: 'clamp(32px, 6vw, 48px)', fontWeight: 500, letterSpacing: '-.03em', lineHeight: 1.05, margin: 0, marginTop: 'var(--sp-3)' }}>Согласие представителя</h1>
         </div>
 
-        {variant === 'a' ? (
-          <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
-            <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-.015em' }}>
-              По закону для участников младше 18 нужно согласие родителя или опекуна
-            </div>
-            <p className="ff-hint" style={{ margin: 'var(--sp-2) 0 var(--sp-6)' }}>
-              Скачай шаблоны и передай их родителю или опекуну на подпись. Подписанные сканы загрузи ниже.
-              Пока документы не получат статус «Принято», подавать заявки нельзя.
-            </p>
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', marginBottom: 'var(--sp-6)' }}>
-              <button type="button" className="fbtn sm line" onClick={() => toast('Демо: шаблон скачается в проде')}>Скачать шаблон — согласие на участие</button>
-              <button type="button" className="fbtn sm line" onClick={() => toast('Демо: шаблон скачается в проде')}>Скачать шаблон — согласие на обработку ПДн</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
-              <DocRow doc="participation" status={state.minorDocs.participation} fileName={state.minorDocNames?.participation} onUpload={name => upload('participation', name)} />
-              <DocRow doc="pdn" status={state.minorDocs.pdn} fileName={state.minorDocNames?.pdn} onUpload={name => upload('pdn', name)} />
-            </div>
+        <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
+          <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em' }}>
+            По закону для участников младше 18 нужно согласие родителя или опекуна
           </div>
-        ) : (
-          <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
-            <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-.015em' }}>
-              Подтверждение через Госуслуги
-            </div>
-            <p className="ff-hint" style={{ margin: 'var(--sp-2) 0 var(--sp-6)', maxWidth: 500 }}>
-              Согласие подтверждает законный представитель через свою учётную запись на Госуслугах.
-              Передай это устройство родителю или опекуну — после перехода на портал вход выполняется под их аккаунтом.
-            </p>
-            <button
-              type="button"
-              className="fbtn submit"
-              style={{ width: 'auto', padding: '0 var(--sp-7)' }}
-              onClick={() => toast('Демо: переход на Госуслуги')}
-            >Подтвердить через Госуслуги</button>
-            <div className="ff-hint" style={{ marginTop: 'var(--sp-3)' }}>Нужна подтверждённая учётная запись Госуслуг. Если её нет, согласие можно загрузить сканами — переключись на вариант с документами.</div>
-            <div style={{ height: 1, background: 'var(--line)', margin: 'var(--sp-6) 0' }}></div>
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span className="mtag wait">Ждём подтверждения</span>
-              <span className="ff-hint">Родитель или опекун ещё не подтвердил согласие через Госуслуги</span>
-            </div>
+          <p className="ff-hint" style={{ margin: 'var(--sp-2) 0 var(--sp-6)' }}>
+            Пока согласия оформляем вручную. Напиши нам: подскажем, какие документы
+            нужны от родителя или опекуна, и поможем всё оформить.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+            <ContactRow icon={<MailIcon />} label="Почта фонда" value={FUND.email} href={'mailto:' + FUND.email} />
+            <ContactRow icon={<TgIcon />} label="Telegram" value={'@' + FUND.tg} href={'https://t.me/' + FUND.tg} />
           </div>
-        )}
+
+          <div className="contact-hours">
+            <ClockIcon />
+            <span>Будни 10:00–19:00 (МСК) · отвечаем в течение рабочего дня</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flexWrap: 'wrap', marginTop: 'var(--sp-5)' }}>
+            <span className="mtag wait">Что указать</span>
+            <span className="ff-hint">Имя участника и почту аккаунта ({state.email || 'твой email'}) — так быстрее найдём заявку.</span>
+          </div>
+        </div>
 
         <div className="locked-banner" style={{ marginTop: 'var(--sp-5)' }}>
-          <span style={{ fontSize: 15, color: 'var(--ink-blue)', fontWeight: 500 }}>Кабинет в режиме ожидания</span>
-          <p className="ff-hint" style={{ margin: 'var(--sp-1) 0 0' }}>{variant === 'a'
-            ? 'Подача заявок станет доступна после того, как проверим документы. Обычно это занимает 1–2 рабочих дня.'
-            : 'Подача заявок откроется сразу после подтверждения через Госуслуги — обычно за несколько минут.'}</p>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 'var(--sp-5)' }}>
-          {variant === 'a' ? (
-            <button type="button" className="mlink" onClick={() => setVariant('b')}>Вариант Б: подтверждение через Госуслуги</button>
-          ) : (
-            <button type="button" className="mlink" onClick={() => setVariant('a')}>Вариант А: загрузка сканов</button>
-          )}
+          <span style={{ fontSize: 'var(--fs-base)', color: 'var(--ink-blue)', fontWeight: 500 }}>Кабинет в режиме ожидания</span>
+          <p className="ff-hint" style={{ margin: 'var(--sp-1) 0 0' }}>
+            Подача заявок откроется, как только оформим согласие вместе с фондом.
+          </p>
         </div>
       </div>
     </div>

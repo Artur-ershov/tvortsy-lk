@@ -4,23 +4,23 @@
 
 /* ── Сплит авторизации: тёмное полотно слева + paper-форма справа ── */
 .auth-shell { min-height: 100vh; padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); background: var(--w); }
-.auth-top { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-3) var(--sp-2) var(--sp-1); }
+.auth-top { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: space-between; align-items: center; padding: var(--sp-3) var(--sp-2) var(--sp-1); }
 .auth-grid { display: grid; grid-template-columns: 1fr 560px; gap: var(--sp-3); flex: 1 0 auto; }
 .auth-poster {
   position: relative; background: var(--plate); color: #fff;
   border-radius: var(--r-2xl); overflow: hidden; padding: var(--sp-12) 52px;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; min-width: 0;
 }
 .auth-panel {
   background: var(--paper); border-radius: var(--r-2xl); padding: var(--sp-11);
-  display: flex; flex-direction: column; gap: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0;
 }
 .poster-stats {
   display: grid; gap: var(--sp-5);
   border-top: 1px solid rgba(255, 255, 255, .18); padding-top: var(--sp-6);
 }
 .poster-stats .n { font-size: 36px; font-weight: 400; letter-spacing: -.03em; color: #fff; }
-.poster-stats .t { font-size: 14px; line-height: 1.45; color: rgba(255, 255, 255, .65); margin-top: var(--sp-2); }
+.poster-stats .t { font-size: var(--fs-sm); line-height: 1.45; color: rgba(255, 255, 255, .65); margin-top: var(--sp-2); }
 .or-row { display: flex; align-items: center; gap: var(--sp-3); margin: 2px 0; }
 .or-row i { flex: 1; height: 1px; background: var(--line); }
 
@@ -35,7 +35,10 @@
 .nom-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
 .fsection .nom-grid { grid-template-columns: repeat(2, 1fr); }
 @media (max-width: 1080px) { .nom-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .nom-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) {
+  .nom-grid, .fsection .nom-grid { grid-template-columns: 1fr; }
+  .nom-card, .nom-synth { min-height: 340px; }
+}
 .nom-card {
   position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between;
   min-height: 430px; border-radius: var(--r-md); overflow: hidden; background-size: cover; background-position: center;
@@ -118,7 +121,7 @@
 }
 
 /* ── Форма заявки («один лист») ── */
-.fsection { display: grid; grid-template-columns: 240px 670px; gap: var(--sp-4); border-top: 1px solid rgba(0, 0, 0, .15); padding: var(--sp-7) 0; }
+.fsection { display: grid; grid-template-columns: 240px minmax(0, 670px); gap: var(--sp-4); border-top: 1px solid rgba(0, 0, 0, .15); padding: var(--sp-7) 0; }
 .form-cols { display: grid; grid-template-columns: 1fr 240px; gap: var(--sp-4); }
 .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
 .form-grid2 .full { grid-column: 1 / -1; }
@@ -126,7 +129,7 @@
 
 /* Участник-бар над формой (it3) */
 .pbar {
-  font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .04em; color: var(--gray-2);
+  font-family: var(--font-jbm); font-size: var(--fs-xs); letter-spacing: .04em; color: var(--gray-2);
   padding: var(--sp-2) var(--sp-4);
   display: flex; gap: var(--sp-1); align-items: center; flex-wrap: wrap;
 }
@@ -141,7 +144,7 @@
 .member-row .init {
   width: 38px; height: 38px; border-radius: var(--r-sm); background: var(--sky);
   display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--font-jbm); font-size: 12px; font-weight: 700; color: var(--ink-blue); flex-shrink: 0;
+  font-family: var(--font-jbm); font-size: var(--fs-xs); font-weight: 700; color: var(--ink-blue); flex-shrink: 0;
 }
 
 /* ── Стена 14–17, статусы документов ── */
@@ -149,13 +152,40 @@
 .locked-banner { border: 1px solid rgba(91, 155, 201, .25); background: var(--paper); border-radius: var(--r-md); padding: var(--sp-4) var(--sp-5); }
 .minor-block { background: var(--paper); border: 1px solid rgba(91, 155, 201, .22); border-radius: var(--r-md); padding: var(--sp-5) var(--sp-5); }
 .doc-status {
-  font-family: var(--font-jbm); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
+  font-family: var(--font-jbm); font-size: var(--fs-2xs); letter-spacing: .05em; text-transform: uppercase;
   padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); white-space: nowrap;
 }
 .doc-status.none    { color: var(--gray-2); background: rgba(0, 0, 0, .06); }
 .doc-status.review  { color: var(--warn); background: rgba(255, 185, 0, .18); }
 .doc-status.ok      { color: var(--ok); background: rgba(31, 138, 91, .08); }
 .doc-status.replace { color: var(--err); background: rgba(179, 64, 46, .08); }
+
+/* Контакты фонда — пока согласия оформляем вручную, без сканов и Госуслуг */
+.contact-row {
+  display: flex; align-items: center; gap: var(--sp-4); text-decoration: none; color: inherit;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-5);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.contact-row:hover { border-color: rgba(91, 155, 201, .55); box-shadow: 0 6px 20px rgba(91, 155, 201, .12); }
+.contact-ic {
+  width: 44px; height: 44px; border-radius: var(--r-sm); flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(91, 155, 201, .14); color: var(--ink-blue);
+}
+.contact-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.contact-lab {
+  font-family: var(--font-jbm); font-size: var(--fs-2xs); letter-spacing: .07em;
+  text-transform: uppercase; color: var(--gray-2);
+}
+.contact-val { font-size: var(--fs-md); font-weight: 500; letter-spacing: -.01em; color: var(--ink); overflow-wrap: anywhere; }
+.contact-go { color: var(--gray-2); flex-shrink: 0; transition: color .15s ease, transform .15s ease; }
+.contact-row:hover .contact-go { color: var(--ink-blue); transform: translate(2px, -2px); }
+.contact-hours {
+  display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3);
+  font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .03em; color: var(--gray-2);
+}
+.contact-hours svg { color: var(--ink-blue); opacity: .65; flex-shrink: 0; }
 
 /* ── Карточки/строки профиля ── */
 .card-white { background: #fff; border: 1px solid rgba(0, 0, 0, .1); border-radius: var(--r-lg); padding: var(--sp-7) var(--sp-8); }
@@ -181,9 +211,10 @@
   display: flex; flex-direction: column; gap: var(--sp-2); z-index: 90; align-items: center; pointer-events: none;
 }
 .toast {
-  background: var(--plate); color: #fff; font-family: var(--font-jbm); font-size: 13px;
+  background: var(--plate); color: #fff; font-family: var(--font-jbm); font-size: var(--fs-xs);
   letter-spacing: .03em; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .25); white-space: nowrap;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+  max-width: min(440px, calc(100vw - 32px)); line-height: 1.4; text-align: center;
 }
 
 /* ── Демо-панель (как tweaks в прототипе) ── */
@@ -191,7 +222,7 @@
   position: fixed; right: 18px; bottom: 18px; z-index: 70;
   width: 48px; height: 48px; border-radius: var(--r-md); background: var(--plate); color: var(--sky);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-jbm); font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  font-family: var(--font-jbm); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em;
   box-shadow: 0 10px 26px rgba(0, 0, 0, .3); cursor: pointer; border: none;
 }
 .demo-panel {
@@ -200,20 +231,20 @@
   box-shadow: 0 18px 50px rgba(0, 0, 0, .4);
   display: flex; flex-direction: column; gap: var(--sp-3); max-height: calc(100vh - 104px); overflow: auto;
 }
-.demo-panel .dp-title { font-family: var(--font-jbm); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--sky-2); display: block; margin-bottom: var(--sp-2); }
+.demo-panel .dp-title { font-family: var(--font-jbm); font-size: var(--fs-2xs); letter-spacing: .09em; text-transform: uppercase; color: var(--sky-2); display: block; margin-bottom: var(--sp-2); }
 
 /* «Где я сейчас» */
 .demo-panel .dp-status { display: flex; align-items: center; gap: var(--sp-2); }
 .demo-panel .dp-ava {
   width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--r-sm); background: var(--sky); color: var(--plate);
-  display: flex; align-items: center; justify-content: center; font-family: var(--font-jbm); font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-jbm); font-size: var(--fs-xs); font-weight: 700;
 }
 .demo-panel .dp-who { display: flex; flex-direction: column; min-width: 0; }
-.demo-panel .dp-who b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.demo-panel .dp-mail { font-family: var(--font-jbm); font-size: 11px; color: var(--accent-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.demo-panel .dp-who b { font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.demo-panel .dp-mail { font-family: var(--font-jbm); font-size: var(--fs-2xs); color: var(--accent-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .demo-panel .dp-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 .demo-panel .dp-tag {
-  font-family: var(--font-jbm); font-size: 10.5px; letter-spacing: .02em; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs);
+  font-family: var(--font-jbm); font-size: var(--fs-2xs); letter-spacing: .02em; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs);
   background: rgba(255, 255, 255, .08); color: var(--accent-3);
 }
 .demo-panel .dp-tag.accent { background: var(--sky); color: var(--plate); font-weight: 600; }
@@ -225,28 +256,28 @@
 /* Сценарии-персоны */
 .demo-panel .dp-persona { margin-top: var(--sp-2); }
 .demo-panel .dp-persona:first-of-type { margin-top: 0; }
-.demo-panel .dp-persona-head { font-size: 12.5px; font-weight: 600; }
+.demo-panel .dp-persona-head { font-size: var(--fs-xs); font-weight: 600; }
 .demo-panel .dp-persona-head i { font-style: normal; font-weight: 400; color: var(--accent-3); }
 .demo-panel .dp-row { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1); }
 
 /* Чип-кнопки (сценарии и экраны) */
 .demo-panel .dp-chip {
-  font-size: 12.5px; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); cursor: pointer;
+  font-size: var(--fs-xs); padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); cursor: pointer;
   background: rgba(255, 255, 255, .08); color: #fff; border: 1px solid transparent;
 }
 .demo-panel .dp-chip:hover { background: rgba(255, 255, 255, .16); border-color: var(--accent); }
 
 /* Контекстные действия — на всю ширину */
 .demo-panel .dp-btn {
-  font-size: 13px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer; margin-top: var(--sp-1);
+  font-size: var(--fs-xs); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer; margin-top: var(--sp-1);
   background: rgba(255, 255, 255, .08); color: #fff; border: none; text-align: left; width: 100%;
 }
 .demo-panel .dp-btn:hover { background: rgba(255, 255, 255, .16); }
-.demo-panel .dp-empty { font-size: 12px; color: rgba(255, 255, 255, .45); line-height: 1.4; }
+.demo-panel .dp-empty { font-size: var(--fs-xs); color: rgba(255, 255, 255, .45); line-height: 1.4; }
 
 /* Сброс */
 .demo-panel .dp-reset {
-  font-family: var(--font-jbm); font-size: 12px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer;
+  font-family: var(--font-jbm); font-size: var(--fs-xs); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer;
   background: rgba(179, 64, 46, .18); color: #F4B8AC; border: 1px solid rgba(179, 64, 46, .35); width: 100%;
 }
 .demo-panel .dp-reset:hover { background: rgba(179, 64, 46, .3); }
@@ -258,7 +289,7 @@
   border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 25;
 }
 .mc {
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
+  font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .04em;
   padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill); border: 1px solid var(--line);
   color: var(--gray-2); background: #fff; cursor: pointer;
 }
@@ -270,6 +301,7 @@
   .auth-grid { grid-template-columns: 1fr 480px; }
   .cab-section { grid-template-columns: 170px 1fr 300px; }
   .cab-head { grid-template-columns: 170px 1fr auto; }
+  .recovery-row { flex-direction: column; }
 }
 
 @media (max-width: 920px) {
@@ -282,9 +314,12 @@
   .fsection, .form-cols { grid-template-columns: 1fr; }
   .form-grid2 { grid-template-columns: 1fr; }
   .anchor-sticky { position: static; }
+  .anchor-desktop { display: none; }
+  .mchips { display: flex; }
+  .recovery-row { flex-direction: column; }
   .row-line { grid-template-columns: 140px 1fr; }
   .row-line > :last-child { grid-column: 2; text-align: left; }
-  .prow { grid-template-columns: 1fr; gap: var(--sp-1); }
+  .prow { grid-template-columns: 1fr; gap: var(--sp-3); }
 }
 
 @media (max-width: 720px) {
@@ -302,4 +337,30 @@
   .modal-card { padding: var(--sp-7) var(--sp-6); }
   .ff-foot { flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-3) 0 var(--sp-4); }
   .recovery-row { flex-direction: column; }
+}
+
+/* ── Статус-таймлайн: десктоп — 4 шага в ряд с дорожкой, узкий экран — сетка 2×2 без линии ── */
+.stl { display: grid; grid-template-columns: repeat(4, 1fr); position: relative; }
+
+/* Шаг восстановления пароля — базовый паддинг, на мобиле меньше (см. ниже) */
+.rec-step { padding: var(--sp-8); }
+
+@media (max-width: 560px) {
+  .stl { grid-template-columns: 1fr 1fr; row-gap: var(--sp-5); }
+  .stl-track { display: none; }
+  .poster-pairs { grid-template-columns: 1fr !important; }
+}
+
+/* Узкая форма авторизации: даём панели больше ширины на телефонах */
+@media (max-width: 480px) {
+  .auth-panel { padding: var(--sp-7) var(--sp-5); }
+}
+
+/* Маленькие телефоны (≤400px): ужимаем ячейки кода, карточки, демо-панель */
+@media (max-width: 400px) {
+  .code-cells { gap: var(--sp-2); }
+  .code-cell { width: 58px; height: 66px; font-size: 30px; }
+  .rec-step { padding: var(--sp-5); }
+  .nom-card, .nom-synth { min-height: 320px; }
+  .demo-panel { width: calc(100vw - 36px); }
 }

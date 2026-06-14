@@ -9,10 +9,10 @@ import { useField, vEmail, vPassword, vMatch } from '../../state/validation.js'
 const fmtTimer = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
 const RecStep = ({ n, title, active, children }) => (
-  <div style={{
+  <div className="rec-step" style={{
     background: active ? '#fff' : 'var(--paper)',
     border: active ? '1.5px solid var(--ink)' : '1px solid rgba(91,155,201,.25)',
-    borderRadius: 'var(--r-lg)', padding: 'var(--sp-8)', flex: 1,
+    borderRadius: 'var(--r-lg)', flex: 1,
     display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)',
     pointerEvents: active ? 'auto' : 'none',
   }}>
@@ -22,11 +22,11 @@ const RecStep = ({ n, title, active, children }) => (
         background: active ? 'var(--ink)' : 'var(--sky)',
         color: active ? '#fff' : 'var(--ink-blue)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 13, fontWeight: 600,
+        fontSize: 'var(--fs-xs)', fontWeight: 600,
       }}>{n}</span>
-      <span className="kick" style={{ fontSize: 13.5 }}>шаг {n} из 3</span>
+      <span className="kick" style={{ fontSize: 'var(--fs-sm)' }}>шаг {n} из 3</span>
     </div>
-    <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-.015em' }}>{title}</div>
+    <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 500, letterSpacing: '-.015em' }}>{title}</div>
     {children}
   </div>
 )

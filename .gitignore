@@ -3,3 +3,7 @@ dist/
 .ux-audit-raw.json
 
 .vercel
+
+# Windows
+desktop.ini
+Thumbs.db

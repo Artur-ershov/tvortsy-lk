@@ -2,15 +2,15 @@
 
 .ff-label {
   display: block; font-family: var(--font-jbm);
-  font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase;
   color: var(--gray-2); margin-bottom: var(--sp-2);
 }
 
 .ff-input {
   background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm);
-  padding: var(--sp-4) var(--sp-4); font-size: 17px; color: var(--ink); min-height: 54px;
+  padding: var(--sp-4) var(--sp-4); font-size: var(--fs-md); color: var(--ink); min-height: 54px;
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  width: 100%;
+  width: 100%; min-width: 0;
 }
 input.ff-input, textarea.ff-input { display: block; outline: none; }
 input.ff-input::placeholder, textarea.ff-input::placeholder { color: #9AA6B0; }
@@ -41,14 +41,14 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-status.warn { color: var(--warn); }
 .ff-status.pw   { right: 44px; }
 
-.ff-err  { display: block; font-size: 13.5px; color: var(--err); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
-.ff-warn { display: block; font-size: 13.5px; color: var(--warn); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
-.ff-hint { font-size: 13.5px; color: var(--gray-2); line-height: 1.4; }
+.ff-err  { display: block; font-size: var(--fs-sm); color: var(--err); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
+.ff-warn { display: block; font-size: var(--fs-sm); color: var(--warn); margin-top: var(--sp-2); animation: ff-msg .2s ease-out; }
+.ff-hint { font-size: var(--fs-sm); color: var(--gray-2); line-height: 1.4; }
 
 @keyframes ff-msg { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 @keyframes ff-pop { from { opacity: 0; } to { opacity: 1; } }
 .ff-act  {
-  font-family: var(--font-jbm); font-size: 12.5px; color: var(--gray-2);
+  font-family: var(--font-jbm); font-size: var(--fs-xs); color: var(--gray-2);
   cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
 }
 
@@ -64,7 +64,7 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-seg { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .ff-chip {
   font-family: var(--font-sans);
-  font-size: 15px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
+  font-size: var(--fs-base); padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
   background: #fff; border: 1px solid var(--line); color: var(--ink);
   cursor: pointer; white-space: nowrap;
 }
@@ -72,7 +72,7 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-chip.sky { background: var(--sky); border-color: var(--sky); color: var(--ink-blue); }
 
 /* Чекбоксы */
-.ff-check { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: 15.5px; line-height: 1.4; cursor: pointer; text-align: left; }
+.ff-check { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-base); line-height: 1.4; cursor: pointer; text-align: left; }
 .ff-check .box {
   flex: 0 0 auto; width: 22px; height: 22px; border-radius: var(--r-xs);
   border: 1.5px solid rgba(0, 0, 0, .3); margin-top: 1px; position: relative; background: #fff;
@@ -86,13 +86,13 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 
 /* Файл-строка */
 .ff-file {
-  display: flex; align-items: center; gap: var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap;
   background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
 }
 .ff-file .ic {
   flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--sky);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-jbm); font-size: 11px; font-weight: 700; color: var(--ink-blue);
+  font-family: var(--font-jbm); font-size: var(--fs-2xs); font-weight: 700; color: var(--ink-blue);
 }
 .ff-file.done { box-shadow: inset 0 0 0 1px rgba(31, 138, 91, .4); }
 .ff-file.err  { box-shadow: inset 0 0 0 1px rgba(179, 64, 46, .5); }
@@ -117,7 +117,7 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-social .s {
   height: 52px; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff;
   display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  font-size: 14.5px; font-weight: 500; cursor: pointer;
+  font-size: var(--fs-sm); font-weight: 500; cursor: pointer;
 }
 .ff-social .s .d { width: 22px; height: 22px; border-radius: var(--r-xs); display: inline-block; }
 
@@ -125,7 +125,7 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-foot {
   position: sticky; bottom: 0; background: rgba(255, 255, 255, .92);
   backdrop-filter: blur(8px); border-top: 2px solid var(--ink);
-  display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) 0;
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-5); padding: var(--sp-4) 0;
   z-index: 20;
 }
 .ff-foot .todo a, .ff-foot .todo button { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font: inherit; }
@@ -134,10 +134,10 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-anchor { display: flex; flex-direction: column; gap: 2px; }
 .ff-anchor .a {
   display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0;
-  font-size: 15.5px; color: var(--gray-2); cursor: pointer; border-bottom: 1px solid var(--line);
+  font-size: var(--fs-base); color: var(--gray-2); cursor: pointer; border-bottom: 1px solid var(--line);
   background: none; border-left: none; border-right: none; border-top: none; text-align: left; width: 100%;
 }
-.ff-anchor .a .n { font-family: var(--font-mono); font-size: 13px; letter-spacing: .05em; }
+.ff-anchor .a .n { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .05em; }
 .ff-anchor .a.cur { color: var(--ink); font-weight: 600; }
 .ff-anchor .a.done .n { color: var(--ok); }
 

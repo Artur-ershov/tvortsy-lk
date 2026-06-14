@@ -37,7 +37,7 @@ export default function Success() {
         <h1 style={{ margin: 0, fontSize: 'clamp(44px, 7vw, 72px)', fontWeight: 500, letterSpacing: '-.04em', marginTop: 'var(--sp-4)', lineHeight: 1, textAlign: 'center' }}>
           Заявка подана
         </h1>
-        <p style={{ margin: 'var(--sp-4) auto 0', fontSize: 18, lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
+        <p style={{ margin: 'var(--sp-4) auto 0', fontSize: 'var(--fs-md)', lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
           Сначала её проверят организаторы, а затем допущенные работы оценит жюри. Следить за статусом можно в кабинете — как только что-то изменится, напишем тебе на почту.
         </p>
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,.12)', borderRadius: 'var(--r-lg)', padding: 'var(--sp-7) var(--sp-8)', marginTop: 'var(--sp-8)', width: '100%', maxWidth: 640 }}>
@@ -47,13 +47,13 @@ export default function Success() {
           Заявку ещё можно отредактировать или отозвать — пока она в статусе «Подана».
         </div>
         <div style={{ display: 'flex', gap: 'var(--sp-3)', marginTop: 'var(--sp-7)', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button className="fbtn" style={{ height: 54, fontSize: 16, fontWeight: 500 }} onClick={() => nav('/cabinet')}>
+          <button className="fbtn" style={{ height: 54, fontSize: 'var(--fs-base)', fontWeight: 500 }} onClick={() => nav('/cabinet')}>
             К моим заявкам
           </button>
           {limitReached ? (
-            <span className="fbtn line disabled" style={{ height: 54, fontSize: 16, fontWeight: 500 }}>Подать ещё одну</span>
+            <span className="fbtn line disabled" style={{ height: 54, fontSize: 'var(--fs-base)', fontWeight: 500 }}>Подать ещё одну</span>
           ) : (
-            <button className="fbtn line" style={{ height: 54, fontSize: 16, fontWeight: 500 }} onClick={createDraft}>
+            <button className="fbtn line" style={{ height: 54, fontSize: 'var(--fs-base)', fontWeight: 500 }} onClick={createDraft}>
               Подать ещё одну
             </button>
           )}

@@ -44,6 +44,7 @@ export default function Confirm() {
 
   return (
     <AuthSplit
+      header={<button type="button" className="mlink" onClick={() => { dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>}
       kicker="Регистрация · шаг 1 из 2"
       title={'Проверь почту'}
       titleSize="clamp(42px, 6.5vw, 84px)"
@@ -56,7 +57,7 @@ export default function Confirm() {
     >
       <div>
         <span className="kick">Подтверждение почты</span>
-        <div style={{ fontSize: 20, lineHeight: 1.4, marginTop: 'var(--sp-3)', color: 'var(--gray-2)' }}>Введи код из письма — 4 цифры</div>
+        <div style={{ fontSize: 'var(--fs-lg)', lineHeight: 1.4, marginTop: 'var(--sp-3)', color: 'var(--gray-2)' }}>Введи код из письма — 4 цифры</div>
       </div>
 
       <div className="code-cells" style={{ margin: 'var(--sp-2) 0' }}>

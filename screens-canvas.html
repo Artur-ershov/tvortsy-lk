@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Все экраны · Творцы будущего ЛК</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Segoe UI',sans-serif;background:#0f1117;color:#e8eaf0;overflow:hidden}
+#app{width:100vw;height:100vh;display:flex;flex-direction:column}
+.hdr{display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #1e2130;height:42px;flex-shrink:0;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;opacity:.78}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lsep{width:1px;height:13px;background:#1e2130}
+.hhint{margin-left:auto;opacity:.28;font-size:10px}
+#wrap{flex:1;position:relative;overflow:hidden;cursor:grab;user-select:none}
+#wrap.drag{cursor:grabbing}
+#cvs{position:absolute;top:0;left:0;transform-origin:0 0}
+.ctrl{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.cb{width:31px;height:31px;border-radius:7px;border:1px solid #1e2130;background:#161820;color:#e8eaf0;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.cb:hover{background:#22253a}
+.rb{position:absolute;bottom:14px;left:14px;font-size:10.5px;padding:5px 11px;border-radius:7px;border:1px solid #1e2130;background:#161820;color:#e8eaf0;cursor:pointer}
+.rb:hover{background:#22253a}
+
+/* Section label */
+.sec{position:absolute;font-family:ui-monospace,'SF Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.45;color:#e8eaf0;white-space:nowrap}
+
+/* Frame shell */
+.fr{position:absolute;width:380px;border-radius:13px;overflow:hidden;box-shadow:0 6px 32px rgba(0,0,0,.55)}
+.fhdr{padding:8px 12px}
+.fht{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.fhname{font-size:11px;font-weight:700;color:rgba(255,255,255,.95);letter-spacing:.01em}
+.fhroute{font-family:ui-monospace,monospace;font-size:9px;color:rgba(255,255,255,.48);letter-spacing:.04em}
+.fhstate{font-size:9.5px;color:rgba(255,255,255,.62);margin-top:2px}
+.fb{background:#fff}
+
+/* ── App tokens ── */
+.fb{
+  --w:#fff;--ink:#000;--plate:#15151A;--paper:#F0F8FD;
+  --sky:#D9ECF9;--sky2:#C5E4F9;--g2:#646A6E;
+  --line:rgba(0,0,0,.10);--ok:#1F8A5B;--err:#B3402E;--warn:#8A6200;
+  color:#000;font-family:-apple-system,'Segoe UI',sans-serif;font-size:13.5px
+}
+
+/* Typography */
+.fb .kick{font-family:ui-monospace,monospace;font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.fb .clu{font-family:ui-monospace,monospace;font-size:10px;line-height:1.55;letter-spacing:.03em;color:var(--ink)}
+.fb .logo{font-family:ui-monospace,monospace;font-weight:700;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
+
+/* Buttons */
+.fb .btn{display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 18px;border-radius:10px;background:var(--sky);color:#0C0C0D;font-weight:700;font-size:13px;border:none;white-space:nowrap;cursor:pointer}
+.fb .btn.sm{height:32px;font-size:11.5px;padding:0 12px;border-radius:8px;font-weight:500}
+.fb .btn.line{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.22)}
+.fb .btn.sub{background:var(--plate);color:#fff;font-weight:400;width:100%;height:44px}
+.fb .btn.dis{opacity:.45;cursor:default}
+
+/* Form controls */
+.fb .lbl{display:block;font-family:ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--g2);margin-bottom:4px}
+.fb .inp{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--ink);width:100%;display:block}
+.fb .inp::placeholder{color:#9AA6B0}
+.fb .inp.err{border-color:var(--err)}
+.fb .inp.ph{color:#9AA6B0}
+.fb .inp.dis{background:#F2F5F8;color:var(--g2)}
+.fb .inp.area{min-height:72px;font-size:12px}
+.fb .errt{font-size:10.5px;color:var(--err);margin-top:3px}
+.fb .hint{font-size:10.5px;color:var(--g2);line-height:1.4}
+.fb .mlink{font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.03em;color:var(--g2);text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:none;border:none;padding:0}
+
+/* Checkbox */
+.fb .chk{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.4;cursor:pointer}
+.fb .chk .bx{flex:0 0 auto;width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(0,0,0,.28);margin-top:1px;background:#fff}
+.fb .chk.on .bx{background:var(--ink);border-color:var(--ink)}
+
+/* Status dots */
+.fb .fst{font-family:ui-monospace,monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+.fb .fst::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--ink);flex-shrink:0}
+.fb .fst.ok{color:var(--ok)}.fb .fst.ok::before{background:var(--ok)}
+.fb .fst.err{color:var(--err)}.fb .fst.err::before{background:var(--err)}
+.fb .fst.wait{color:var(--g2)}.fb .fst.wait::before{background:var(--sky2)}
+.fb .fst.warn{color:var(--warn)}.fb .fst.warn::before{background:var(--warn)}
+.fb .fst.sub{color:#3b5bdb}.fb .fst.sub::before{background:#3b5bdb}
+
+/* Tags */
+.fb .tag{font-family:ui-monospace,monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.06);color:var(--g2)}
+.fb .tag.ok{background:rgba(31,138,91,.1);color:var(--ok)}
+.fb .tag.warn{background:rgba(255,185,0,.12);color:var(--warn)}
+.fb .tag.err{background:rgba(179,64,46,.1);color:var(--err)}
+.fb .tag.sub{background:rgba(59,91,219,.1);color:#3b5bdb}
+.fb .tag.rev{background:rgba(103,65,217,.1);color:#6741d9}
+.fb .tag.draft{background:rgba(0,0,0,.07);color:var(--g2)}
+
+/* Chip */
+.fb .chip{font-size:11.5px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink);cursor:pointer;white-space:nowrap;display:inline-flex}
+.fb .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* Nav bar */
+.fb .nav{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--line)}
+.fb .avt{width:26px;height:26px;border-radius:50%;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:9px;font-weight:700;color:#23425A}
+.fb .tabs{display:flex;gap:2px}
+.fb .t{font-size:11px;padding:4px 8px;border-radius:6px;color:var(--g2);cursor:pointer}
+.fb .t.on{background:var(--sky);color:#23425A;font-weight:600}
+
+/* Auth */
+.fb .poster{background:var(--plate);padding:13px 16px}
+.fb .p-kck{font-family:ui-monospace,monospace;font-size:8px;color:rgba(255,255,255,.4);letter-spacing:.07em;text-transform:uppercase}
+.fb .p-ttl{color:#fff;font-size:18px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin-top:7px}
+.fb .p-lede{color:rgba(255,255,255,.55);font-size:11px;line-height:1.45;margin-top:6px}
+.fb .atop{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;border-bottom:1px solid var(--line);background:var(--w)}
+.fb .panel{padding:16px;display:flex;flex-direction:column;gap:11px}
+
+/* Code cells */
+.fb .cells{display:flex;gap:7px}
+.fb .cell{width:46px;height:46px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;background:#fff}
+.fb .cell.f{border-color:var(--ink)}
+
+/* Recovery steps */
+.fb .rs{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.fb .rs.act{border:1.5px solid var(--ink)}
+.fb .rs.dim{opacity:.42}
+.fb .rsn{width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:9px;font-weight:700}
+.fb .rsn.a{background:var(--ink);color:#fff}
+.fb .rsn.d{background:var(--paper);color:var(--g2)}
+.fb .rst{font-size:13px;font-weight:500}
+
+/* Wall */
+.fb .wcard{background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px}
+.fb .drow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--w);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+.fb .dstat{font-family:ui-monospace,monospace;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:3px}
+.fb .dstat.none{background:rgba(0,0,0,.06);color:var(--g2)}
+.fb .dstat.rev{background:rgba(255,185,0,.12);color:var(--warn)}
+.fb .dstat.ok{background:rgba(31,138,91,.1);color:var(--ok)}
+.fb .lbanner{background:rgba(138,98,0,.05);border:1px solid rgba(255,185,0,.28);border-radius:8px;padding:11px 13px}
+
+/* Cabinet */
+.fb .cabsec{border-top:1px solid rgba(0,0,0,.1);padding:12px 0;display:grid;grid-template-columns:68px 1fr;gap:9px}
+.fb .cabl{display:flex;flex-direction:column;gap:6px}
+.fb .cabr{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.fb .row-line{display:grid;grid-template-columns:80px 1fr 80px;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:12px}
+
+/* Modal */
+.fb .modal-bg{background:rgba(0,0,0,.42);padding:20px}
+.fb .mbox{background:#fff;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:11px}
+
+/* Profile */
+.fb .prow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
+
+/* Social */
+.fb .socr{display:flex;gap:6px}
+.fb .socb{flex:1;height:34px;border-radius:7px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;cursor:pointer;background:#fff}
+
+/* OR divider */
+.fb .or{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--g2)}
+.fb .or::before,.fb .or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* Form spy */
+.fb .spy{display:flex;gap:4px;padding:6px 10px;background:var(--paper);border-bottom:1px solid var(--line)}
+.fb .si{font-size:9.5px;font-family:ui-monospace,monospace;padding:2px 6px;border-radius:4px;color:var(--g2);cursor:pointer}
+.fb .si.on{background:var(--ink);color:#fff}
+
+/* Form section */
+.fb .fsec{border-top:1px solid rgba(0,0,0,.1);padding:12px 15px;display:grid;grid-template-columns:60px 1fr;gap:10px}
+
+/* Timeline */
+.fb .tlr{display:flex;align-items:flex-start;gap:8px;padding:4px 0}
+.fb .tld{width:8px;height:8px;border-radius:50%;margin-top:2px;flex-shrink:0}
+.fb .tld.ok{background:var(--ok)}.fb .tld.cur{background:#3b5bdb}.fb .tld.wait{background:rgba(0,0,0,.13)}
+
+/* Files */
+.fb .frow{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:7px 10px}
+.fb .fic{width:26px;height:26px;border-radius:5px;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:7px;font-weight:700;color:#23425A;flex-shrink:0}
+
+/* Drop zone */
+.fb .drop{border:1.5px dashed rgba(0,0,0,.16);border-radius:9px;padding:22px 14px;text-align:center}
+
+/* Member row */
+.fb .memr{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.fb .mavt{width:22px;height:22px;border-radius:50%;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:8px;font-weight:700;color:#23425A}
+
+/* Invite rows */
+.fb .invr{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+
+/* Pixel art placeholder (simplified) */
+.fb .pix{display:grid;grid-template-columns:repeat(8,13px);gap:3px;margin:0 auto}
+.fb .pix i{width:13px;height:13px;border-radius:3px;background:var(--sky)}
+.fb .pix i.x{background:transparent}
+
+/* Utilities */
+.g6{display:flex;flex-direction:column;gap:6px}
+.g8{display:flex;flex-direction:column;gap:8px}
+.g10{display:flex;flex-direction:column;gap:10px}
+.g12{display:flex;flex-direction:column;gap:12px}
+.p14{padding:14px}
+.p16{padding:16px}
+.p18{padding:18px}
+.tc{text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="hdr">
+  <div class="leg"><div class="ld" style="background:#3b5bdb"></div>Авторизация</div>
+  <div class="leg"><div class="ld" style="background:#e8590c"></div>Стена 14–17</div>
+  <div class="leg"><div class="ld" style="background:#2f9e44"></div>Кабинет / Профиль</div>
+  <div class="leg"><div class="ld" style="background:#6741d9"></div>Форма заявки</div>
+  <div class="leg"><div class="ld" style="background:#0c8599"></div>Приглашение</div>
+  <div class="leg"><div class="ld" style="background:#495057"></div>Модалки</div>
+  <div class="lsep"></div>
+  <div class="leg" style="opacity:.35;font-size:10px">380px · статические мокапы</div>
+  <div class="hhint">тащи · скролл = зум</div>
+</div>
+<div id="wrap">
+<div id="cvs">
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 1 · АВТОРИЗАЦИЯ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:46px">АВТОРИЗАЦИЯ</div>
+
+<!-- F01 · Login default -->
+<div class="fr" style="left:60px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Login</span><span class="fhroute">/login</span></div>
+    <div class="fhstate">Дефолтное состояние</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Кабинет участника · 2026</div>
+      <div class="p-ttl">С возвра­щением</div>
+      <div class="p-lede" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div style="color:#fff;font-size:12px;font-weight:500">Статус заявки</div><div style="color:rgba(255,255,255,.5);font-size:10px;margin-top:3px">виден в кабинете</div></div>
+        <div><div style="color:#fff;font-size:12px;font-weight:500">Черновики</div><div style="color:rgba(255,255,255,.5);font-size:10px;margin-top:3px">сохраняются</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="kick">Вход</span>
+        <div style="display:flex;align-items:center;gap:7px"><span class="clu" style="color:var(--g2)">Первый раз?</span><button class="btn sm line">Зарегистрироваться</button></div>
+      </div>
+      <div style="font-size:20px;font-weight:500;letter-spacing:-.02em">Войти в кабинет</div>
+      <div class="g6"><label class="lbl">Email</label><input class="inp" value="m.sokolova@mail.ru" readonly></div>
+      <div class="g6">
+        <div style="display:flex;justify-content:space-between"><label class="lbl" style="margin:0">Пароль</label><button class="mlink">Забыли пароль?</button></div>
+        <div class="inp ph">••••••••</div>
+      </div>
+      <button class="btn sub">Войти</button>
+      <div class="or">или</div>
+      <div class="socr">
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="m9.489.004.729-.003h3.564l.73.003.914.01.433.007.418.011.403.014.388.016.374.021.36.025.345.03.333.033c1.74.196 2.933.616 3.833 1.516.9.9 1.32 2.092 1.516 3.833l.034.333.029.346.025.36.02.373.025.588.012.41.013.644.009.915.004.98-.001 3.313-.003.73-.01.914-.007.433-.011.418-.014.403-.016.388-.021.374-.025.36-.03.345-.033.333c-.196 1.74-.616 2.933-1.516 3.833-.9.9-2.092 1.32-3.833 1.516l-.333.034-.346.029-.36.025-.373.02-.588.025-.41.012-.644.013-.915.009-.98.004-3.313-.001-.73-.003-.914-.01-.433-.007-.418-.011-.403-.014-.388-.016-.374-.021-.36-.025-.345-.03-.333-.033c-1.74-.196-2.933-.616-3.833-1.516-.9-.9-1.32-2.092-1.516-3.833l-.034-.333-.029-.346-.025-.36-.02-.373-.025-.588-.012-.41-.013-.644-.009-.915-.004-.98.001-3.313.003-.73.01-.914.007-.433.011-.418.014-.403.016-.388.021-.374.025-.36.03-.345.033-.333c.196-1.74.616-2.933 1.516-3.833.9-.9 2.092-1.32 3.833-1.516l.333-.034.346-.029.36-.025.373-.02.588-.025.41-.012.644-.013.915-.009Z" fill="#0077FF"/><path d="M6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z" fill="#fff"/></svg>VK ID</div>
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M2.04 12c0-5.523 4.476-10 10-10 5.522 0 10 4.477 10 10s-4.478 10-10 10c-5.524 0-10-4.477-10-10z" fill="#FC3F1D"/><path d="M13.32 7.666h-.924c-1.694 0-2.585.858-2.585 2.123 0 1.43.616 2.1 1.881 2.959l1.045.704-3.003 4.487H7.49l2.695-4.014c-1.55-1.111-2.42-2.19-2.42-4.015 0-2.288 1.595-3.85 4.62-3.85h3.003v11.868H13.32V7.666z" fill="#fff"/></svg>Яндекс</div>
+      </div>
+      <div class="clu tc" style="color:var(--g2)">демо: m.sokolova@mail.ru · пароль любой</div>
+    </div>
+  </div>
+</div>
+
+<!-- F02 · Login error -->
+<div class="fr" style="left:500px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Login</span><span class="fhroute">/login</span></div>
+    <div class="fhstate">Ошибка: неверные данные</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Кабинет участника · 2026</div>
+      <div class="p-ttl">С возвра­щением</div>
+    </div>
+    <div class="panel">
+      <span class="kick">Вход</span>
+      <div style="font-size:20px;font-weight:500;letter-spacing:-.02em">Войти в кабинет</div>
+      <div class="g6">
+        <label class="lbl">Email</label>
+        <input class="inp err" value="wrong@example.com" readonly>
+        <span class="errt">Неверный email или пароль</span>
+      </div>
+      <div class="g6">
+        <div style="display:flex;justify-content:space-between"><label class="lbl" style="margin:0">Пароль</label><button class="mlink">Забыли пароль?</button></div>
+        <div class="inp err ph">••••••••</div>
+      </div>
+      <button class="btn sub">Войти</button>
+      <div class="or">или</div>
+      <div class="socr">
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="m9.489.004.729-.003h3.564l.73.003.914.01.433.007.418.011.403.014.388.016.374.021.36.025.345.03.333.033c1.74.196 2.933.616 3.833 1.516.9.9 1.32 2.092 1.516 3.833l.034.333.029.346.025.36.02.373.025.588.012.41.013.644.009.915.004.98-.001 3.313-.003.73-.01.914-.007.433-.011.418-.014.403-.016.388-.021.374-.025.36-.03.345-.033.333c-.196 1.74-.616 2.933-1.516 3.833-.9.9-2.092 1.32-3.833 1.516l-.333.034-.346.029-.36.025-.373.02-.588.025-.41.012-.644.013-.915.009-.98.004-3.313-.001-.73-.003-.914-.01-.433-.007-.418-.011-.403-.014-.388-.016-.374-.021-.36-.025-.345-.03-.333-.033c-1.74-.196-2.933-.616-3.833-1.516-.9-.9-1.32-2.092-1.516-3.833l-.034-.333-.029-.346-.025-.36-.02-.373-.025-.588-.012-.41-.013-.644-.009-.915-.004-.98.001-3.313.003-.73.01-.914.007-.433.011-.418.014-.403.016-.388.021-.374.025-.36.03-.345.033-.333c.196-1.74.616-2.933 1.516-3.833.9-.9 2.092-1.32 3.833-1.516l.333-.034.346-.029.36-.025.373-.02.588-.025.41-.012.644-.013.915-.009Z" fill="#0077FF"/><path d="M6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z" fill="#fff"/></svg>VK ID</div>
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M2.04 12c0-5.523 4.476-10 10-10 5.522 0 10 4.477 10 10s-4.478 10-10 10c-5.524 0-10-4.477-10-10z" fill="#FC3F1D"/><path d="M13.32 7.666h-.924c-1.694 0-2.585.858-2.585 2.123 0 1.43.616 2.1 1.881 2.959l1.045.704-3.003 4.487H7.49l2.695-4.014c-1.55-1.111-2.42-2.19-2.42-4.015 0-2.288 1.595-3.85 4.62-3.85h3.003v11.868H13.32V7.666z" fill="#fff"/></svg>Яндекс</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F03 · Register empty -->
+<div class="fr" style="left:940px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Register</span><span class="fhroute">/register</span></div>
+    <div class="fhstate">Шаг 1 из 2 · пустая форма</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Путь участника · 2026</div>
+      <div class="p-ttl">Сделай работу, которую увидят</div>
+      <div class="p-lede">Пять направлений, грант на продакшн, финал в Москве.</div>
+      <div style="display:flex;gap:16px;margin-top:10px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px">
+        <div><div style="color:rgba(255,255,255,.9);font-size:13px;font-weight:600">5</div><div style="color:rgba(255,255,255,.45);font-size:9.5px">направлений</div></div>
+        <div><div style="color:rgba(255,255,255,.9);font-size:13px;font-weight:600">14–35</div><div style="color:rgba(255,255,255,.45);font-size:9.5px">возраст</div></div>
+        <div><div style="color:rgba(255,255,255,.9);font-size:13px;font-weight:600">до 1 июня</div><div style="color:rgba(255,255,255,.45);font-size:9.5px">приём заявок</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="kick">Регистрация · шаг 1 из 2</span>
+        <button class="btn sm line">Войти</button>
+      </div>
+      <div style="font-size:20px;font-weight:500;letter-spacing:-.02em">Создать аккаунт</div>
+      <div class="hint">Аккаунт открывает личный кабинет.</div>
+      <div class="g6"><label class="lbl">Email</label><input class="inp" placeholder="m.sokolova@mail.ru"></div>
+      <div class="g6">
+        <label class="lbl">Пароль</label>
+        <div class="inp ph">••••••••</div>
+        <span class="hint">не короче 8 символов · буквы и цифры</span>
+      </div>
+      <label class="chk"><span class="bx"></span><span>Согласен на обработку персональных данных — <span style="text-decoration:underline">политика обработки</span></span></label>
+      <button class="btn sub dis">Создать аккаунт</button>
+      <div class="hint tc">далее отправим код подтверждения на email</div>
+    </div>
+  </div>
+</div>
+
+<!-- F04 · Register filled -->
+<div class="fr" style="left:1380px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Register</span><span class="fhroute">/register</span></div>
+    <div class="fhstate">Форма заполнена · кнопка активна</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Путь участника · 2026</div>
+      <div class="p-ttl">Сделай работу, которую увидят</div>
+    </div>
+    <div class="panel">
+      <span class="kick">Регистрация · шаг 1 из 2</span>
+      <div style="font-size:20px;font-weight:500;letter-spacing:-.02em">Создать аккаунт</div>
+      <div class="g6"><label class="lbl">Email</label><input class="inp" value="m.sokolova@mail.ru" readonly></div>
+      <div class="g6">
+        <label class="lbl">Пароль</label>
+        <div class="inp">••••••••</div>
+        <span class="hint">не короче 8 символов · буквы и цифры</span>
+      </div>
+      <label class="chk on"><span class="bx"></span><span>Согласен на обработку персональных данных</span></label>
+      <button class="btn sub">Создать аккаунт</button>
+      <div class="or">или войти быстрее</div>
+      <div class="socr">
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="m9.489.004.729-.003h3.564l.73.003.914.01.433.007.418.011.403.014.388.016.374.021.36.025.345.03.333.033c1.74.196 2.933.616 3.833 1.516.9.9 1.32 2.092 1.516 3.833l.034.333.029.346.025.36.02.373.025.588.012.41.013.644.009.915.004.98-.001 3.313-.003.73-.01.914-.007.433-.011.418-.014.403-.016.388-.021.374-.025.36-.03.345-.033.333c-.196 1.74-.616 2.933-1.516 3.833-.9.9-2.092 1.32-3.833 1.516l-.333.034-.346.029-.36.025-.373.02-.588.025-.41.012-.644.013-.915.009-.98.004-3.313-.001-.73-.003-.914-.01-.433-.007-.418-.011-.403-.014-.388-.016-.374-.021-.36-.025-.345-.03-.333-.033c-1.74-.196-2.933-.616-3.833-1.516-.9-.9-1.32-2.092-1.516-3.833l-.034-.333-.029-.346-.025-.36-.02-.373-.025-.588-.012-.41-.013-.644-.009-.915-.004-.98.001-3.313.003-.73.01-.914.007-.433.011-.418.014-.403.016-.388.021-.374.025-.36.03-.345.033-.333c.196-1.74.616-2.933 1.516-3.833.9-.9 2.092-1.32 3.833-1.516l.333-.034.346-.029.36-.025.373-.02.588-.025.41-.012.644-.013.915-.009Z" fill="#0077FF"/><path d="M6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z" fill="#fff"/></svg>VK ID</div>
+        <div class="socb" style="gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M2.04 12c0-5.523 4.476-10 10-10 5.522 0 10 4.477 10 10s-4.478 10-10 10c-5.524 0-10-4.477-10-10z" fill="#FC3F1D"/><path d="M13.32 7.666h-.924c-1.694 0-2.585.858-2.585 2.123 0 1.43.616 2.1 1.881 2.959l1.045.704-3.003 4.487H7.49l2.695-4.014c-1.55-1.111-2.42-2.19-2.42-4.015 0-2.288 1.595-3.85 4.62-3.85h3.003v11.868H13.32V7.666z" fill="#fff"/></svg>Яндекс</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F05 · Confirm empty -->
+<div class="fr" style="left:1820px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Confirm Email</span><span class="fhroute">/confirm</span></div>
+    <div class="fhstate">4-значный код · ещё не введён</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Регистрация · шаг 1 из 2 · подтверждение</div>
+      <div class="p-ttl">Проверьте почту</div>
+      <div class="p-lede" style="margin-top:8px">Код отправлен на <span style="color:#fff">m.sokolova@mail.ru</span></div>
+    </div>
+    <div class="panel">
+      <span class="kick">Подтверждение email</span>
+      <div style="font-size:16px;line-height:1.4;color:var(--g2)">Введи 4-значный код из письма</div>
+      <div class="cells">
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+      <button class="btn sub dis">Подтвердить</button>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="clu" style="color:var(--g2)">Отправить ещё раз — через 1:00</span>
+        <button class="mlink">Изменить адрес</button>
+      </div>
+      <div style="height:1px;background:var(--line)"></div>
+      <div class="hint">В письме есть и кнопка-ссылка — подтверждает без ввода кода.</div>
+    </div>
+  </div>
+</div>
+
+<!-- F06 · Confirm filled -->
+<div class="fr" style="left:2260px;top:70px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Confirm Email</span><span class="fhroute">/confirm</span></div>
+    <div class="fhstate">Код введён · кнопка активна</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Регистрация · шаг 1 из 2 · подтверждение</div>
+      <div class="p-ttl">Проверьте почту</div>
+    </div>
+    <div class="panel">
+      <span class="kick">Подтверждение email</span>
+      <div style="font-size:16px;line-height:1.4;color:var(--g2)">Введи 4-значный код из письма</div>
+      <div class="cells">
+        <div class="cell f">7</div><div class="cell f">3</div><div class="cell f">4</div><div class="cell f">1</div>
+      </div>
+      <button class="btn sub">Подтвердить</button>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="clu" style="color:var(--g2)">Отправить ещё раз — через 0:42</span>
+        <button class="mlink">Изменить адрес</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 2 · ОНБОРДИНГ + ВОССТАНОВЛЕНИЕ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:606px">ОНБОРДИНГ + ВОССТАНОВЛЕНИЕ ПАРОЛЯ</div>
+
+<!-- F07 · Onboarding -->
+<div class="fr" style="left:60px;top:630px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Onboarding</span><span class="fhroute">/onboarding</span></div>
+    <div class="fhstate">Шаг 2 из 2 · анкета участника</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Путь участника · шаг 2 из 2</div>
+      <div class="p-ttl">Данные участника</div>
+      <div class="p-lede">Заполнишь один раз — подставятся в заявку.</div>
+    </div>
+    <div class="panel">
+      <span class="kick">Анкета участника</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="grid-column:1/-1"><label class="lbl">ФИО</label><input class="inp" placeholder="Соколова Мария Андреевна"></div>
+        <div><label class="lbl">Дата рождения</label><input class="inp" placeholder="ДД.ММ.ГГГГ"><div class="hint" style="margin-top:3px">от 14 до 35 лет</div></div>
+        <div><label class="lbl">Телефон</label><input class="inp" placeholder="+7 (999) 000-00-00"></div>
+        <div><label class="lbl">Национальность</label><input class="inp" placeholder="Российская"></div>
+        <div><label class="lbl">Город</label><input class="inp" placeholder="Москва"></div>
+        <div style="grid-column:1/-1"><label class="lbl">Место работы / учёбы <span style="color:var(--g2)">— необяз.</span></label><input class="inp" placeholder="Университет или работодатель"></div>
+      </div>
+      <button class="btn sub dis">Перейти в кабинет</button>
+    </div>
+  </div>
+</div>
+
+<!-- F08 · Recovery step 1 -->
+<div class="fr" style="left:500px;top:630px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Recovery</span><span class="fhroute">/recovery</span></div>
+    <div class="fhstate">Шаг 1 — ввод email</div>
+  </div>
+  <div class="fb">
+    <div class="atop">
+      <div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div>
+      <button class="mlink">← Вернуться ко входу</button>
+    </div>
+    <div class="p16 g10">
+      <span class="kick">Восстановление пароля</span>
+      <div class="g8">
+        <div class="rs act">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn a">1</span><span class="clu" style="color:var(--g2)">шаг 1 из 3</span></div>
+          <div class="rst">Укажи email</div>
+          <div class="g6"><label class="lbl">Email аккаунта</label><input class="inp" placeholder="m.sokolova@mail.ru"></div>
+          <button class="btn sub dis" style="height:38px;font-size:12px">Отправить ссылку</button>
+          <div class="hint">Если адрес есть в системе, придёт письмо со ссылкой.</div>
+        </div>
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">2</span><span class="clu" style="color:var(--g2)">шаг 2 из 3</span></div>
+          <div class="rst">Проверь почту</div>
+        </div>
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">3</span><span class="clu" style="color:var(--g2)">шаг 3 из 3</span></div>
+          <div class="rst">Новый пароль</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F09 · Recovery step 2 -->
+<div class="fr" style="left:940px;top:630px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Recovery</span><span class="fhroute">/recovery</span></div>
+    <div class="fhstate">Шаг 2 — ожидание письма</div>
+  </div>
+  <div class="fb">
+    <div class="atop">
+      <div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div>
+      <button class="mlink">← Вернуться ко входу</button>
+    </div>
+    <div class="p16 g10">
+      <span class="kick">Восстановление пароля</span>
+      <div class="g8">
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">1</span></div>
+          <div class="rst">Укажи email</div>
+        </div>
+        <div class="rs act">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn a">2</span><span class="clu" style="color:var(--g2)">шаг 2 из 3</span></div>
+          <div class="rst">Проверь почту</div>
+          <div class="hint">Письмо отправлено на <span style="color:var(--ink);font-weight:500">m.sokolova@mail.ru</span>. Ссылка действует 24 часа.</div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="clu" style="color:var(--g2)">Через 0:48</span>
+            <button class="mlink">Изменить адрес</button>
+          </div>
+          <button class="mlink" style="color:#3b5bdb">(демо) открыть ссылку из письма →</button>
+        </div>
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">3</span></div>
+          <div class="rst">Новый пароль</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F10 · Recovery step 3 -->
+<div class="fr" style="left:1380px;top:630px">
+  <div class="fhdr" style="background:#3b5bdb">
+    <div class="fht"><span class="fhname">Recovery</span><span class="fhroute">/recovery</span></div>
+    <div class="fhstate">Шаг 3 — новый пароль</div>
+  </div>
+  <div class="fb">
+    <div class="atop">
+      <div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div>
+      <button class="mlink">← Вернуться ко входу</button>
+    </div>
+    <div class="p16 g10">
+      <span class="kick">Восстановление пароля</span>
+      <div class="g8">
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">1</span></div>
+          <div class="rst">Укажи email</div>
+        </div>
+        <div class="rs dim">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn d">2</span></div>
+          <div class="rst">Проверь почту</div>
+        </div>
+        <div class="rs act">
+          <div style="display:flex;align-items:center;gap:7px"><span class="rsn a">3</span><span class="clu" style="color:var(--g2)">шаг 3 из 3</span></div>
+          <div class="rst">Новый пароль</div>
+          <div class="g6"><label class="lbl">Новый пароль</label><div class="inp ph">••••••••</div></div>
+          <div class="g6"><label class="lbl">Повтори пароль</label><div class="inp ph">••••••••</div></div>
+          <div class="hint">не короче 8 символов · буквы и цифры</div>
+          <button class="btn sub" style="height:38px;font-size:12px">Сохранить и войти</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 3 · СТЕНА 14–17
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:1236px">СТЕНА 14–17 — СОГЛАСИЕ ПРЕДСТАВИТЕЛЯ</div>
+
+<!-- F11 · Wall A · none -->
+<div class="fr" style="left:60px;top:1260px">
+  <div class="fhdr" style="background:#e8590c">
+    <div class="fht"><span class="fhname">Wall</span><span class="fhroute">/wall</span></div>
+    <div class="fhstate">Вариант А — документы не загружены</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g12">
+      <div class="tc g6"><span class="kick">Кабинет участника</span><div style="font-size:24px;font-weight:500;letter-spacing:-.025em">Согласие представителя</div></div>
+      <div class="wcard g10">
+        <div style="font-size:14px;font-weight:600;letter-spacing:-.01em">По закону для участников младше 18 нужно согласие родителя или опекуна</div>
+        <div class="hint">Скачай шаблоны, подпиши у родителя и загрузи сканы. До получения статуса «принято» подача заявок недоступна.</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn sm line" style="font-size:10.5px">Скачать шаблон — согласие на участие</button>
+          <button class="btn sm line" style="font-size:10.5px">Скачать шаблон — согласие на ПДн</button>
+        </div>
+        <div class="g8">
+          <div class="drow"><span style="font-size:13px;font-weight:500">Согласие на участие</span><span class="dstat none">не загружено</span><button class="btn sm line">Загрузить</button></div>
+          <div class="drow"><span style="font-size:13px;font-weight:500">Согласие на ПДн</span><span class="dstat none">не загружено</span><button class="btn sm line">Загрузить</button></div>
+        </div>
+      </div>
+      <div class="lbanner">
+        <span style="font-size:13px;color:var(--warn);font-weight:500">Кабинет в режиме ожидания</span>
+        <div class="hint" style="margin-top:5px">Подача заявок станет доступна после проверки документов. Обычно 1–2 рабочих дня.</div>
+      </div>
+      <div class="tc"><button class="mlink">Вариант Б: подтверждение через Госуслуги</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- F12 · Wall A · review -->
+<div class="fr" style="left:500px;top:1260px">
+  <div class="fhdr" style="background:#e8590c">
+    <div class="fht"><span class="fhname">Wall</span><span class="fhroute">/wall</span></div>
+    <div class="fhstate">Вариант А — документы на проверке</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g12">
+      <div class="tc g6"><span class="kick">Кабинет участника</span><div style="font-size:24px;font-weight:500;letter-spacing:-.025em">Согласие представителя</div></div>
+      <div class="wcard g10">
+        <div style="font-size:14px;font-weight:600;letter-spacing:-.01em">Документы получены — проверяем</div>
+        <div class="g8">
+          <div class="drow"><div style="flex:1"><div style="font-size:13px;font-weight:500">Согласие на участие</div><div class="hint" style="margin-top:2px">soglasie_uchastie.pdf · загружено</div></div><span class="dstat rev">на проверке</span></div>
+          <div class="drow"><div style="flex:1"><div style="font-size:13px;font-weight:500">Согласие на ПДн</div><div class="hint" style="margin-top:2px">soglasie_pdn.pdf · загружено</div></div><span class="dstat rev">на проверке</span></div>
+        </div>
+      </div>
+      <div class="lbanner">
+        <span style="font-size:13px;color:var(--warn);font-weight:500">Кабинет в режиме ожидания</span>
+        <div class="hint" style="margin-top:5px">Проверяем документы — обычно 1–2 рабочих дня. Пришлём письмо когда всё будет готово.</div>
+      </div>
+      <div class="tc"><button class="mlink">Вариант Б: подтверждение через Госуслуги</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- F13 · Wall B -->
+<div class="fr" style="left:940px;top:1260px">
+  <div class="fhdr" style="background:#e8590c">
+    <div class="fht"><span class="fhname">Wall</span><span class="fhroute">/wall</span></div>
+    <div class="fhstate">Вариант Б — Госуслуги</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g12">
+      <div class="tc g6"><span class="kick">Кабинет участника</span><div style="font-size:24px;font-weight:500;letter-spacing:-.025em">Согласие представителя</div></div>
+      <div class="wcard g10">
+        <span class="tag warn">способ выбирают юристы</span>
+        <div style="font-size:14px;font-weight:600;letter-spacing:-.01em;margin-top:4px">Подтверждение через Госуслуги</div>
+        <div class="hint">Законный представитель подтверждает согласие через учётную запись на Госуслугах.</div>
+        <button class="btn sub" style="width:auto;padding:0 20px;height:40px;font-size:13px">Подтвердить через Госуслуги</button>
+        <div class="hint">Требуется подтверждённая учётная запись уровня «Стандартная» или выше.</div>
+        <div style="height:1px;background:var(--line)"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="tag">ожидаем подтверждения</span>
+          <span class="hint">представитель не проходил</span>
+        </div>
+      </div>
+      <div class="lbanner">
+        <span style="font-size:13px;color:var(--warn);font-weight:500">Кабинет в режиме ожидания</span>
+        <div class="hint" style="margin-top:5px">Подача заявок откроется после успешного подтверждения.</div>
+      </div>
+      <div class="tc"><button class="mlink">Вариант А: загрузка сканов</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 4 · КАБИНЕТ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:1876px">КАБИНЕТ · МОИ ЗАЯВКИ</div>
+
+<!-- F14 · Cabinet empty -->
+<div class="fr" style="left:60px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Заявок нет — пустое состояние</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g10">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid rgba(0,0,0,.1);padding-top:14px">
+        <div><span class="kick">Кабинет</span><div style="font-size:28px;font-weight:500;letter-spacing:-.04em;line-height:.95;margin-top:8px">Мария<br>Соколова</div><div class="clu" style="color:var(--g2);margin-top:8px">m.sokolova@mail.ru · Москва · 23 года · заявки: 0 из 2</div></div>
+        <button class="btn">+ Подать заявку</button>
+      </div>
+      <div style="border:1.5px dashed rgba(0,0,0,.15);border-radius:14px;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;margin-top:8px">
+        <div class="pix"><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i></i></div>
+        <div style="font-size:18px;font-weight:500;letter-spacing:-.015em">Заявок пока нет</div>
+        <div class="hint" style="max-width:280px">Выбери номинацию, расскажи о работе и загрузи материалы. Черновик сохраняется.</div>
+        <button class="btn" style="margin-top:4px">Подать заявку</button>
+        <span class="clu" style="color:var(--g2)">одному или с командой · от 14 до 35 лет</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;margin-top:4px">
+        <span class="clu" style="color:var(--g2)">заявки до 1 июня · осталось 12 дней</span>
+        <span class="clu" style="color:var(--g2)">help@tvorcy.ru</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F15 · Cabinet draft -->
+<div class="fr" style="left:500px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Один черновик</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid rgba(0,0,0,.1);padding-top:12px">
+        <div><span class="kick">Кабинет</span><div style="font-size:26px;font-weight:500;letter-spacing:-.04em;margin-top:6px">Мария Соколова</div></div>
+        <button class="btn">+ Подать заявку</button>
+      </div>
+      <div class="clu" style="color:var(--g2)">m.sokolova@mail.ru · Москва · заявки: 0 из 2</div>
+      <div class="cabsec" style="margin-top:4px">
+        <div class="cabl"><span class="kick">Черновик</span><div class="clu" style="color:var(--g2);margin-top:8px;line-height:1.7">ТВ-2026-02<br>изменён 09:41</div></div>
+        <div>
+          <div style="font-size:22px;font-weight:500;letter-spacing:-.02em;color:var(--g2)">Без названия</div>
+          <div class="hint" style="margin-top:6px">заполнено 0 из 4 разделов</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+            <span class="fst draft">черновик</span>
+            <button class="btn sm" style="margin-left:auto">Продолжить</button>
+            <button class="mlink">удалить</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px">
+        <span class="clu" style="color:var(--g2)">заявки до 1 июня · осталось 12 дней</span>
+        <span class="clu" style="color:var(--g2)">help@tvorcy.ru</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F16 · Cabinet submitted collapsed -->
+<div class="fr" style="left:940px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Поданная заявка · свёрнута</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid rgba(0,0,0,.1);padding-top:12px">
+        <div><span class="kick">Кабинет</span><div style="font-size:26px;font-weight:500;letter-spacing:-.04em;margin-top:6px">Мария Соколова</div></div>
+        <button class="btn">+ Подать заявку</button>
+      </div>
+      <div class="cabsec">
+        <div class="cabl"><span class="kick">01 / Заявка</span><div class="clu" style="color:var(--g2);margin-top:8px;line-height:1.7">ТВ-2026-01<br>подана 24 мая<br>аудио · соло</div></div>
+        <div>
+          <div style="font-size:22px;font-weight:500;letter-spacing:-.02em">Симфония теней</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:10px;align-items:flex-start">
+            <span class="fst sub">подана</span>
+            <div class="hint">Пока заявка в статусе «Подана», её можно редактировать или отозвать.</div>
+            <div style="display:flex;gap:7px">
+              <button class="btn sm">Редактировать</button>
+              <button class="btn sm line">Отозвать</button>
+            </div>
+            <button class="mlink">Подробнее ↓</button>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--line);padding-top:10px"><span class="clu" style="color:var(--g2)">заявки до 1 июня</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- F17 · Cabinet submitted expanded -->
+<div class="fr" style="left:1380px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Поданная заявка · раскрыта</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="border-top:1px solid rgba(0,0,0,.1);padding-top:10px"><span class="kick">Кабинет</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:4px">Мария Соколова</div></div>
+      <div class="cabsec">
+        <div class="cabl"><span class="kick">01 / Заявка</span><div class="clu" style="color:var(--g2);margin-top:8px;line-height:1.7">ТВ-2026-01<br>24 мая 2026<br>аудио · соло</div></div>
+        <div>
+          <div style="font-size:20px;font-weight:500;letter-spacing:-.025em">Симфония теней</div>
+          <!-- timeline -->
+          <div style="margin-top:12px">
+            <div class="tlr"><div class="tld ok"></div><div><div style="font-size:12px;font-weight:500">Подана</div><div class="hint">24 мая 2026, 14:32</div></div></div>
+            <div class="tlr"><div class="tld cur"></div><div><div style="font-size:12px;font-weight:500">На проверке</div><div class="hint">организаторы смотрят работу</div></div></div>
+            <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">Оценка жюри</div></div></div>
+            <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">Результат</div></div></div>
+          </div>
+          <!-- row lines -->
+          <div style="margin-top:10px">
+            <div class="row-line"><span class="clu" style="color:var(--g2)">ФАЙЛЫ</span><span>symphony.mp3 · 2 файла</span><span></span></div>
+            <div class="row-line"><span class="clu" style="color:var(--g2)">СОГЛАСИЯ</span><span>Подписаны · 2 из 2</span><span></span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:10px;align-items:flex-start">
+            <span class="fst sub">подана</span>
+            <div style="display:flex;gap:7px"><button class="btn sm">Редактировать</button><button class="btn sm line">Отозвать</button></div>
+            <button class="mlink">Свернуть ↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F18 · Cabinet rework -->
+<div class="fr" style="left:1820px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Заявка на доработке</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="border-top:1px solid rgba(0,0,0,.1);padding-top:10px"><span class="kick">Кабинет</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:4px">Мария Соколова</div></div>
+      <div class="cabsec">
+        <div class="cabl"><span class="kick" style="color:var(--err)">01 / Заявка</span><div class="clu" style="color:var(--g2);margin-top:8px;line-height:1.7">ТВ-2026-01<br>аудио · соло</div></div>
+        <div>
+          <div style="font-size:20px;font-weight:500;letter-spacing:-.025em">Симфония теней</div>
+          <div style="font-size:13px;color:var(--err);margin-top:8px;line-height:1.4">Качество аудиофайла ниже требуемого — пришли WAV или FLAC 24bit.</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:10px;align-items:flex-start">
+            <span class="fst err">на доработке</span>
+            <div class="hint">Исправь работу и подай снова — дедлайн не сгорает.</div>
+            <button class="btn sm">Исправить →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F19 · Cabinet limit -->
+<div class="fr" style="left:2260px;top:1900px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Cabinet</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Лимит достигнут · 2 из 2 заявок</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid rgba(0,0,0,.1);padding-top:12px;gap:10px">
+        <div><span class="kick">Кабинет</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:6px">Мария Соколова</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span class="btn dis" style="font-size:13px;height:38px;padding:0 14px">+ Подать заявку</span>
+          <div class="hint">достигнут лимит — 2 заявки на участника</div>
+        </div>
+      </div>
+      <div class="cabsec">
+        <span class="kick">01 / Заявка</span>
+        <div>
+          <div style="font-size:19px;font-weight:500;letter-spacing:-.02em">Симфония теней</div>
+          <span class="fst sub" style="margin-top:6px">подана</span>
+        </div>
+      </div>
+      <div class="cabsec">
+        <span class="kick">02 / Заявка</span>
+        <div>
+          <div style="font-size:19px;font-weight:500;letter-spacing:-.02em">Голос города</div>
+          <span class="fst ok" style="margin-top:6px">допущена</span>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--line);padding-top:10px"><span class="clu" style="color:var(--g2)">заявки до 1 июня · заявки: 2 из 2</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- F36 · Cabinet pending invite — новое состояние на ветке -->
+<div class="fr" style="left:2700px;top:1900px;width:460px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">Cabinet · Входящее приглашение</span><span class="fhroute">/cabinet</span></div>
+    <div class="fhstate">Капитан позвал — участник ещё не ответил · новое на ветке</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t on">Заявки</div><div class="t">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g8">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid rgba(0,0,0,.1);padding-top:12px">
+        <div><span class="kick">Кабинет</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:6px">Мария Соколова</div></div>
+        <button class="btn">+ Подать заявку</button>
+      </div>
+
+      <!-- Вариант А: баннер-полоска -->
+      <div style="border:1px solid var(--ink);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px">
+        <span class="kick">Приглашение</span>
+        <span style="flex:1;min-width:180px;font-size:14px">М. Волков зовёт вас в команду «Фотон» — «Симфония теней»</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm">Принять</button>
+          <button class="btn sm line">Отклонить</button>
+        </div>
+      </div>
+
+      <!-- Вариант Б: карточка в списке -->
+      <div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 0;display:grid;grid-template-columns:68px 1fr 100px;gap:9px;margin-top:4px">
+        <div class="cabl">
+          <span class="kick">Приглашение</span>
+          <div class="clu" style="color:var(--g2);margin-top:8px;line-height:1.7">ТВ-2026-01<br>капитан М. Волков<br>аудио · 3 участника</div>
+        </div>
+        <div>
+          <div style="font-size:20px;font-weight:500;letter-spacing:-.02em">«Фотон» · Симфония теней</div>
+          <div class="hint" style="margin-top:6px">М. Волков приглашает вас в команду — участие подтверждается с вашего email</div>
+        </div>
+        <div class="cabr">
+          <span class="fst wait">Ждёт ответа</span>
+          <button class="btn sm">Принять</button>
+          <button class="btn sm line">Отклонить</button>
+          <button class="mlink">подробнее</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line);padding-top:10px"><span class="clu" style="color:var(--g2)">заявки до 1 июня · осталось 12 дней</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 5 · МОДАЛКИ + ПРОФИЛЬ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:2716px">МОДАЛКИ + ПРОФИЛЬ</div>
+
+<!-- F20 · Modal withdraw -->
+<div class="fr" style="left:60px;top:2740px">
+  <div class="fhdr" style="background:#495057">
+    <div class="fht"><span class="fhname">Modal · Отозвать заявку</span></div>
+    <div class="fhstate">Подтверждение отзыва поданной заявки</div>
+  </div>
+  <div class="fb">
+    <div style="background:rgba(0,0,0,.12);padding:8px 12px;border-bottom:1px solid var(--line)">
+      <div style="font-size:10px;color:var(--g2);font-family:ui-monospace,monospace;text-align:center">— кабинет за оверлеем —</div>
+    </div>
+    <div class="modal-bg" style="background:rgba(0,0,0,.38)">
+      <div class="mbox">
+        <div style="font-size:17px;font-weight:600;letter-spacing:-.01em">Отозвать заявку?</div>
+        <div class="hint">"Симфония теней" · Аудио-направление · от 24 мая. Заявка будет удалена, освобождённый слот можно использовать повторно.</div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn sm line" style="flex:1">Отмена</button>
+          <button class="btn sm" style="flex:1;background:var(--err);color:#fff;border-radius:8px;height:32px;font-size:11.5px">Отозвать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F21 · Modal delete draft -->
+<div class="fr" style="left:500px;top:2740px">
+  <div class="fhdr" style="background:#495057">
+    <div class="fht"><span class="fhname">Modal · Удалить черновик</span></div>
+    <div class="fhstate">Необратимое удаление черновика</div>
+  </div>
+  <div class="fb">
+    <div style="background:rgba(0,0,0,.12);padding:8px 12px;border-bottom:1px solid var(--line)">
+      <div style="font-size:10px;color:var(--g2);font-family:ui-monospace,monospace;text-align:center">— кабинет за оверлеем —</div>
+    </div>
+    <div class="modal-bg" style="background:rgba(0,0,0,.38)">
+      <div class="mbox">
+        <div style="font-size:17px;font-weight:600;letter-spacing:-.01em">Удалить черновик?</div>
+        <div class="hint">"Без названия". Черновик будет удалён без возможности восстановления.</div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn sm line" style="flex:1">Отмена</button>
+          <button class="btn sm" style="flex:1;background:var(--err);color:#fff;border-radius:8px;height:32px;font-size:11.5px">Удалить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F22 · Modal password -->
+<div class="fr" style="left:940px;top:2740px">
+  <div class="fhdr" style="background:#495057">
+    <div class="fht"><span class="fhname">Modal · Смена пароля</span></div>
+    <div class="fhstate">Открывается из Профиля</div>
+  </div>
+  <div class="fb">
+    <div style="background:rgba(0,0,0,.12);padding:8px 12px;border-bottom:1px solid var(--line)">
+      <div style="font-size:10px;color:var(--g2);font-family:ui-monospace,monospace;text-align:center">— профиль за оверлеем —</div>
+    </div>
+    <div class="modal-bg" style="background:rgba(0,0,0,.38)">
+      <div class="mbox">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:17px;font-weight:600;letter-spacing:-.01em">Сменить пароль</span>
+          <button style="font-size:22px;color:var(--g2);background:none;border:none;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div class="g8">
+          <div><label class="lbl">Старый пароль</label><div class="inp ph">••••••••</div></div>
+          <div><label class="lbl">Новый пароль</label><div class="inp ph">••••••••</div></div>
+          <div><label class="lbl">Повторите новый пароль</label><div class="inp ph">••••••••</div></div>
+          <div class="hint">не короче 8 символов · буквы и цифры</div>
+          <button class="btn sub dis" style="height:40px;font-size:13px">Сохранить пароль</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F23 · Profile view -->
+<div class="fr" style="left:1380px;top:2740px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Profile</span><span class="fhroute">/profile</span></div>
+    <div class="fhstate">Режим просмотра</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t">Заявки</div><div class="t on">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g10">
+      <div style="border-top:1px solid rgba(0,0,0,.1);padding-top:12px"><span class="kick">Аккаунт</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:6px">Профиль</div></div>
+      <div style="background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Анкета участника</div>
+        <div class="prow"><span style="color:var(--g2)">ФИО</span><span>Соколова Мария Андреевна</span><button class="mlink">Редактировать</button></div>
+        <div class="prow"><span style="color:var(--g2)">Дата рождения</span><span>15.03.2003</span><span></span></div>
+        <div class="prow"><span style="color:var(--g2)">Национальность</span><span>Российская</span><span></span></div>
+        <div class="prow"><span style="color:var(--g2)">Телефон</span><span>+7 999 000-00-00</span><button class="mlink">Редактировать</button></div>
+        <div class="prow"><span style="color:var(--g2)">Город</span><span>Москва</span><button class="mlink">Редактировать</button></div>
+      </div>
+      <div style="background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:14px;font-weight:600">Вход в аккаунт</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(0,0,0,.08);padding-top:10px"><span class="clu" style="color:var(--g2)">Email</span><span style="font-size:13px">m.sokolova@mail.ru</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(0,0,0,.08);padding-top:10px">
+          <div><div class="clu" style="color:var(--g2)">Пароль</div><div class="clu" style="color:var(--g2);margin-top:3px">изменён 12.05.2026</div></div>
+          <button class="btn sm line">Сменить пароль</button>
+        </div>
+        <div style="border-top:1px solid rgba(0,0,0,.08);padding-top:10px"><button class="mlink" style="color:var(--err)">Выйти из аккаунта</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F24 · Profile editing inline -->
+<div class="fr" style="left:1820px;top:2740px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Profile</span><span class="fhroute">/profile</span></div>
+    <div class="fhstate">Инлайн-редактирование поля</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="tabs"><div class="t">Заявки</div><div class="t on">Профиль</div></div><div class="avt">МС</div></div>
+    <div class="p16 g10">
+      <div style="border-top:1px solid rgba(0,0,0,.1);padding-top:12px"><span class="kick">Аккаунт</span><div style="font-size:24px;font-weight:500;letter-spacing:-.03em;margin-top:6px">Профиль</div></div>
+      <div style="background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Анкета участника</div>
+        <!-- ФИО row in edit mode -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
+          <span style="font-size:11.5px;color:var(--g2)">ФИО</span>
+          <input class="inp" value="Соколова Мария Андреевна" style="flex:1;min-width:160px" readonly>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn sm" style="background:var(--plate);color:#fff;border-radius:7px">Сохранить</button>
+            <button class="btn sm line" style="border-radius:7px">Отмена</button>
+          </div>
+        </div>
+        <div class="prow"><span style="color:var(--g2)">Дата рождения</span><span>15.03.2003</span><span></span></div>
+        <div class="prow"><span style="color:var(--g2)">Телефон</span><span>+7 999 000-00-00</span><button class="mlink">Редактировать</button></div>
+        <div class="prow"><span style="color:var(--g2)">Город</span><span>Москва</span><button class="mlink">Редактировать</button></div>
+      </div>
+      <div style="background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px">
+        <span style="font-size:14px;font-weight:600">Быстрые входы</span>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="background:#0077FF;width:22px;height:22px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">VK</span><span style="font-size:13px;font-weight:500;flex:1">VK ID</span><span class="tag ok">подключён</span><button class="mlink">Отвязать</button></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="background:#FC3F1D;width:22px;height:22px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">Я</span><span style="font-size:13px;font-weight:500;flex:1">Яндекс ID</span><button class="mlink">Подключить</button></div>
+          <div class="hint" style="margin-top:2px;font-size:9.5px">Telegram убран в этом релизе</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 6 · УСПЕХ + ФОРМА ЗАЯВКИ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:3556px">УСПЕХ + ФОРМА ЗАЯВКИ</div>
+
+<!-- F25 · Success -->
+<div class="fr" style="left:60px;top:3580px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Success</span><span class="fhroute">/success/:id</span></div>
+    <div class="fhstate">Заявка подана · можно подать ещё</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="avt">МС</div></div>
+    <div style="padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <div class="pix" style="grid-template-columns:repeat(10,13px)"><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i></div>
+      <div class="clu" style="color:var(--g2)">заявка № ТВ-2026-01 · аудио · 24 мая, 14:32</div>
+      <div style="font-size:28px;font-weight:500;letter-spacing:-.04em;line-height:1">Заявка подана</div>
+      <div class="hint" style="max-width:300px">Сначала проверят организаторы, затем допущенные работы оценивает жюри. Статус виден в кабинете.</div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px;width:100%;text-align:left">
+        <div class="tlr"><div class="tld ok"></div><div><div style="font-size:12px;font-weight:500">Подана</div><div class="hint">24 мая 2026</div></div></div>
+        <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">На проверке у организаторов</div></div></div>
+        <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">Оценка жюри</div></div></div>
+        <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">Результат</div></div></div>
+      </div>
+      <div class="hint">Пока заявка в статусе «Подана», её можно редактировать или отозвать.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="btn" style="height:40px;font-size:13px">К моим заявкам</button>
+        <button class="btn line" style="height:40px;font-size:13px">Подать ещё одну</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F26 · Success limit -->
+<div class="fr" style="left:500px;top:3580px">
+  <div class="fhdr" style="background:#2f9e44">
+    <div class="fht"><span class="fhname">Success</span><span class="fhroute">/success/:id</span></div>
+    <div class="fhstate">Лимит 2 заявки достигнут</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div class="avt">МС</div></div>
+    <div style="padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <div class="pix" style="grid-template-columns:repeat(10,13px)"><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i></div>
+      <div class="clu" style="color:var(--g2)">заявка № ТВ-2026-02 · визуал · 25 мая</div>
+      <div style="font-size:28px;font-weight:500;letter-spacing:-.04em;line-height:1">Заявка подана</div>
+      <div class="hint" style="max-width:300px">Обе заявки поданы. Статус виден в кабинете, об изменениях напишем на email.</div>
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px;width:100%;text-align:left">
+        <div class="tlr"><div class="tld ok"></div><div><div style="font-size:12px;font-weight:500">Подана</div><div class="hint">25 мая 2026</div></div></div>
+        <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">На проверке у организаторов</div></div></div>
+        <div class="tlr"><div class="tld wait"></div><div><div style="font-size:12px;color:var(--g2)">Результат</div></div></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="btn" style="height:40px;font-size:13px">К моим заявкам</button>
+        <button class="btn line dis" style="height:40px;font-size:13px">Подать ещё одну</button>
+      </div>
+      <div class="hint">Лимит — 2 заявки на одного участника.</div>
+    </div>
+  </div>
+</div>
+
+<!-- F27 · Form §01 empty -->
+<div class="fr" style="left:940px;top:3580px">
+  <div class="fhdr" style="background:#6741d9">
+    <div class="fht"><span class="fhname">Apply Form · §01</span><span class="fhroute">/apply/:id</span></div>
+    <div class="fhstate">Номинация и работа · пусто</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div style="font-size:11px;color:var(--g2)">Черновик · ТВ-2026-02</div><div class="avt">МС</div></div>
+    <div class="spy"><span class="si on">01</span><span class="si">02</span><span class="si">03</span><span class="si">04</span></div>
+    <div class="fsec">
+      <div><span class="kick">01</span></div>
+      <div class="g10">
+        <div style="font-size:16px;font-weight:500">Номинация и работа</div>
+        <div class="g6"><label class="lbl">Номинация</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="chip">Аудио</span><span class="chip">Визуал</span><span class="chip">Танец</span><span class="chip">Медиа</span><span class="chip">Синтез</span>
+          </div>
+        </div>
+        <div class="g6"><label class="lbl">Название работы</label><input class="inp" placeholder="Как называется твоя работа?"></div>
+        <div class="g6"><label class="lbl">Описание</label><textarea class="inp area" placeholder="Расскажи о работе — идея, процесс, результат. До 2000 символов." rows="3"></textarea></div>
+        <div class="hint tc">Автосохранение черновика</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F28 · Form §02 materials -->
+<div class="fr" style="left:1380px;top:3580px">
+  <div class="fhdr" style="background:#6741d9">
+    <div class="fht"><span class="fhname">Apply Form · §02</span><span class="fhroute">/apply/:id</span></div>
+    <div class="fhstate">Материалы работы</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div style="font-size:11px;color:var(--g2)">Черновик · ТВ-2026-02</div><div class="avt">МС</div></div>
+    <div class="spy"><span class="si">01</span><span class="si on">02</span><span class="si">03</span><span class="si">04</span></div>
+    <div class="fsec">
+      <div><span class="kick">02</span></div>
+      <div class="g10">
+        <div style="font-size:16px;font-weight:500">Материалы работы</div>
+        <div class="drop">
+          <div style="font-size:22px;margin-bottom:8px">↑</div>
+          <div style="font-size:13px;font-weight:500">Перетащи файлы или нажми</div>
+          <div class="hint" style="margin-top:4px">MP3, WAV, FLAC, MP4, PDF, JPG · до 500 МБ</div>
+          <button class="btn sm line" style="margin-top:12px">Выбрать файлы</button>
+        </div>
+        <div class="g6">
+          <div class="frow"><div class="fic">MP3</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">symphony_main.mp3</div><div class="hint">24.3 МБ · загружен</div></div><span class="tag ok">✓</span></div>
+          <div class="frow"><div class="fic">PDF</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">liner_notes.pdf</div><div class="hint">1.2 МБ · загружен</div></div><span class="tag ok">✓</span></div>
+        </div>
+        <div class="hint">Минимум 1 файл. Все форматы описаны в правилах конкурса.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F29 · Form §03 team -->
+<div class="fr" style="left:1820px;top:3580px">
+  <div class="fhdr" style="background:#6741d9">
+    <div class="fht"><span class="fhname">Apply Form · §03</span><span class="fhroute">/apply/:id</span></div>
+    <div class="fhstate">Команда · режим «С командой»</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div style="font-size:11px;color:var(--g2)">Черновик · ТВ-2026-02</div><div class="avt">МС</div></div>
+    <div class="spy"><span class="si">01</span><span class="si">02</span><span class="si on">03</span><span class="si">04</span></div>
+    <div class="fsec">
+      <div><span class="kick">03</span></div>
+      <div class="g10">
+        <div style="font-size:16px;font-weight:500">Команда</div>
+        <div style="display:flex;gap:7px">
+          <span class="chip">Один</span><span class="chip on">С командой</span>
+        </div>
+        <div class="g6"><label class="lbl">Название команды</label><input class="inp" value="Фотон" readonly></div>
+        <div class="g6">
+          <label class="lbl">Пригласить участника</label>
+          <div style="display:flex;gap:7px"><input class="inp" placeholder="email участника" style="flex:1"><button class="btn sm">Пригласить</button></div>
+        </div>
+        <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:ui-monospace,monospace;color:var(--g2);margin-top:2px">Состав</div>
+        <div>
+          <div class="memr"><div class="mavt">МС</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">Мария Соколова</div><div class="hint">m.sokolova@mail.ru</div></div><span class="tag ok">капитан</span></div>
+          <div class="memr"><div class="mavt">ИВ</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">И. Волков</div><div class="hint">i.volkov@mail.ru</div></div><span class="tag warn">ожидает</span></div>
+          <div class="memr"><div class="mavt">АК</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">А. Козлова</div><div class="hint">a.kozlova@mail.ru</div></div><span class="tag ok">принял</span></div>
+        </div>
+        <div class="hint" style="color:var(--warn)">1 участник ожидает подтверждения</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F30 · Form §04 submit -->
+<div class="fr" style="left:2260px;top:3580px">
+  <div class="fhdr" style="background:#6741d9">
+    <div class="fht"><span class="fhname">Apply Form · §04</span><span class="fhroute">/apply/:id</span></div>
+    <div class="fhstate">Согласия и подача</div>
+  </div>
+  <div class="fb">
+    <div class="nav"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><div style="font-size:11px;color:var(--g2)">Черновик · ТВ-2026-02</div><div class="avt">МС</div></div>
+    <div class="spy"><span class="si">01</span><span class="si">02</span><span class="si">03</span><span class="si on">04</span></div>
+    <div class="fsec">
+      <div><span class="kick">04</span></div>
+      <div class="g10">
+        <div style="font-size:16px;font-weight:500">Согласия и подача</div>
+        <div style="background:var(--w);border:1px solid var(--line);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:10px">
+          <label class="chk on"><span class="bx"></span><span>Согласен с Правилами конкурса «Творцы РФ 2026»</span></label>
+          <label class="chk on"><span class="bx"></span><span>Подтверждаю согласие на обработку персональных данных</span></label>
+        </div>
+        <div style="background:var(--w);border:1px solid var(--line);border-radius:9px;padding:12px">
+          <div style="font-size:11px;font-weight:600;margin-bottom:8px;font-family:ui-monospace,monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--g2)">Итого</div>
+          <div style="font-size:13px;line-height:1.7"><span style="color:var(--g2)">Номинация:</span> Аудио-направление<br><span style="color:var(--g2)">Работа:</span> Симфония теней<br><span style="color:var(--g2)">Команда:</span> «Фотон» · 3 участника<br><span style="color:var(--g2)">Файлы:</span> 2 файла · 25.5 МБ</div>
+        </div>
+        <button class="btn sub">Подать заявку</button>
+        <div class="hint tc">После подачи уведомим на email</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ROW 7 · ПРИГЛАШЕНИЕ В КОМАНДУ
+══════════════════════════════════════════════════════════ -->
+<div class="sec" style="left:60px;top:4406px">ПРИГЛАШЕНИЕ В КОМАНДУ · /join/:id</div>
+
+<!-- F31 · JoinInvite guest -->
+<div class="fr" style="left:60px;top:4430px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">JoinInvite · Гость</span><span class="fhroute">/join/:id</span></div>
+    <div class="fhstate">Не авторизован — нужен вход</div>
+  </div>
+  <div class="fb">
+    <div class="poster">
+      <div class="p-kck">Команда зовёт · 2026</div>
+      <div class="p-ttl">Вас зовут в команду</div>
+      <div class="p-lede">М. Волков приглашает присоединиться к заявке на фестиваль «Творцы РФ 2026».</div>
+      <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.15);padding-top:12px">
+        <div class="invr" style="border-color:rgba(255,255,255,.15)"><span style="font-family:ui-monospace,monospace;font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em">КОМАНДА</span><span style="font-size:13px;color:#fff;font-weight:500">«Фотон»</span></div>
+        <div class="invr" style="border-color:rgba(255,255,255,.15)"><span style="font-family:ui-monospace,monospace;font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em">РАБОТА</span><span style="font-size:13px;color:#fff;font-weight:500">Симфония теней</span></div>
+        <div class="invr" style="border-color:rgba(255,255,255,.15)"><span style="font-family:ui-monospace,monospace;font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em">КАПИТАН</span><span style="font-size:13px;color:#fff;font-weight:500">М. Волков</span></div>
+        <div class="invr" style="border-color:rgba(255,255,255,.15);border-bottom:none"><span style="font-family:ui-monospace,monospace;font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em">НОМИНАЦИЯ</span><span style="font-size:13px;color:#fff;font-weight:500">Аудио-направление</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="kick">Шаг 1 из 2</span>
+      <div style="font-size:18px;font-weight:500;letter-spacing:-.02em">Войдите, чтобы ответить</div>
+      <div class="hint">Принять или отклонить приглашение можно только из своего аккаунта — участие подтверждается с личного email.</div>
+      <button class="btn sub">Войти</button>
+      <button class="btn sm line" style="width:100%">Зарегистрироваться</button>
+      <div class="clu tc" style="color:var(--g2)">после входа вернём к этому приглашению</div>
+    </div>
+  </div>
+</div>
+
+<!-- F32 · JoinInvite active -->
+<div class="fr" style="left:500px;top:4430px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">JoinInvite · Авторизован</span><span class="fhroute">/join/:id</span></div>
+    <div class="fhstate">Принять / Отклонить</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g10">
+      <div class="tc g6"><span class="kick">Приглашение в команду</span><div style="font-size:22px;font-weight:500;letter-spacing:-.025em">Команда «Фотон»</div></div>
+      <div class="wcard g10">
+        <div style="font-size:14px;font-weight:600;letter-spacing:-.01em">М. Волков приглашает вас в команду</div>
+        <div class="hint">Участие подтверждается с вашего email — m.sokolova@mail.ru. Приглашение бессрочно.</div>
+        <div>
+          <div class="invr"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">КОМАНДА</span><span style="font-size:13.5px;font-weight:500">«Фотон»</span></div>
+          <div class="invr"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">РАБОТА</span><span style="font-size:13.5px;font-weight:500">Симфония теней</span></div>
+          <div class="invr"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">КАПИТАН</span><span style="font-size:13.5px;font-weight:500">М. Волков</span></div>
+          <div class="invr" style="border-bottom:none"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">НОМИНАЦИЯ</span><span style="font-size:13.5px;font-weight:500">Аудио-направление</span></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn sub" style="flex:1;min-width:140px;height:40px;font-size:13px">Принять приглашение</button>
+          <button class="btn sm line" style="align-self:center">Отклонить</button>
+        </div>
+      </div>
+      <div class="hint tc">После принятия заявка появится в кабинете — редактирует капитан.</div>
+    </div>
+  </div>
+</div>
+
+<!-- F33 · JoinInvite declined -->
+<div class="fr" style="left:940px;top:4430px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">JoinInvite · Отклонено</span><span class="fhroute">/join/:id</span></div>
+    <div class="fhstate">Участник отклонил приглашение</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g10">
+      <div class="tc g6"><span class="kick">Приглашение в команду</span><div style="font-size:22px;font-weight:500;letter-spacing:-.025em">Приглашение отклонено</div></div>
+      <div class="wcard g10">
+        <div class="hint">Капитан увидит отказ в составе команды. Если передумаете — приглашение бессрочно.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm">Передумать и принять</button>
+          <button class="btn sm line">В кабинет</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F34 · JoinInvite already in team -->
+<div class="fr" style="left:1380px;top:4430px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">JoinInvite · Уже в команде</span><span class="fhroute">/join/:id</span></div>
+    <div class="fhstate">Участник уже принял ранее</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div><button class="mlink">Выйти</button></div>
+    <div class="p16 g10">
+      <div class="tc g6"><span class="kick">Приглашение в команду</span><div style="font-size:22px;font-weight:500;letter-spacing:-.025em">Вы уже в команде «Фотон»</div></div>
+      <div class="wcard g10">
+        <div>
+          <div class="invr"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">КОМАНДА</span><span style="font-size:13.5px;font-weight:500">«Фотон»</span></div>
+          <div class="invr"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">РАБОТА</span><span style="font-size:13.5px;font-weight:500">Симфония теней</span></div>
+          <div class="invr" style="border-bottom:none"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--g2);text-transform:uppercase;letter-spacing:.06em">КАПИТАН</span><span style="font-size:13.5px;font-weight:500">М. Волков</span></div>
+        </div>
+        <button class="btn sub" style="height:40px;font-size:13px">В кабинет</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- F35 · JoinInvite invalid -->
+<div class="fr" style="left:1820px;top:4430px">
+  <div class="fhdr" style="background:#0c8599">
+    <div class="fht"><span class="fhname">JoinInvite · Недействительно</span><span class="fhroute">/join/:id</span></div>
+    <div class="fhstate">Ссылка устарела или заявка удалена</div>
+  </div>
+  <div class="fb">
+    <div class="atop"><div class="logo">ТВОРЦЫ<br>БУДУЩЕГО</div></div>
+    <div class="p16 g10">
+      <div class="tc g6"><span class="kick">Приглашение в команду</span><div style="font-size:22px;font-weight:500;letter-spacing:-.025em">Приглашение недействительно</div></div>
+      <div class="wcard g10 tc">
+        <div class="hint">Ссылка устарела или заявка была удалена. Попроси капитана прислать новое приглашение.</div>
+        <button class="btn sm line" style="margin-top:4px">Ко входу</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #cvs -->
+<div class="ctrl">
+  <button class="cb" id="zi">+</button>
+  <button class="cb" id="zo">−</button>
+</div>
+<button class="rb" id="rv">↺ сбросить</button>
+</div><!-- #wrap -->
+</div><!-- #app -->
+
+<script>
+let sc = 0.48, tx = 20, ty = 20;
+const wrap = document.getElementById('wrap');
+const cvs  = document.getElementById('cvs');
+const apply = () => { cvs.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`; };
+apply();
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = wrap.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const d = e.deltaY < 0 ? 1.1 : 0.9;
+  const ns = Math.max(0.12, Math.min(3, sc * d));
+  tx = mx - (mx - tx) * (ns / sc);
+  ty = my - (my - ty) * (ns / sc);
+  sc = ns; apply();
+}, { passive: false });
+
+let drag = false, lx = 0, ly = 0;
+wrap.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; wrap.classList.add('drag'); });
+document.addEventListener('mouseup', () => { drag = false; wrap.classList.remove('drag'); });
+document.addEventListener('mousemove', e => {
+  if (!drag) return;
+  tx += e.clientX - lx; ty += e.clientY - ly;
+  lx = e.clientX; ly = e.clientY; apply();
+});
+
+document.getElementById('zi').onclick = () => { sc = Math.min(3, sc * 1.2); apply(); };
+document.getElementById('zo').onclick = () => { sc = Math.max(0.12, sc / 1.2); apply(); };
+document.getElementById('rv').onclick = () => { sc = 0.48; tx = 20; ty = 20; apply(); };
+
+/* Touch support */
+let t0 = null, ts = sc;
+wrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) { drag = true; lx = e.touches[0].clientX; ly = e.touches[0].clientY; }
+  if (e.touches.length === 2) { t0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); ts = sc; }
+}, { passive: true });
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && drag) {
+    tx += e.touches[0].clientX - lx; ty += e.touches[0].clientY - ly;
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY; apply();
+  }
+  if (e.touches.length === 2 && t0) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    sc = Math.max(0.12, Math.min(3, ts * d / t0)); apply();
+  }
+}, { passive: true });
+wrap.addEventListener('touchend', () => { drag = false; t0 = null; });
+</script>
+</body>
+</html>

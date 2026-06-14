@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дизайн-система · Творцы РФ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+/* ── TOKENS (tokens.css) ── */
+:root {
+  --w:        #FFFFFF;
+  --ink:      #000000;
+  --plate:    #15151A;
+  --paper:    #F0F8FD;
+  --sky:      #D9ECF9;
+  --sky-2:    #C5E4F9;
+  --gray:     #666666;
+  --gray-2:   #646A6E;
+  --line:     rgba(0, 0, 0, .10);
+  --ok:       #1F8A5B;
+  --err:      #B3402E;
+  --warn:     #8A6200;
+  --warn-bg:  rgba(255, 185, 0, .07);
+  --warn-line:rgba(255, 185, 0, .35);
+  --accent:   #5B9BC9;
+  --font-sans: "Golos Text", -apple-system, sans-serif;
+  --font-mono: "Fira Mono", ui-monospace, monospace;
+  --font-jbm:  "JetBrains Mono", ui-monospace, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--font-sans); color: var(--ink); background: #E8F2F9; -webkit-font-smoothing: antialiased; }
+a { cursor: pointer; color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; text-align: inherit; }
+input, textarea { font: inherit; color: inherit; }
+h1, h2, h3, p { margin: 0; }
+b { font-weight: 600; }
+code { font-family: var(--font-jbm); }
+
+/* ── BASE (base.css) ── */
+.jbm { font-family: var(--font-jbm); }
+.cluster { font-family: var(--font-jbm); font-size: 12.5px; line-height: 1.55; letter-spacing: .03em; color: var(--ink); }
+
+/* Buttons */
+.fbtn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 64px; padding: 0 32px; border-radius: 16px;
+  background: var(--sky); color: #0C0C0D;
+  font-family: var(--font-sans); font-weight: 700; font-size: 20px; cursor: pointer;
+  border: none; white-space: nowrap; flex-shrink: 0;
+}
+.fbtn.lg        { height: 84px; font-size: 24px; padding: 0 40px; }
+.fbtn.dark      { background: var(--plate); color: var(--sky-2); }
+.fbtn.line      { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.22); }
+.fbtn.sm        { height: 44px; font-size: 15px; padding: 0 20px; border-radius: 12px; font-weight: 500; }
+.fbtn.disabled  { opacity: .45; cursor: default; pointer-events: none; }
+.fbtn.submit    { background: var(--plate); color: #fff; font-weight: 400; height: 60px; }
+
+/* Status dots */
+.fst {
+  font-family: var(--font-jbm); font-size: 14px; letter-spacing: .05em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+}
+.fst::before { content:""; width:10px; height:10px; border-radius:3px; background:var(--ink); flex-shrink:0; }
+.fst.ok   { color: var(--ok);     } .fst.ok::before   { background: var(--ok);    }
+.fst.err  { color: var(--err);    } .fst.err::before  { background: var(--err);   }
+.fst.wait { color: var(--gray-2); } .fst.wait::before { background: var(--sky-2); }
+.fst.warn { color: var(--warn);   } .fst.warn::before { background: var(--warn);  }
+
+/* Member/doc tags */
+.mtag {
+  font-family: var(--font-jbm); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+  color: var(--gray-2); background: rgba(0,0,0,.06);
+}
+.mtag.ok   { color: var(--ok);   background: rgba(31,138,91,.08);  }
+.mtag.err  { color: var(--err);  background: rgba(179,64,46,.08);  }
+.mtag.warn { color: var(--warn); background: rgba(255,185,0,.18);  }
+
+/* Mono link */
+.mlink {
+  font-family: var(--font-jbm); font-size: 12px; letter-spacing: .04em;
+  color: var(--gray-2); text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
+}
+
+/* Tooltip */
+.tipwrap { position: relative; display: inline-flex; }
+.tipwrap .tip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: var(--plate); color: #fff; font-size: 12.5px; line-height: 1.35;
+  padding: 8px 12px; border-radius: 8px; white-space: nowrap;
+  pointer-events: none; z-index: 30;
+}
+
+/* ── FORMS (forms.css) ── */
+.ff-label {
+  display: block; font-family: var(--font-jbm);
+  font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--gray-2); margin-bottom: 9px;
+}
+.ff-input {
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  padding: 15px 18px; font-size: 17px; color: var(--ink); min-height: 54px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+}
+input.ff-input, textarea.ff-input { display: block; outline: none; }
+input.ff-input::placeholder { color: #9AA6B0; }
+input.ff-input:focus, .ff-input.focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.05); }
+.ff-input.dis, input.ff-input:disabled { background: #F2F5F8; color: var(--gray-2); }
+.ff-input.err, input.ff-input.err { border-color: var(--err); }
+.ff-err  { display: block; font-size: 13.5px; color: var(--err); margin-top: 8px; }
+.ff-hint { font-size: 13.5px; color: var(--gray-2); line-height: 1.4; }
+.ff-act  { font-family: var(--font-jbm); font-size: 12.5px; color: var(--gray-2); cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; }
+
+.ff-wrap { position: relative; }
+.ff-wrap input.ff-input { padding-right: 48px; }
+.ff-wrap .ff-eye {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; opacity: .45; cursor: pointer; background: none; border: none; padding: 0;
+}
+
+.ff-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.ff-chip {
+  font-family: var(--font-sans); font-size: 15px; padding: 9px 16px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--line); color: var(--ink); cursor: pointer; white-space: nowrap;
+}
+.ff-chip.on  { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ff-chip.sky { background: var(--sky); border-color: var(--sky); color: #23425A; }
+
+.ff-check { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; line-height: 1.4; cursor: pointer; }
+.ff-check .box {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid rgba(0,0,0,.3); margin-top: 1px; position: relative; background: #fff;
+}
+.ff-check.on .box { background: var(--ink); border-color: var(--ink); }
+.ff-check.on .box::after {
+  content: ""; position: absolute; left: 6px; top: 2px; width: 6px; height: 11px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+
+.ff-file {
+  display: flex; align-items: center; gap: 16px;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px;
+}
+.ff-file .ic {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 9px; background: var(--sky);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-jbm); font-size: 11px; font-weight: 700; color: #23425A;
+}
+.ff-file.done { box-shadow: inset 0 0 0 1px rgba(31,138,91,.4); }
+.ff-file.ferr { box-shadow: inset 0 0 0 1px rgba(179,64,46,.5); }
+.ff-bar { height: 6px; border-radius: 99px; background: rgba(0,0,0,.08); overflow: hidden; margin-top: 8px; }
+.ff-bar i { display: block; height: 100%; background: var(--ink); border-radius: 99px; }
+.ff-bar.err i { background: var(--err); }
+
+.ff-social { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.ff-social .s {
+  height: 52px; border-radius: 12px; border: 1px solid var(--line); background: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 14.5px; font-weight: 500; cursor: pointer;
+}
+
+.code-cells { display: flex; gap: 12px; }
+.code-cell {
+  width: 80px; height: 88px; border-radius: 18px;
+  border: 1.5px solid rgba(0,0,0,.18); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 42px; font-weight: 400; font-family: var(--font-sans);
+}
+.code-cell.active { border-color: var(--ink); border-width: 2px; box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+
+.ff-anchor { display: flex; flex-direction: column; gap: 2px; }
+.ff-anchor .a {
+  display: flex; align-items: center; gap: 12px; padding: 11px 0;
+  font-size: 15.5px; color: var(--gray-2); cursor: pointer;
+  border: none; border-bottom: 1px solid var(--line); text-align: left; width: 100%; background: none;
+}
+.ff-anchor .a .n { font-family: var(--font-mono); font-size: 13px; letter-spacing: .05em; }
+.ff-anchor .a.cur  { color: var(--ink); font-weight: 600; }
+.ff-anchor .a.done .n { color: var(--ok); }
+
+.pbar {
+  font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .04em; color: var(--gray-2);
+  border-bottom: 1px solid var(--line); padding: 10px 0;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.pbar a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── PAGE CHROME ── */
+.ds-page  { max-width: 1040px; margin: 0 auto; padding: 32px 24px 80px; }
+.ds-title { font-family: var(--font-jbm); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gray-2); margin-bottom: 28px; }
+.ds-wrap  { display: flex; flex-direction: column; gap: 10px; }
+
+.ds-card  { background: #fff; border-radius: 22px; padding: 24px 28px 28px; }
+.ds-tag   {
+  font-family: var(--font-jbm); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--gray-2); margin-bottom: 20px;
+}
+.ds-sub   {
+  font-family: var(--font-jbm); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gray-2); opacity: .7; margin: 20px 0 10px;
+}
+.ds-sub:first-child, .ds-sub.first { margin-top: 0; }
+.ds-row   { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* input grid */
+.ds-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+/* issues */
+.ds-issues {
+  background: var(--warn-bg); border: 1px solid var(--warn-line);
+  border-radius: 22px; padding: 24px 28px;
+}
+.ds-issues-head {
+  font-family: var(--font-jbm); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--warn); margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+}
+.ds-issue {
+  display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--warn-line);
+  font-size: 14px; line-height: 1.55; color: var(--ink);
+}
+.ds-issue:last-child { border-bottom: none; padding-bottom: 0; }
+.ds-itag {
+  font-family: var(--font-jbm); font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap; align-self: flex-start; margin-top: 2px; flex-shrink: 0;
+}
+.ds-itag.miss { color: var(--err);    background: rgba(179,64,46,.1);  }
+.ds-itag.ambi { color: var(--warn);   background: rgba(255,185,0,.2);  }
+.ds-itag.dead { color: var(--gray-2); background: rgba(0,0,0,.07);     }
+.ds-itag.part { color: var(--accent); background: rgba(91,155,201,.12);}
+.ds-code { font-family: var(--font-jbm); font-size: 12.5px; background: rgba(0,0,0,.06); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+
+</style>
+</head>
+<body>
+<div class="ds-page">
+
+  <div class="ds-title">Дизайн-система · Компоненты и состояния</div>
+  <div class="ds-wrap">
+
+    <!-- ══ КНОПКИ ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Кнопки</div>
+      <div class="ds-row">
+        <button class="fbtn dark">Подать заявку</button>
+        <button class="fbtn line">+ Подать заявку</button>
+        <button class="fbtn line">Отменить</button>
+        <button class="fbtn dark disabled">Подать заявку</button>
+        <button class="fbtn line sm">Редактировать</button>
+        <button class="fbtn line sm">Отозвать</button>
+      </div>
+      <div class="ds-sub">sm — малый размер</div>
+      <div class="ds-row">
+        <button class="fbtn sm dark">Сохранить</button>
+        <button class="fbtn sm line">Редактировать</button>
+        <button class="fbtn sm line disabled">Недоступно</button>
+        <button class="fbtn sm line">Докачать</button>
+      </div>
+      <div class="ds-sub">Прочие варианты</div>
+      <div class="ds-row">
+        <button class="fbtn">sky (default)</button>
+        <button class="fbtn submit" style="width:auto;height:60px">Подать заявку — submit</button>
+      </div>
+    </div>
+
+    <!-- ══ ПОЛЯ ВВОДА ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Поля ввода</div>
+      <div class="ds-grid3">
+        <div>
+          <div class="ds-sub first">Пустое</div>
+          <input class="ff-input" placeholder="you@mail.ru">
+        </div>
+        <div>
+          <div class="ds-sub first">Заполненное</div>
+          <input class="ff-input" value="Казань">
+        </div>
+        <div>
+          <div class="ds-sub first">Фокус</div>
+          <input class="ff-input focus" value="Каза">
+        </div>
+        <div>
+          <div class="ds-sub first">Ошибка</div>
+          <input class="ff-input err" value="м.соколова@">
+          <span class="ff-err">Проверьте формат email</span>
+        </div>
+        <div>
+          <div class="ds-sub first">Недоступно</div>
+          <input class="ff-input" value="m.sokolova@mail.ru" disabled>
+        </div>
+        <div>
+          <div class="ds-sub first">Пароль</div>
+          <div class="ff-wrap">
+            <input class="ff-input" type="password" value="password123" style="padding-right:48px">
+            <button class="ff-eye" type="button" aria-label="Показать">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="ds-sub">Textarea</div>
+      <textarea class="ff-input" style="min-height:92px;align-items:flex-start;line-height:1.4;resize:vertical;display:block" placeholder="Расскажите о своём проекте..."></textarea>
+    </div>
+
+    <!-- ══ ЧЕКБОКСЫ · ЧИПЫ · СЕГМЕНТЫ ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Чекбоксы · Чипы · Сегменты</div>
+      <div class="ds-row">
+        <button class="ff-check on"><span class="box"></span><span>Отмечен</span></button>
+        <button class="ff-check"><span class="box"></span><span>Не отмечен</span></button>
+      </div>
+      <div class="ds-sub">Сегменты — single-select (.on)</div>
+      <div class="ds-row">
+        <span class="ff-label" style="margin:0;align-self:center;color:var(--gray-2)">Номинация</span>
+        <button class="ff-chip">Номинация</button>
+        <button class="ff-chip on">Выбрана</button>
+        <button class="ff-chip on">Аудио ✓</button>
+        <button class="ff-chip on">Одному</button>
+        <button class="ff-chip">С командой</button>
+      </div>
+      <div class="ds-sub">Multi-select — .sky</div>
+      <div class="ff-seg">
+        <button class="ff-chip sky">Аудио ✓</button>
+        <button class="ff-chip sky">Медиа ✓</button>
+        <button class="ff-chip">Танец</button>
+        <button class="ff-chip">Визуал</button>
+        <button class="ff-chip">Синтез</button>
+      </div>
+    </div>
+
+    <!-- ══ СТАТУСЫ ЗАЯВКИ И УЧАСТНИКОВ ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Статусы заявки и участников</div>
+      <div class="ds-sub first">Статус-теги (.fst) — заявки</div>
+      <div class="ds-row" style="gap:20px">
+        <span class="fst">Подана</span>
+        <span class="fst wait">На проверке</span>
+        <span class="fst ok">Допущена</span>
+        <span class="fst warn">Ожидает</span>
+        <span class="fst err">На доработку</span>
+      </div>
+      <div class="ds-sub">Теги участников / документов (.mtag)</div>
+      <div class="ds-row" style="gap:8px">
+        <span class="mtag ok">Подтвердил</span>
+        <span class="mtag ok">Приглашена</span>
+        <span class="mtag err">Отклонил</span>
+        <span class="mtag">Без аккаунта</span>
+        <span class="mtag warn">Документы на проверке</span>
+        <span class="mtag">В команде</span>
+      </div>
+      <div class="ds-sub">Таймлайн заявки — StatusTimeline</div>
+      <div style="position:relative;display:grid;grid-template-columns:repeat(4,1fr);margin-top:8px">
+        <div style="position:absolute;left:0;right:0;top:5px;height:1px;background:rgba(0,0,0,.18)"></div>
+        <div style="position:relative;padding-right:12px">
+          <span style="display:block;width:11px;height:11px;border-radius:3px;background:var(--ink)"></span>
+          <div style="font-family:var(--font-jbm);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:14px;opacity:.6">июнь</div>
+          <div style="font-size:16.5px;margin-top:6px">Подана</div>
+        </div>
+        <div style="position:relative;padding-right:12px">
+          <span style="display:block;width:11px;height:11px;border-radius:3px;background:var(--ink)"></span>
+          <div style="font-family:var(--font-jbm);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:14px;opacity:.6">июнь</div>
+          <div style="font-size:16.5px;margin-top:6px">На проверке</div>
+        </div>
+        <div style="position:relative;padding-right:12px">
+          <span style="display:block;width:11px;height:11px;border-radius:3px;background:var(--ink);outline:2px solid var(--ink);outline-offset:2px"></span>
+          <div style="font-family:var(--font-jbm);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:14px;opacity:.6">июль — сент</div>
+          <div style="font-size:16.5px;font-weight:600;margin-top:6px">Допущена</div>
+        </div>
+        <div style="position:relative;padding-right:12px">
+          <span style="display:block;width:11px;height:11px;border-radius:3px;background:#D6DCE1"></span>
+          <div style="font-family:var(--font-jbm);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:14px;opacity:.6">ноябрь</div>
+          <div style="font-size:16.5px;margin-top:6px;color:var(--gray-2)">Итоги</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ФАЙЛЫ · БЫСТРЫЕ ВХОДЫ · КОД ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Файлы · Быстрые входы · Код</div>
+      <div class="ds-sub first">Строки файлов</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- done -->
+        <div class="ff-file done">
+          <span class="ic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13l4 4L19 7" stroke="#23425A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <div style="flex:1">
+            <div style="font-size:15.5px;font-weight:500">rabota_final.mp4</div>
+            <div class="ff-hint" style="margin-top:3px">412 МБ · загружено</div>
+          </div>
+          <button class="ff-act">заменить</button>
+          <button class="mlink">убрать</button>
+        </div>
+
+        <!-- progress -->
+        <div class="ff-file">
+          <span class="ic">MP4</span>
+          <div style="flex:1">
+            <div style="font-size:15.5px;font-weight:500">rabota_final.mp4</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="ff-hint" style="margin-top:3px">загружается · заполняй дальше</div>
+              <div class="ff-hint" style="margin-top:3px">64%</div>
+            </div>
+            <div class="ff-bar"><i style="width:64%"></i></div>
+          </div>
+        </div>
+
+        <!-- broken / resume -->
+        <div class="ff-file ferr">
+          <span class="ic">MP4</span>
+          <div style="flex:1">
+            <div style="font-size:15.5px;font-weight:500">rabota_final.mp4</div>
+            <div class="ff-hint" style="margin-top:3px">соединение прервалось</div>
+            <div class="ff-bar err"><i style="width:64%"></i></div>
+          </div>
+          <button class="fbtn sm line">Докачать</button>
+        </div>
+
+      </div>
+
+      <div class="ds-sub">Быстрые входы — SocialRow</div>
+      <div class="ff-social" style="max-width:420px">
+        <!-- VK -->
+        <button class="s">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <path d="m9.489.004.729-.003h3.564l.73.003.914.01.433.007.418.011.403.014.388.016.374.021.36.025.345.03.333.033c1.74.196 2.933.616 3.833 1.516.9.9 1.32 2.092 1.516 3.833l.034.333.029.346.025.36.02.373.025.588.012.41.013.644.009.915.004.98-.001 3.313-.003.73-.01.914-.007.433-.011.418-.014.403-.016.388-.021.374-.025.36-.03.345-.033.333c-.196 1.74-.616 2.933-1.516 3.833-.9.9-2.092 1.32-3.833 1.516l-.333.034-.346.029-.36.025-.373.02-.588.025-.41.012-.644.013-.915.009-.98.004-3.313-.001-.73-.003-.914-.01-.433-.007-.418-.011-.403-.014-.388-.016-.374-.021-.36-.025-.345-.03-.333-.033c-1.74-.196-2.933-.616-3.833-1.516-.9-.9-1.32-2.092-1.516-3.833l-.034-.333-.029-.346-.025-.36-.02-.373-.025-.588-.012-.41-.013-.644-.009-.915-.004-.98.001-3.313.003-.73.01-.914.007-.433.011-.418.014-.403.016-.388.021-.374.025-.36.03-.345.033-.333c.196-1.74.616-2.933 1.516-3.833.9-.9 2.092-1.32 3.833-1.516l.333-.034.346-.029.36-.025.373-.02.588-.025.41-.012.644-.013.915-.009Z" fill="#0077FF"/>
+            <path d="M6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z" fill="#fff"/>
+          </svg>
+          VK ID
+        </button>
+        <!-- Яндекс -->
+        <button class="s">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <path d="M2.04 12c0-5.523 4.476-10 10-10 5.522 0 10 4.477 10 10s-4.478 10-10 10c-5.524 0-10-4.477-10-10z" fill="#FC3F1D"/>
+            <path d="M13.32 7.666h-.924c-1.694 0-2.585.858-2.585 2.123 0 1.43.616 2.1 1.881 2.959l1.045.704-3.003 4.487H7.49l2.695-4.014c-1.55-1.111-2.42-2.19-2.42-4.015 0-2.288 1.595-3.85 4.62-3.85h3.003v11.868H13.32V7.666z" fill="#fff"/>
+          </svg>
+          Яндекс
+        </button>
+      </div>
+
+      <div class="ds-sub">Ячейки кода — .code-cell</div>
+      <div class="code-cells">
+        <div class="code-cell active">7</div>
+        <div class="code-cell"></div>
+        <div class="code-cell"></div>
+        <div class="code-cell"></div>
+      </div>
+    </div>
+
+    <!-- ══ ЯКОРНАЯ НАВИГАЦИЯ · ОСТАЛОСЬ · ТУЛТИП ══ -->
+    <div class="ds-card">
+      <div class="ds-tag">Якорная навигация · Строка «Осталось» · Тултип</div>
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:40px;align-items:start">
+
+        <div>
+          <div class="ds-sub first">Якорная навигация — .ff-anchor</div>
+          <div class="ff-anchor">
+            <button class="a done"><span class="n">01</span><span>Заполнена</span></button>
+            <button class="a cur"><span class="n">02</span><span>Текущая</span></button>
+            <button class="a"><span class="n">03</span><span>Пустая</span></button>
+          </div>
+          <div style="font-family:var(--font-jbm);font-size:12px;color:var(--gray-2);margin-top:10px;letter-spacing:.03em">
+            Заполнено <b style="color:var(--ink)">1</b> из 3
+          </div>
+        </div>
+
+        <div>
+          <div class="ds-sub first">Строка «Осталось» — .pbar</div>
+          <div class="pbar">
+            Осталось:&nbsp;
+            <a>файл загружается — 64%</a>
+            &nbsp;·&nbsp;
+            <a>2 согласия</a>
+          </div>
+
+          <div class="ds-sub">Тултип — .tipwrap .tip</div>
+          <div style="padding-top:52px">
+            <div class="tipwrap">
+              <button class="fbtn sm line disabled">Редактировать</button>
+              <div class="tip" style="opacity:1">Редактирование доступно только в статусе «Подана»</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ НЕСООТВЕТСТВИЯ ══ -->
+    <div class="ds-issues">
+      <div class="ds-issues-head">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Несоответствия · нужно унифицировать
+      </div>
+
+      <div class="ds-issue">
+        <span class="ds-itag ambi">неоднозначно</span>
+        <div>
+          <b>Главная кнопка: .fbtn.dark vs .fbtn.submit</b> — оба варианта дают тёмный фон. Разница: <code class="ds-code">.submit</code> имеет <code class="ds-code">color:#fff</code> (не sky-2), <code class="ds-code">font-weight:400</code> (не 700), <code class="ds-code">width:100%</code> и <code class="ds-code">height:60px</code> вместо 64px. Когда что применять — нигде не задокументировано.
+        </div>
+      </div>
+
+      <div class="ds-issue">
+        <span class="ds-itag dead">мёртвый токен</span>
+        <div>
+          <b>--gray (#666666) нигде не используется</b> — в <code class="ds-code">tokens.css</code> объявлены <code class="ds-code">--gray</code> и <code class="ds-code">--gray-2</code>, но во всех стилях проекта используется только <code class="ds-code">--gray-2 (#646A6E)</code>. <code class="ds-code">--gray</code> — мёртвый токен, можно удалить.
+        </div>
+      </div>
+
+      <div class="ds-issue">
+        <span class="ds-itag miss">отсутствует</span>
+        <div>
+          <b>Нет React-компонента для ячеек кода</b> — <code class="ds-code">.code-cell</code> описан в <code class="ds-code">forms.css</code>, но в <code class="ds-code">ui.jsx</code> нет компонента <code class="ds-code">CodeCells</code>. Управление фокусом и переход между ячейками при вводе, по всей видимости, сделаны inline в экране авторизации, без переиспользуемой обёртки.
+        </div>
+      </div>
+
+      <div class="ds-issue">
+        <span class="ds-itag ambi">неоднозначно</span>
+        <div>
+          <b>Иконка в .ff-file при состоянии broken</b> — в <code class="ds-code">FileRow</code> (<code class="ds-code">ui.jsx</code>) для состояния <code class="ds-code">broken</code> рендерится иконка ошибки (красный кружок), а не расширение файла. В макете у сломанного файла — «MP4» текстом, как у файла в процессе. Нужно уточнить нужное поведение.
+        </div>
+      </div>
+
+      <div class="ds-issue">
+        <span class="ds-itag part">частично</span>
+        <div>
+          <b>Тултип только вверх</b> — <code class="ds-code">.tipwrap .tip</code> позиционируется исключительно над триггером (<code class="ds-code">bottom: calc(100% + 8px)</code>). Нет модификаторов для вниз / влево / вправо — при использовании у верхнего края экрана тултип обрезается.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

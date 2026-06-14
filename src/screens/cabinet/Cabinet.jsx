@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, shortName,
+  useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted, filledCount, shortName, fmtMB,
 } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Pix, PIX_A, StatusTag, StatusTimeline, Modal } from '../../components/ui.jsx'
@@ -21,10 +21,18 @@ const draftWord = (n) => {
   return 'черновиков'
 }
 
+/* Статус участника в составе команды (read-only витрина у участника) — без email, приватность */
+const MEMBER_STATE = {
+  in:        { label: 'в команде',  cls: 'ok' },
+  confirmed: { label: 'в команде',  cls: 'ok' },
+  invited:   { label: 'ждёт ответа', cls: 'wait' },
+  declined:  { label: 'отклонил',   cls: '' },
+}
+
 /* Пояснение статуса в правой колонке */
 const SIDE_NOTE = {
-  submitted: 'Пока заявка в статусе «Подана», её можно редактировать или отозвать.',
-  review: 'Редактирование закрыто до результата проверки. Заявку можно отозвать.',
+  submitted: 'Заявка принята. До результата проверки её можно отозвать.',
+  review: 'Заявка на проверке. До результата её можно отозвать.',
   rework: 'Исправь работу и подай снова — дедлайн не сгорает.',
   admitted: 'Работа в программе мастерских. Следующий этап — показы, июль.',
   results: 'Сезон завершён — спасибо за участие!',
@@ -83,7 +91,8 @@ export default function Cabinet() {
     <div className="app-root">
       <style>{`
         .cab-meta{margin:16px 0 0 212px}
-        @media(max-width:1080px){.cab-meta{margin-left:0}}
+        @media(max-width:1080px){.cab-meta{margin-left:182px}}
+        @media(max-width:920px){.cab-meta{margin-left:0}}
       `}</style>
       <Nav tab="apps" />
       <div className="sheet" style={{ flex: '1 0 auto' }}>
@@ -96,7 +105,7 @@ export default function Cabinet() {
           </h1>
           {limitReached ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--sp-1)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', background: 'var(--sky)', color: 'var(--ink-blue)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)', fontWeight: 500, fontSize: 15 }}>Все места заняты · 2 из 2</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', background: 'var(--sky)', color: 'var(--ink-blue)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-4)', fontWeight: 500, fontSize: 'var(--fs-base)' }}>Все места заняты · 2 из 2</span>
               <span className="ff-hint" style={{ textAlign: 'right' }}>обе заявки поданы — чтобы подать новую, сначала отзови одну</span>
             </div>
           ) : (
@@ -114,7 +123,7 @@ export default function Cabinet() {
               display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', flexWrap: 'wrap',
             }}>
               <span className="kick">Приглашение</span>
-              <span style={{ flex: 1, minWidth: 220, fontSize: 16.5 }}>
+              <span style={{ flex: 1, minWidth: 160, fontSize: 'var(--fs-md)' }}>
                 {captain ? shortName(captain.name) : 'Капитан'} зовёт тебя в команду «{app.teamName}» — «{app.title || 'Без названия'}»
               </span>
               <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
@@ -130,14 +139,14 @@ export default function Cabinet() {
           <div className="rule-soft" style={{ marginTop: 'var(--sp-10)', paddingTop: 'var(--sp-10)', paddingBottom: 'var(--sp-12)' }}>
             <div style={{ border: '1.5px dashed rgba(0,0,0,.18)', borderRadius: 'var(--r-lg)', padding: '56px var(--sp-10)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--sp-4)', textAlign: 'center' }}>
               <Pix map={PIX_A} cell={20} gap={5} />
-              <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-.02em' }}>Заявок пока нет</div>
-              <p style={{ margin: 0, fontSize: 16.5, lineHeight: 1.5, color: 'var(--gray-2)', maxWidth: 460 }}>
+              <div style={{ fontSize: 'var(--fs-xl)', fontWeight: 500, letterSpacing: '-.02em' }}>Заявок пока нет</div>
+              <p style={{ margin: 0, fontSize: 'var(--fs-md)', lineHeight: 1.5, color: 'var(--gray-2)', maxWidth: 460 }}>
                 Подать работу — минут на десять: выбираешь номинацию, описываешь идею, прикладываешь файлы. Черновик сохраняется сам, заполнять можно в несколько подходов.
               </p>
               <button className="fbtn" style={{ marginTop: 'var(--sp-2)' }} onClick={() => startApply()}>Подать заявку</button>
               <span className="cluster" style={{ color: 'var(--gray-2)' }}>одному или с командой · 14–35 лет · до 2 заявок · бесплатно</span>
             </div>
-            <p style={{ margin: 'var(--sp-5) auto 0', textAlign: 'center', maxWidth: 460, fontSize: 14.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
+            <p style={{ margin: 'var(--sp-5) auto 0', textAlign: 'center', maxWidth: 460, fontSize: 'var(--fs-sm)', lineHeight: 1.45, color: 'var(--gray-2)' }}>
               Тебя позвали в команду? Приглашение появится здесь — даже если письмо потерялось.
             </p>
           </div>
@@ -148,13 +157,13 @@ export default function Cabinet() {
           <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
             <div>
               <span className="kick">Черновик</span>
-              <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
+              <div className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                 {app.num}<br />изменён {app.updatedAt}
                 {app.nomination ? <><br />{NOMINATIONS[app.nomination].label.toLowerCase()}</> : null}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1, color: app.title.trim() ? 'var(--ink)' : 'var(--gray-2)' }}>
+              <div style={{ fontSize: 'var(--fs-3xl)', fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1, color: app.title.trim() ? 'var(--ink)' : 'var(--gray-2)' }}>
                 {app.title.trim() || 'Без названия'}
               </div>
               <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>заполнено {filledCount(app)} из 4 разделов</div>
@@ -174,14 +183,14 @@ export default function Cabinet() {
             <div key={'inv' + app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
               <div>
                 <span className="kick">Приглашение</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
+                <div className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   капитан {captain ? shortName(captain.name) : '—'}<br />
                   {app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''} · {app.members.length} {memberWord(app.members.length)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
+                <div style={{ fontSize: 'var(--fs-3xl)', fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   «{app.teamName}» · {app.title || 'Без названия'}
                 </div>
                 <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>
@@ -205,23 +214,79 @@ export default function Cabinet() {
             <div key={app.id} className="rule-soft cab-section" style={{ marginTop: secTop(), paddingBottom: 'var(--sp-7)' }}>
               <div>
                 <span className="kick">Команда</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
+                <div className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   капитан {captain ? shortName(captain.name) : '—'}<br />
                   {app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''} · {app.members.length} {memberWord(app.members.length)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
+                <div style={{ fontSize: 'var(--fs-3xl)', fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   «{app.teamName}» · {app.title || 'Без названия'}
                 </div>
                 <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>
                   ты участник команды — заявку заполняет и подаёт капитан
                 </div>
+
+                {/* Описание работы — read-only, чтобы участник видел, во что вписался */}
+                {app.description && (
+                  <p style={{ margin: 'var(--sp-4) 0 0', fontSize: 'var(--fs-base)', lineHeight: 1.5, color: 'var(--gray-2)', maxWidth: 640 }}>
+                    {app.description}
+                  </p>
+                )}
+
+                {/* Состав команды — имена и статусы, без email (приватность) */}
+                <div style={{ marginTop: 'var(--sp-5)' }}>
+                  <span className="meta" style={{ textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    Состав · {app.members.length} {memberWord(app.members.length)}
+                  </span>
+                  <div style={{ display: 'grid', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', maxWidth: 460 }}>
+                    {app.members.map(m => {
+                      const st = m.role === 'captain' ? { label: 'капитан', cls: 'ok' } : (MEMBER_STATE[m.tag] || MEMBER_STATE.invited)
+                      const isMe = m.email === state.email
+                      return (
+                        <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-3)', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 'var(--fs-base)', color: m.name ? 'var(--ink)' : 'var(--gray-2)' }}>
+                            {m.name || 'Участник по приглашению'}{isMe ? ' · ты' : ''}
+                          </span>
+                          <span className={'mtag ' + st.cls}>{st.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Материалы — имена файлов без скачивания (правит и выкладывает капитан) */}
+                {app.files.length > 0 && (
+                  <div style={{ marginTop: 'var(--sp-5)' }}>
+                    <span className="meta" style={{ textTransform: 'uppercase', letterSpacing: '.06em' }}>Материалы</span>
+                    <div style={{ display: 'grid', gap: 'var(--sp-1)', marginTop: 'var(--sp-3)' }}>
+                      {app.files.map(f => (
+                        <div key={f.id} className="jbm" style={{ fontSize: 'var(--fs-xs)', color: 'var(--gray-2)', overflowWrap: 'anywhere' }}>
+                          {f.name} · {f.state === 'done' ? fmtMB(f.sizeMB)
+                            : f.state === 'progress' ? `загружается ${f.pct || 0}%`
+                            : f.state === 'broken' ? 'загрузка прервана'
+                            : '…'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Статус: таймлайн только для поданных; черновик капитана ещё не в цикле */}
+                {app.status === 'draft' ? (
+                  <div className="ff-hint" style={{ marginTop: 'var(--sp-6)' }}>
+                    Капитан ещё заполняет заявку — она пока не подана.
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 'var(--sp-7)', maxWidth: 720 }}>
+                    <StatusTimeline status={app.status} submittedAt={app.submittedAt} />
+                  </div>
+                )}
               </div>
               <div className="cab-side">
                 <StatusTag status={app.status} />
-                <div style={{ fontSize: 15.5, lineHeight: 1.4, color: 'var(--gray-2)' }}>
+                <div style={{ fontSize: 'var(--fs-base)', lineHeight: 1.4, color: 'var(--gray-2)' }}>
                   Статус заявки увидишь здесь, а об изменениях напишем на почту.
                 </div>
                 <button className="mlink" style={{ alignSelf: 'flex-start' }} onClick={() => setLeaveApp(app)}>покинуть команду</button>
@@ -239,7 +304,7 @@ export default function Cabinet() {
               {/* Левая колонка */}
               <div>
                 <span className="kick">{nn} / Заявка</span>
-                <div className="jbm" style={{ fontSize: 12.5, letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
+                <div className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', color: 'var(--gray-2)', marginTop: 'var(--sp-3)', lineHeight: 1.7 }}>
                   {app.num}<br />
                   подана {app.submittedAt}<br />
                   {nomLabel.toLowerCase()} · {app.mode === 'solo' ? 'соло' : 'команда ' + app.members.length}
@@ -248,11 +313,11 @@ export default function Cabinet() {
 
               {/* Центр */}
               <div>
-                <div style={{ fontSize: 44, fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
+                <div style={{ fontSize: 'var(--fs-3xl)', fontWeight: 500, letterSpacing: '-.025em', lineHeight: 1 }}>
                   {app.title}
                 </div>
                 {app.status === 'rework' && (
-                  <div style={{ fontSize: 15, color: 'var(--ink-blue)', background: 'var(--paper)', border: '1px solid rgba(91,155,201,.3)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-3)', marginTop: 'var(--sp-3)', lineHeight: 1.4 }}>{app.reworkNote}</div>
+                  <div style={{ fontSize: 'var(--fs-base)', color: 'var(--err)', background: 'rgba(179, 64, 46, .08)', border: '1px solid rgba(179, 64, 46, .25)', borderRadius: 'var(--r-sm)', padding: 'var(--sp-2) var(--sp-3)', marginTop: 'var(--sp-3)', lineHeight: 1.4 }}>{app.reworkNote}</div>
                 )}
                 <div style={{ marginTop: 'var(--sp-7)', maxWidth: 720 }}>
                   <StatusTimeline status={app.status} submittedAt={app.submittedAt} />
@@ -262,16 +327,7 @@ export default function Cabinet() {
               {/* Правая колонка */}
               <div className="cab-side">
                 <StatusTag status={app.status} />
-                <div style={{ fontSize: 15.5, lineHeight: 1.4, color: 'var(--gray-2)' }}>{SIDE_NOTE[app.status]}</div>
-                {app.status === 'submitted' && (
-                  <button className="fbtn sm" onClick={() => nav('/apply/' + app.id)}>Редактировать</button>
-                )}
-                {app.status === 'review' && (
-                  <span className="tipwrap">
-                    <span className="tip">Редактировать можно, пока заявка в статусе «Подана»</span>
-                    <span className="fbtn sm disabled" style={{ flex: 1 }}>Редактировать</span>
-                  </span>
-                )}
+                <div style={{ fontSize: 'var(--fs-base)', lineHeight: 1.4, color: 'var(--gray-2)' }}>{SIDE_NOTE[app.status]}</div>
                 {app.status === 'rework' && (
                   <button className="fbtn sm" onClick={() => reopen(app.id)}>Исправить</button>
                 )}
@@ -285,16 +341,16 @@ export default function Cabinet() {
 
         {/* Подвал листа */}
         <div className="rule-strong sheet-foot">
-          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', textTransform: 'uppercase' }}>приём заявок открыт</span>
-          <span className="jbm" style={{ fontSize: 13, letterSpacing: '.05em', color: 'var(--gray-2)' }}>вопросы → help@liderybuduschego.ru</span>
+          <span className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', textTransform: 'uppercase' }}>приём заявок открыт</span>
+          <span className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', color: 'var(--gray-2)' }}>вопросы → help@liderybuduschego.ru</span>
         </div>
       </div>
 
       {/* Модалка «Отозвать заявку?» */}
       {withdrawApp && (
         <Modal onClose={() => setWithdrawApp(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Отозвать заявку?</div>
-          <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
+          <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Отозвать заявку?</div>
+          <p style={{ margin: 0, fontSize: 'var(--fs-base)', lineHeight: 1.45, color: 'var(--gray-2)' }}>
             «{withdrawApp.title}» · {withdrawApp.nomination ? NOMINATIONS[withdrawApp.nomination].label : ''} · от {withdrawApp.submittedAt}. Заявку удалим, а освободившееся место сможешь занять новой работой.
           </p>
           <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
@@ -315,8 +371,8 @@ export default function Cabinet() {
       {/* Модалка «Покинуть команду?» */}
       {leaveApp && (
         <Modal onClose={() => setLeaveApp(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Покинуть команду?</div>
-          <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
+          <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Покинуть команду?</div>
+          <p style={{ margin: 0, fontSize: 'var(--fs-base)', lineHeight: 1.45, color: 'var(--gray-2)' }}>
             «{leaveApp.teamName}» · {leaveApp.title || 'Без названия'}. Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.
           </p>
           <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
@@ -337,8 +393,8 @@ export default function Cabinet() {
       {/* Модалка «Удалить черновик?» */}
       {deleteDraft && (
         <Modal onClose={() => setDeleteDraft(null)}>
-          <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Удалить черновик?</div>
-          <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.45, color: 'var(--gray-2)' }}>
+          <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em', marginBottom: 'var(--sp-3)' }}>Удалить черновик?</div>
+          <p style={{ margin: 0, fontSize: 'var(--fs-base)', lineHeight: 1.45, color: 'var(--gray-2)' }}>
             «{deleteDraft.title.trim() || 'Без названия'}». Удалим черновик навсегда — восстановить не получится.
           </p>
           <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>

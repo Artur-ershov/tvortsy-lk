@@ -19,7 +19,7 @@ const PRow = ({ label, value, editable, editing, editVal, onEditVal, onStart, on
         <div>
           <input
             className={'ff-input focus' + (err ? ' err' : '')}
-            style={{ padding: 'var(--sp-2) var(--sp-3)', fontSize: 16 }}
+            style={{ padding: 'var(--sp-2) var(--sp-3)', fontSize: 'var(--fs-base)' }}
             value={editVal}
             autoFocus
             onChange={e => onEditVal(mask ? mask(e.target.value) : e.target.value)}
@@ -28,7 +28,7 @@ const PRow = ({ label, value, editable, editing, editVal, onEditVal, onStart, on
           {err && <span className="ff-err">{err}</span>}
         </div>
       ) : (
-        <span style={{ fontSize: 16, color: empty ? 'var(--gray-2)' : 'var(--ink)' }}>{empty ? 'не указано' : value}</span>
+        <span style={{ fontSize: 'var(--fs-base)', color: empty ? 'var(--gray-2)' : 'var(--ink)' }}>{empty ? 'не указано' : value}</span>
       )}
       {editing ? (
         <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
@@ -118,14 +118,14 @@ export default function Profile() {
           {/* Анкета участника */}
           <div className="card-white">
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', marginBottom: 'var(--sp-5)' }}>
-              <span style={{ width: 64, height: 64, borderRadius: 'var(--r-md)', background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-jbm)', fontWeight: 700, fontSize: 22, color: 'var(--ink-blue)', flexShrink: 0 }}>{initialsOf(fullName(state.profile)) || '··'}</span>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-.015em' }}>{fullName(state.profile) || 'Участник'}</div>
-                <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 'var(--sp-1)' }}>{[state.profile.city, state.email].filter(Boolean).join(' · ')}</div>
+              <span style={{ width: 64, height: 64, borderRadius: 'var(--r-md)', background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-jbm)', fontWeight: 700, fontSize: 'var(--fs-lg)', color: 'var(--ink-blue)', flexShrink: 0 }}>{initialsOf(fullName(state.profile)) || '··'}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 500, letterSpacing: '-.015em' }}>{fullName(state.profile) || 'Участник'}</div>
+                <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 'var(--sp-1)', overflowWrap: 'anywhere' }}>{[state.profile.city, state.email].filter(Boolean).join(' · ')}</div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--sp-3)', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Анкета участника</span>
+              <span style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em' }}>Анкета участника</span>
               <span className="cluster" style={{ color: 'var(--gray-2)' }}>подставляется в заявки</span>
             </div>
             <div style={{ marginTop: 'var(--sp-2)' }}>
@@ -144,12 +144,12 @@ export default function Profile() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
             {/* Вход в аккаунт */}
             <div className="card-white">
-              <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Вход в аккаунт</span>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 'var(--sp-4)', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0', marginTop: 'var(--sp-2)' }}>
+              <span style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em' }}>Вход в аккаунт</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr)', gap: 'var(--sp-4)', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0', marginTop: 'var(--sp-2)' }}>
                 <span className="cluster" style={{ color: 'var(--gray-2)' }}>Email</span>
-                <span style={{ fontSize: 15.5 }}>{state.email}</span>
+                <span style={{ fontSize: 'var(--fs-base)', overflowWrap: 'anywhere' }}>{state.email}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-3)', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-3)', rowGap: 'var(--sp-3)', flexWrap: 'wrap', borderTop: '1px solid rgba(0,0,0,.1)', padding: 'var(--sp-4) 0' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span className="cluster" style={{ color: 'var(--gray-2)' }}>Пароль</span>
                   <span className="cluster" style={{ color: 'var(--gray-2)', marginTop: 'var(--sp-1)' }}>изменён 12.05.2026</span>
@@ -163,14 +163,14 @@ export default function Profile() {
 
             {/* Быстрые входы */}
             <div className="card-white">
-              <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.015em' }}>Быстрые входы</span>
+              <span style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em' }}>Быстрые входы</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)', marginTop: 'var(--sp-4)' }}>
                 {SOCIALS.map(([name, icon, key]) => {
                   const on = !!state.socials[key]
                   return (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)' }}>
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)', flexWrap: 'wrap', rowGap: 'var(--sp-1)' }}>
                       {icon}
-                      <span style={{ fontSize: 15.5, fontWeight: 500, flex: 1 }}>{name}</span>
+                      <span style={{ fontSize: 'var(--fs-base)', fontWeight: 500, flex: 1, minWidth: 0 }}>{name}</span>
                       {on && <span className="mtag ok">подключён</span>}
                       <button
                         className="mlink"
@@ -192,9 +192,9 @@ export default function Profile() {
       {pwOpen && (
         <Modal onClose={() => setPwOpen(false)}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--sp-6)' }}>
-            <span style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.015em' }}>Сменить пароль</span>
+            <span style={{ fontSize: 'var(--fs-xl)', fontWeight: 600, letterSpacing: '-.015em' }}>Сменить пароль</span>
             <button
-              style={{ fontSize: 28, color: 'var(--gray-2)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              style={{ fontSize: 'var(--fs-xl)', color: 'var(--gray-2)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               aria-label="Закрыть"
               onClick={() => setPwOpen(false)}
             >×</button>

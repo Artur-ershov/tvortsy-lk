@@ -23,8 +23,8 @@ const InviteRows = ({ app, light = false }) => {
           display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-4)', alignItems: 'baseline',
           padding: 'var(--sp-3) 0', borderBottom: '1px solid ' + (light ? 'rgba(255,255,255,.18)' : 'var(--line)'),
         }}>
-          <span className="jbm" style={{ fontSize: 12.5, letterSpacing: '.06em', textTransform: 'uppercase', color: light ? 'rgba(255,255,255,.6)' : 'var(--gray-2)' }}>{label}</span>
-          <span style={{ fontSize: 16.5, fontWeight: 500, textAlign: 'right', color: light ? '#fff' : 'var(--ink)' }}>{value}</span>
+          <span className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.06em', textTransform: 'uppercase', color: light ? 'rgba(255,255,255,.6)' : 'var(--gray-2)' }}>{label}</span>
+          <span style={{ fontSize: 'var(--fs-md)', fontWeight: 500, textAlign: 'right', color: light ? '#fff' : 'var(--ink)' }}>{value}</span>
         </div>
       ))}
     </div>
@@ -106,6 +106,7 @@ export default function JoinInvite() {
             <button type="button" className="fbtn sm line" onClick={() => go('/register')}>Зарегистрироваться</button>
           </>
         )}
+        <button type="button" className="mlink" style={{ alignSelf: 'center' }} onClick={() => nav('/login')}>← Ко входу</button>
         <div className="cluster" style={{ color: 'var(--gray-2)', textAlign: 'center' }}>
           после {isMinorWall ? 'согласия родителя' : 'входа'} вернём к этому приглашению
         </div>
@@ -157,7 +158,7 @@ export default function JoinInvite() {
   return (
     <CenterShell title={`Команда «${app.teamName || 'Без названия'}»`} onLogout={logout}>
       <div className="wall-card" style={{ marginTop: 'var(--sp-8)' }}>
-        <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-.015em' }}>
+        <div style={{ fontSize: 'var(--fs-lg)', fontWeight: 600, letterSpacing: '-.015em' }}>
           {captain ? shortName(captain.name) : 'Капитан'} зовёт тебя в команду
         </div>
         <p className="ff-hint" style={{ margin: 'var(--sp-2) 0 var(--sp-4)' }}>

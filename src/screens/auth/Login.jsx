@@ -43,14 +43,14 @@ export default function Login() {
       titleSize="clamp(44px, 7vw, 92px)"
       art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
       posterBottom={
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-5)', borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 'var(--sp-6)' }}>
+        <div className="poster-pairs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-5)', borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 'var(--sp-6)' }}>
           {[
             ['Статус заявки', 'виден в кабинете, об изменениях напишем на e-mail'],
             ['Черновики', 'сохраняются сами — заполняй частями, когда удобно'],
           ].map(([n, t]) => (
             <div key={n}>
-              <div style={{ fontSize: 16, fontWeight: 500, color: '#fff' }}>{n}</div>
-              <div style={{ fontSize: 13.5, lineHeight: 1.45, color: 'rgba(255,255,255,.6)', marginTop: 'var(--sp-1)' }}>{t}</div>
+              <div style={{ fontSize: 'var(--fs-base)', fontWeight: 500, color: '#fff' }}>{n}</div>
+              <div style={{ fontSize: 'var(--fs-sm)', lineHeight: 1.45, color: 'rgba(255,255,255,.6)', marginTop: 'var(--sp-1)' }}>{t}</div>
             </div>
           ))}
         </div>
@@ -87,7 +87,7 @@ export default function Login() {
       <SocialRow onClick={() => toast('Демо: быстрый вход недоступен в прототипе')} />
 
       <div style={{ height: 1, background: 'var(--line)' }}></div>
-      <div style={{ textAlign: 'center', fontSize: 15.5 }}>
+      <div style={{ textAlign: 'center', fontSize: 'var(--fs-base)' }}>
         Нет аккаунта?{' '}
         <a
           style={{ fontWeight: 600, color: 'var(--ink)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}

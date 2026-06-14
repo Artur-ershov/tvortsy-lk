@@ -1,12 +1,12 @@
 // Форма заявки «один лист» — структура/копирайт: lk3/it3-form.jsx (+ it3-mobile),
 // визуальный стиль: lk3/screens-form.jsx + screens-form-extra.jsx.
 // 01 Номинация → 02 Работа → 03 Команда → 04 Согласия и подача.
-// Анкеты в форме нет — участник-бар над формой; 2 согласия; приглашения бессрочны.
+// Анкеты в форме нет — личные данные живут в профиле; 2 согласия; приглашения бессрочны.
 import React, { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   useStore, NOMINATIONS, SYNTH_DIR_KEYS,
-  computeTodos, sectionState, filledCount, firstNameCity, fullName,
+  computeTodos, sectionState, filledCount, fullName, initialsOf,
   classifyFile, nextId, countSubmitted, APP_LIMIT,
 } from '../../state/store.jsx'
 import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
@@ -28,9 +28,9 @@ const goTo = (sid) => document.getElementById(sid)?.scrollIntoView({ behavior: '
 /* Индикатор готовности секции под кикером */
 const SectionTag = ({ st }) => {
   if (!st) return null
-  if (st === 'done') return <div className="fst ok" style={{ marginTop: 'var(--sp-4)', fontSize: 12.5 }}>готово</div>
+  if (st === 'done') return <div className="fst ok" style={{ marginTop: 'var(--sp-4)', fontSize: 'var(--fs-xs)' }}>готово</div>
   const cls = st === 'согласие на проверке' ? 'warn' : 'wait'
-  return <div className={'fst ' + cls} style={{ marginTop: 'var(--sp-4)', fontSize: 12.5 }}>{st}</div>
+  return <div className={'fst ' + cls} style={{ marginTop: 'var(--sp-4)', fontSize: 'var(--fs-xs)' }}>{st}</div>
 }
 
 /* Секция «один лист»: kick слева, контент справа */
@@ -76,8 +76,8 @@ export default function ApplyForm() {
   }, [])
 
   if (!app) return <Navigate to="/cabinet" replace />
-  // форма доступна только для draft / submitted; остальные статусы — в кабинет
-  if (['review', 'admitted', 'results'].includes(app.status)) return <Navigate to="/cabinet" replace />
+  // форма доступна только для черновика — после подачи заявка не редактируется (временно)
+  if (app.status !== 'draft') return <Navigate to="/cabinet" replace />
 
   const patch = (p) => dispatch({ type: 'patch-app', id, patch: { ...p, updatedAt: nowHM() } })
   const touch = () => dispatch({ type: 'patch-app', id, patch: { updatedAt: nowHM() } })
@@ -85,8 +85,7 @@ export default function ApplyForm() {
   const todos = computeTodos(app)
   const nomDef = NOMINATIONS[app.nomination] || NOMINATIONS.media
   const filled = filledCount(app)
-  const editingSubmitted = app.status === 'submitted'
-  const limitReached = !editingSubmitted && countSubmitted(state.apps) >= APP_LIMIT
+  const limitReached = countSubmitted(state.apps) >= APP_LIMIT
 
   /* ── файлы ── */
   const addFiles = (list) => {
@@ -136,7 +135,7 @@ export default function ApplyForm() {
   }
 
   const statusHint = limitReached ? (
-    <span className="cluster" style={{ color: 'var(--gray-2)' }}>ты подал 2 заявки — это максимум. Чтобы освободить место, отзови одну в кабинете.</span>
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>ты подал 2 заявки — это максимум. Чтобы освободить место, <button type="button" onClick={() => nav('/cabinet')}>отзови одну в кабинете</button>.</span>
   ) : todos.length === 0 ? (
     <span className="cluster" style={{ color: 'var(--ink)' }}>всё готово — можно подавать заявку</span>
   ) : (
@@ -155,12 +154,6 @@ export default function ApplyForm() {
     <div className="app-root" style={{ background: 'var(--w)' }}>
       <Nav tab="apps" />
 
-      {/* Участник-бар (it3): анкета живёт в профиле */}
-      <div className="pbar">
-        Участник: {firstNameCity(state.profile)}
-        <button type="button" onClick={() => nav('/profile')}>· изменить в профиле</button>
-      </div>
-
       {/* Мобильные прогресс-чипы (видны < 720px) */}
       <div className="mchips">
         {SECTIONS.map(([num], i) => {
@@ -176,18 +169,18 @@ export default function ApplyForm() {
             >{num}{done ? ' ✓' : ''}</button>
           )
         })}
-        <span className="mono" style={{ marginLeft: 'auto', fontSize: 11.5, color: 'var(--gray-2)', alignSelf: 'center' }}>{filled} из 4</span>
+        <span className="mono" style={{ marginLeft: 'auto', fontSize: 'var(--fs-2xs)', color: 'var(--gray-2)', alignSelf: 'center' }}>{filled} из 4</span>
       </div>
 
       <div className="sheet" style={{ flex: '1 0 auto' }}>
         {/* Шапка */}
         <div className="rule-strong" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 'var(--sp-6)', paddingTop: 'var(--sp-6)' }}>
           <div>
-            <span className="kick">{editingSubmitted ? 'Заявка · Подана' : 'Новая заявка · черновик'}</span>
+            <span className="kick">Новая заявка · черновик</span>
             <h1 style={{ fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9, marginTop: 'var(--sp-3)' }}>Подать заявку</h1>
           </div>
           <span className="cluster" style={{ paddingBottom: 'var(--sp-2)', textAlign: 'right' }}>
-            {editingSubmitted ? 'изменения сохранены' : 'черновик сохранён'} · {app.updatedAt}<br />{app.num}
+            черновик сохранён · {app.updatedAt}<br />{app.num}
           </span>
         </div>
 
@@ -267,7 +260,7 @@ export default function ApplyForm() {
                 onDragLeave={() => setOver(false)}
                 onDrop={e => { e.preventDefault(); setOver(false); if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files) }}
               >
-                <div style={{ fontSize: 15.5, color: 'var(--ink)' }}>Перетащи файлы или нажми для выбора</div>
+                <div style={{ fontSize: 'var(--fs-base)', color: 'var(--ink)' }}>Перетащи файлы или нажми для выбора</div>
                 <div className="ff-hint" style={{ marginTop: 'var(--sp-1)' }}>{nomDef.fmt}</div>
               </button>
               <input
@@ -298,10 +291,41 @@ export default function ApplyForm() {
                 />
                 <span className="ff-hint">
                   {app.mode === 'solo'
-                    ? `участвуешь как ${fullName(state.profile)}`
+                    ? 'данные участника берутся из профиля'
                     : 'приглашённые подтверждают участие со своего email'}
                 </span>
               </div>
+
+              {app.mode === 'solo' && (
+                <div style={{ marginTop: 'var(--sp-4)' }}>
+                  <div className="member-row" style={{ gap: 'var(--sp-3)' }}>
+                    <span className="init">{initialsOf(fullName(state.profile)) || '··'}</span>
+                    <div style={{ flex: 1, minWidth: 180 }}>
+                      <div style={{ fontSize: 'var(--fs-md)', fontWeight: 500 }}>{fullName(state.profile) || 'Участник'}</div>
+                      <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 2 }}>
+                        {[state.profile.city, state.email].filter(Boolean).join(' · ')}
+                      </div>
+                    </div>
+                    <button type="button" className="mlink" onClick={() => nav('/profile')}>изменить в профиле</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0 var(--sp-6)', marginTop: 'var(--sp-4)' }}>
+                    {[
+                      ['Дата рождения', state.profile.dob],
+                      ['Телефон', state.profile.phone],
+                      ['Национальность', state.profile.nationality],
+                      ['Место работы / учёбы', state.profile.work],
+                    ].map(([label, val]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--sp-3)', borderBottom: '1px solid var(--line)', padding: 'var(--sp-2) 0' }}>
+                        <span className="cluster" style={{ color: 'var(--gray-2)' }}>{label}</span>
+                        <span style={{ fontSize: 'var(--fs-sm)', textAlign: 'right', overflowWrap: 'anywhere' }}>{val || '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="ff-hint" style={{ marginTop: 'var(--sp-3)' }}>
+                    Эти данные подставятся в заявку из профиля — менять их можно там.
+                  </div>
+                </div>
+              )}
 
               {app.mode === 'team' && (
                 <>
@@ -315,7 +339,7 @@ export default function ApplyForm() {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-3)', marginTop: 'var(--sp-4)', flexWrap: 'wrap' }}>
-                    <span className="mono" style={{ fontSize: 12.5, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--gray-2)' }}>Участники</span>
+                    <span className="mono" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--gray-2)' }}>Участники</span>
                     <span className="ff-hint">подать заявку можно, когда все приглашённые ответили</span>
                   </div>
                   <div style={{ display: 'grid', gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
@@ -398,27 +422,13 @@ export default function ApplyForm() {
 
         {/* Sticky-футер подачи */}
         <div className="ff-foot">
-          {editingSubmitted ? (
-            <>
-              <button type="button" className="mlink" onClick={() => nav('/cabinet')}>← в кабинет</button>
-              <span className="todo" style={{ marginLeft: 'auto' }}>{statusHint}</span>
-              {todos.length === 0 ? (
-                <button type="button" className="fbtn" onClick={() => { toast('Изменения сохранены'); nav('/cabinet') }}>Сохранить изменения</button>
-              ) : (
-                <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Сохранить изменения</span>
-              )}
-            </>
+          {todos.length === 0 && !limitReached ? (
+            <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
           ) : (
-            <>
-              {todos.length === 0 && !limitReached ? (
-                <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
-              ) : (
-                <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
-              )}
-              <span className="todo">{statusHint}</span>
-              <button type="button" className="fbtn sm line" style={{ marginLeft: 'auto' }} onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
-            </>
+            <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
           )}
+          <span className="todo">{statusHint}</span>
+          <button type="button" className="fbtn sm line" style={{ marginLeft: 'auto' }} onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
         </div>
       </div>
 
