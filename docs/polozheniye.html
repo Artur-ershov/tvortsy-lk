@@ -66,6 +66,8 @@
     .nav-link:hover { color: var(--ink); background: rgba(0,0,0,.03); }
     .nav-link.active { color: var(--ink); font-weight: 600; border-left-color: var(--accent); background: rgba(91,155,201,.07); }
     .nav-link .n { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; min-width: 18px; }
+    .nav-link.doc-cur { color: var(--ink); font-weight: 600; border-left-color: var(--accent); cursor: default; }
+    .nav-link.doc-cur:hover { background: none; }
 
     /* ── Контент ── */
     .content {
@@ -144,6 +146,11 @@
     <a class="nav-link" href="#s12" data-sec="s12"><span class="n">12</span>Контакты</a>
     <a class="nav-link" href="#s13" data-sec="s13"><span class="n">13</span>Заключительные</a>
     <a class="nav-link" href="#appendix" data-sec="appendix"><span class="n">→</span>Приложения</a>
+
+    <div class="sidebar-head" style="margin-top: 26px;">Документы фестиваля</div>
+    <a class="nav-link doc-cur"><span class="n">●</span>Положение о фестивале</a>
+    <a class="nav-link" href="/docs/privacy.html"><span class="n">→</span>Политика обработки ПДн</a>
+    <a class="nav-link" href="/docs/consent.html"><span class="n">→</span>Согласие на обработку ПДн</a>
   </nav>
 
   <!-- ── Основной контент ── -->
@@ -434,7 +441,7 @@
       <h2><span class="n">Приложения</span>Отдельные документы</h2>
       <ul class="appendix-list">
         <li><span class="ann">№ 1</span> Форма заявки на участие (регистрационная форма)</li>
-        <li><span class="ann">№ 2</span><a href="/docs/privacy.html">Согласие на обработку персональных данных</a></li>
+        <li><span class="ann">№ 2</span><a href="/docs/consent.html">Согласие на обработку персональных данных</a></li>
         <li><span class="ann">№ 3</span> Форма письменного согласия родителей (для несовершеннолетних участников)</li>
         <li><span class="ann">№ 4</span> Технические требования к загружаемым материалам</li>
         <li><span class="ann">№ 5</span> Оценочный лист члена Экспертного совета</li>
@@ -444,6 +451,7 @@
     <footer>
       Фестиваль-конкурс «ТВОРЦЫ.РФ 2026: Единство в Творчестве»<br>
       Фонд «Лидеры Будущего» · Утверждено Президентом Фонда · 2026<br>
+      Связанные документы: <a href="/docs/privacy.html">Политика обработки ПДн</a> · <a href="/docs/consent.html">Согласие на обработку ПДн</a><br>
       Вопросы: <a href="mailto:official@liderybuduschego.ru">official@liderybuduschego.ru</a> · <a href="mailto:help@tvortsy.online">help@tvortsy.online</a>
     </footer>
 

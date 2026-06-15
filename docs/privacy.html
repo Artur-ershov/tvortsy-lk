@@ -63,6 +63,8 @@
     .nav-link:hover { color: var(--ink); background: rgba(0,0,0,.03); }
     .nav-link.active { color: var(--ink); font-weight: 600; border-left-color: var(--accent); background: rgba(91,155,201,.07); }
     .nav-link .n { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; min-width: 18px; }
+    .nav-link.doc-cur { color: var(--ink); font-weight: 600; border-left-color: var(--accent); cursor: default; }
+    .nav-link.doc-cur:hover { background: none; }
 
     .content { flex: 1; min-width: 0; padding: 48px 48px 80px 56px; max-width: 820px; }
 
@@ -120,6 +122,11 @@
     <a class="nav-link" href="#s9" data-sec="s9"><span class="n">09</span>Несовершеннолетние</a>
     <a class="nav-link" href="#s10" data-sec="s10"><span class="n">10</span>Изменения политики</a>
     <a class="nav-link" href="#s11" data-sec="s11"><span class="n">11</span>Контакты</a>
+
+    <div class="sidebar-head" style="margin-top: 26px;">Документы фестиваля</div>
+    <a class="nav-link" href="/docs/polozheniye.html"><span class="n">→</span>Положение о фестивале</a>
+    <a class="nav-link doc-cur"><span class="n">●</span>Политика обработки ПДн</a>
+    <a class="nav-link" href="/docs/consent.html"><span class="n">→</span>Согласие на обработку ПДн</a>
   </nav>
 
   <main class="content">
@@ -335,7 +342,8 @@
     <footer>
       Фестиваль-конкурс «ТВОРЦЫ.РФ 2026» · Фонд «Лидеры Будущего»<br>
       Политика обработки персональных данных v1.0, вступает в силу 01.04.2026<br>
-      <a href="/docs/polozheniye.html">Положение о фестивале</a> · <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a>
+      Связанные документы: <a href="/docs/polozheniye.html">Положение о фестивале</a> · <a href="/docs/consent.html">Согласие на обработку ПДн</a><br>
+      Вопросы: <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a>
     </footer>
 
   </main>
