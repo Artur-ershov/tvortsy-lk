@@ -4,19 +4,23 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, dobVerdict } from '../../state/store.jsx'
 import { AuthSplit, PanelHead } from '../../components/AuthSplit.jsx'
 import { Field, PasswordInput, Check, SocialRow, OrRow } from '../../components/ui.jsx'
-import { useField, revealInvalid, vEmail, vPassword, vDob, maskDob } from '../../state/validation.js'
-import g559 from '../../assets/group559.png'
+import { useField, revealInvalid, vEmail, vPassword, vDobRegister, maskDob } from '../../state/validation.js'
+import wing from '../../assets/wing.svg'
 
 export default function Register() {
-  const { dispatch, toast } = useStore()
+  const { state, dispatch, toast } = useStore()
   const nav = useNavigate()
   const formRef = useRef(null)
+  // регистрация по ссылке-приглашению: старше 35 можно — но только в команде
+  const hasInvite = !!state.pendingInvite
   const emailF = useField('', vEmail)
   const passF = useField('', vPassword)
-  const dobF = useField('', vDob, { mask: maskDob })
+  const dobF = useField('', vDobRegister(hasInvite), { mask: maskDob })
   const [agree, setAgree] = useState(false)
   const [agreeErr, setAgreeErr] = useState(false)
   const verdict = dobVerdict(dobF.value)
+  // у 14–17 и 35+ объяснение даёт баннер ниже — не дублируем его подсказкой/инлайн-варном у поля
+  const dobBanner = verdict === 'minor' || verdict === 'old'
 
   const submit = () => {
     if (!emailF.valid || !passF.valid || !dobF.valid) { revealInvalid([emailF, passF, dobF], formRef.current); return }
@@ -37,7 +41,7 @@ export default function Register() {
       title="Сделай работу, которую увидят"
       titleSize="clamp(44px, 7vw, 92px)"
       lede="Пришли готовую работу или собери проект с соавторами. Пять направлений, грант на продакшн, финал в ноябре в Москве."
-      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
+      art={<img src={wing} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
       stats={[
         ['5', 'направлений · аудио, визуал, танец, медиа, синтез'],
         ['14–35', 'возраст · РФ и иностранные студенты в России'],
@@ -45,13 +49,12 @@ export default function Register() {
       ]}
     >
       <PanelHead
-        kicker="Регистрация · шаг 1 из 2"
         title="Создать аккаунт"
         hint="В личном кабинете ты подашь заявку, загрузишь работу и увидишь статус на каждом этапе. Анкету заполнишь позже — когда будешь подавать заявку."
       />
 
       <div ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-5)' }}>
-        <Field label="Email" type="email" {...emailF.bind} placeholder="m.sokolova@mail.ru" autoComplete="email" />
+        <Field label="Email" type="email" {...emailF.bind} placeholder="example@mail.ru" autoComplete="email" />
 
         <div>
           <span className="ff-label">Пароль</span>
@@ -61,7 +64,13 @@ export default function Register() {
             : <span className="ff-hint" style={{ display: 'block', marginTop: 'var(--sp-2)' }}>Минимум 8 символов, хотя бы одна буква и одна цифра</span>}
         </div>
 
-        <Field label="Дата рождения" {...dobF.bind} placeholder="ДД.ММ.ГГГГ" hint="от 14 до 35 лет на момент подачи" />
+        <Field
+          label="Дата рождения"
+          {...dobF.bind}
+          warn={dobBanner ? null : dobF.bind.warn}
+          placeholder="ДД.ММ.ГГГГ"
+          hint={dobBanner ? undefined : 'от 14 до 35 лет на момент подачи'}
+        />
       </div>
 
       {verdict === 'minor' && (
@@ -73,10 +82,28 @@ export default function Register() {
         </div>
       )}
 
+      {/* Старше 35: по приглашению — можно (только в команде); без приглашения — самостоятельно нельзя */}
+      {verdict === 'old' && hasInvite && (
+        <div className="locked-banner">
+          <span style={{ fontSize: 'var(--fs-base)', color: 'var(--ink-blue)', fontWeight: 500 }}>Участие — только в составе команды</span>
+          <p className="ff-hint" style={{ margin: 'var(--sp-1) 0 0' }}>
+            Тебе больше 35 — самостоятельно подать заявку нельзя, но капитан позвал тебя в команду, и так участвовать можно. Создадим аккаунт и вернём к приглашению.
+          </p>
+        </div>
+      )}
+      {verdict === 'old' && !hasInvite && (
+        <div className="locked-banner" style={{ background: 'rgba(179, 64, 46, .07)' }}>
+          <span style={{ fontSize: 'var(--fs-base)', color: 'var(--err)', fontWeight: 500 }}>Самостоятельно участвовать нельзя</span>
+          <p className="ff-hint" style={{ margin: 'var(--sp-1) 0 0' }}>
+            Подать заявку самому можно до 35 лет. Старше — только в составе команды: попроси капитана прислать ссылку-приглашение и открой её, тогда регистрация откроется.
+          </p>
+        </div>
+      )}
+
       <div>
         <Check on={agree} onChange={v => { setAgree(v); setAgreeErr(false) }} style={{ marginTop: 2 }}>
-          Согласен на обработку персональных данных —{' '}
-          <a onClick={e => { e.stopPropagation(); toast('Демо: документ откроется в проде') }}>политика обработки</a>
+          Даю <a href="/docs/consent.html" target="_blank" rel="noopener" onClick={e => e.stopPropagation()}>согласие на обработку персональных данных</a>{' '}
+          и принимаю <a href="/docs/privacy.html" target="_blank" rel="noopener" onClick={e => e.stopPropagation()}>политику обработки</a>
         </Check>
         {agreeErr && <span className="ff-err" style={{ display: 'block', marginTop: 'var(--sp-2)' }}>Поставь галочку — без согласия на обработку данных не зарегистрировать</span>}
       </div>

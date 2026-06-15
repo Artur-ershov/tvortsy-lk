@@ -3,10 +3,10 @@
 import React, { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../state/store.jsx'
-import { AuthSplit } from '../../components/AuthSplit.jsx'
+import { AuthSplit, PanelHead } from '../../components/AuthSplit.jsx'
 import { Field } from '../../components/ui.jsx'
 import { useField, revealInvalid, vName, vNameOpt, vPhone, vRequired, maskPhone } from '../../state/validation.js'
-import g559 from '../../assets/group559.png'
+import wing from '../../assets/wing.svg'
 
 export default function Onboarding() {
   const { state, dispatch } = useStore()
@@ -42,15 +42,16 @@ export default function Onboarding() {
       header={<button type="button" className="mlink" onClick={() => { dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>}
       titleSize="clamp(42px, 6.5vw, 84px)"
       lede="Эти данные подставятся в заявку автоматически — заполнишь один раз."
-      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
+      art={<img src={wing} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
     >
+      <PanelHead kicker="Анкета" />
       <div className="form-grid2" ref={formRef}>
-        <Field label="Фамилия" {...lastName.bind} placeholder="Соколова" autoComplete="family-name" />
-        <Field label="Имя" {...firstName.bind} placeholder="Мария" autoComplete="given-name" />
-        <Field label="Отчество" optional {...middleName.bind} placeholder="Андреевна" autoComplete="additional-name" />
-        <Field label="Телефон" type="tel" {...phone.bind} placeholder="+7 917 240-18-66" autoComplete="tel" />
+        <Field label="Фамилия" {...lastName.bind} placeholder="Иванова" autoComplete="family-name" />
+        <Field label="Имя" {...firstName.bind} placeholder="Анна" autoComplete="given-name" />
+        <Field label="Отчество" optional {...middleName.bind} placeholder="Сергеевна" autoComplete="additional-name" />
+        <Field label="Телефон" type="tel" {...phone.bind} placeholder="+7 999 999-99-99" autoComplete="tel" />
         <Field label="Национальность" {...nationality.bind} placeholder="Русская" />
-        <Field label="Город" {...city.bind} placeholder="Казань" />
+        <Field label="Город" {...city.bind} placeholder="Москва" />
         <div className="full">
           <Field label="Место работы или учёбы" optional {...work.bind} placeholder="Школа, вуз или работодатель" />
         </div>

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore, dobVerdict } from '../../state/store.jsx'
 import { AuthSplit } from '../../components/AuthSplit.jsx'
-import g559 from '../../assets/group559.png'
+import wing from '../../assets/wing.svg'
 
 const fmtTimer = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
@@ -45,10 +45,10 @@ export default function Confirm() {
   return (
     <AuthSplit
       header={<button type="button" className="mlink" onClick={() => { dispatch({ type: 'logout' }); nav('/login') }}>Выйти</button>}
-      kicker="Регистрация · шаг 1 из 2"
+      kicker="Творцы РФ · 2026"
       title={'Проверь почту'}
       titleSize="clamp(42px, 6.5vw, 84px)"
-      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
+      art={<img src={wing} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
       posterBottom={
         <div className="cluster" style={{ color: 'rgba(255,255,255,.65)', maxWidth: 480 }}>
           Код отправлен на <span style={{ color: '#fff' }}>{state.email}</span>.

@@ -1,0 +1,1033 @@
+{
+  "meta": {
+    "project": "tvortsy-lk",
+    "date": "2026-06-15",
+    "method": "multi-agent audit, 11 dimensions, adversarial per-finding verification",
+    "stats": {
+      "dimensions": 11,
+      "findingsVerified": 82,
+      "confirmed": 56,
+      "criticAdded": 0,
+      "bySeverity": {
+        "medium": 18,
+        "low": 37,
+        "high": 1
+      },
+      "byBucket": {
+        "code-quality": 21,
+        "ux": 35
+      }
+    },
+    "notes": "Synthesis/critic and 3 responsive-mobile verifications did not finish (session limit). 26 of 82 raw findings rejected during verification and excluded."
+  },
+  "findings": [
+    {
+      "n": 1,
+      "severity": "high",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/styles/tokens.css",
+      "line": "89",
+      "title": "Нет видимого фокуса на кнопках и интерактивных элементах (focus-visible отсутствует во всём проекте)",
+      "description": "Глобальный ресет `button { ... border: none; ... }` (tokens.css:89) и `a { ... }` снимают рамку, а нигде в CSS нет ни одного правила `:focus-visible` (поиск по всему репозиторию — 0 совпадений). Видимый фокус-ринг есть только у текстовых полей (`.ff-input:focus`, forms.css:17) и ячеек кода (`.code-cell:focus`, forms.css:170). Все кнопки — `.fbtn`, `.ff-chip`, `.ff-check`, `.mlink`, `.cab-title-link`, триггер меню профиля, карточки номинаций, мобильные чипы прогресса — при навигации с клавиатуры не показывают, где находится фокус. Это ломает доступность уже сейчас: пользователь клавиатуры физически не видит, на каком элементе он стоит. WCAG 2.4.7 (Focus Visible, AA).",
+      "evidence": "button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; text-align: inherit; }   // и grep 'focus-visible' по *.css → No matches found",
+      "recommendation": "Добавить глобальное правило фокуса для клавиатуры, например `:where(button, a, [role=button], [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-xs); }`. Это одним блоком закрывает все кнопки/ссылки/карточки и не задевает мышиные клики.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "high",
+        "reasoning": "Подтверждено по фактическому коду. tokens.css:89 точно содержит глобальный ресет `button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; text-align: inherit; }`, а tokens.css:88 снимает оформление со ссылок (`a { ... text-decoration: none; }`). Grep по `focus-visible` во всех *.css — 0 совпадений. Единственные правила фокуса в проекте — текстовые поля (`.ff-input:focus` forms.css:17,25-27) и ячейки кода (`.code-cell:focus` forms.css:170), причём оба сначала делают `outline: none` (forms.css:15,168) и заменяют его на box-shadow/border. Интерактивные элементы реально существуют как фокусируемые контролы: `.fbtn` (base.css:32), `.ff-chip` (forms.css:76), `.ff-check` (forms.css:86), `.mlink` (base.css:111), `.cab-title-link` (app.css:131, явно `background:none; border:0; padding:0`, есть только `:hover` на строке 132). В JSX это настоящие `<button>` (ui.jsx:265-297, JoinInvite.jsx:39-185, Success.jsx:53-59 и др.) — все получают фокус по Tab, но ни одного видимого индикатора фокуса для них CSS не задаёт. Это материальный дефект доступности (WCAG 2.4.7 Focus Visible, AA), ломающий клавиатурную навигацию уже сейчас, а не «известная заглушка прототипа» вроде mock-auth/дат. Severity=high: функциональность для мыши не блокируется и чинится одним CSS-блоком, но клавиатурная навигация фактически непригодна, и дефект перенесётся в боевой двойник при переиспользовании стилей. Не critical, т.к. дефолтный UA-outline всё же частично остаётся на голых ссылках, но согласованного дизайнерского фокус-ринга по проекту нет."
+      }
+    },
+    {
+      "n": 2,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "routing-guards",
+      "file": "src/App.jsx",
+      "line": "63-65",
+      "title": "Заявки не имеют владельца: при переносе в прод (общий стор, много юзеров) /view, /apply, /success раскроют чужие заявки",
+      "description": "RequireActive проверяет только stage, но не владельца заявки. Доступ к конкретной заявке решается лишь поиском по id в общем state.apps (apps.find(a => a.id === id)), а «своё/чужое» нигде по сути не разграничено — в кабинете own-заявки определяются вычитанием: `own = apps.filter(a => !myMemberIn(a))`, то есть ЛЮБАЯ заявка, где ты не приглашённый участник, считается твоей. В текущем прототипе это безопасно (один пользователь, свой localStorage), но это прямая ловушка при портировании на боевой applications.tvortsy.online: там стор/стейт наполняется заявками с сервера, и /view/:id, /apply/:id, /success/:id для чужого id отрендерят чужую заявку как собственную (а /apply ещё и позволит редактировать). Это надо явно отметить как прод-риск, а не как баг прототипа.",
+      "evidence": "App.jsx:63-65 `<Route path=\"/apply/:id\" element={<RequireActive><ApplyForm /></RequireActive>} /> ... <Route path=\"/success/:id\" element={<RequireActive><Success /></RequireActive>} />` — гард не смотрит на :id. Cabinet.jsx:42 `const own = state.apps.filter(a => !myMemberIn(a))`. ApplyView.jsx:55-56 `const app = state.apps.find(a => a.id === id); if (!app) return <Navigate to=\"/cabinet\" replace />` — только проверка существования, не принадлежности.",
+      "recommendation": "При интеграции с реальным API добавить проверку принадлежности заявки текущему пользователю (поле owner/captain email) в ApplyForm/ApplyView/Success: если заявка не своя и не командная для меня — Navigate на /cabinet или 403. Хотя бы оставить TODO в коде гарда, чтобы это не уехало в прод незамеченным.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Находка подтверждена по фактическому коду. RequireActive (src/App.jsx:34-38) проверяет только state.stage==='active' и не смотрит на :id; маршруты /apply/:id, /view/:id, /success/:id (App.jsx:63-65) гейтятся лишь стадией. Принадлежность заявки нигде не проверяется явно: ApplyView.jsx:55-56 и ApplyForm.jsx:52,82-86, и Success.jsx:13 делают state.apps.find(a => a.id === id) и навигируют на /cabinet только при отсутствии заявки (!app) — проверки владельца нет. ApplyForm дополнительно гейтит status!=='draft' и isSenior, но не владельца, то есть чужой черновик можно было бы и редактировать. «Своё/чужое» определяется вычитанием: Cabinet.jsx:42 own = state.apps.filter(a => !myMemberIn(a)) — любая заявка, где ты не приглашённый участник, считается твоей. Структурно поле владельца отсутствует: newDraft (store.jsx:118-137) не содержит owner/captainEmail, единственная привязка к email — внутри members[] с role:'captain', а у solo-заявки members:[] вовсе пустой; occupiesSlot/countUsed (store.jsx:205-215) идентифицируют свою заявку через status!=='draft', а не через сопоставление с текущим пользователем. В текущем прототипе утечки нет (один пользователь, свой localStorage — state.apps содержит только его данные), поэтому это не баг прототипа, а реальная ловушка при портировании на боевой applications.tvortsy.online, где state.apps наполняется заявками с сервера: тогда /view, /apply, /success по чужому id отрендерят чужую заявку как собственную. Рекомендация (проверка принадлежности по owner/captain email в ApplyForm/ApplyView/Success либо хотя бы TODO в гарде) обоснована. Severity=medium: проблема материальна и подтверждена кодом, но дремлющая — проявляется только после интеграции с реальным многопользовательским API, а не как живой эксплойт в этом репозитории."
+      }
+    },
+    {
+      "n": 3,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "logic-bugs-screens",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "110-117",
+      "title": "Лимит суммарного размера для «Синтеза» обходится при загрузке нескольких файлов разом",
+      "description": "Для номинации synth classifyFile считает суммарный размер материалов (cap 500 МБ) на основе переданного списка files + размер нового файла. Но в addFiles цикл по всем выбранным файлам передаёт один и тот же СТАРЫЙ снимок app.files для каждого файла (dispatch асинхронен, app не обновляется внутри цикла). Поэтому при перетаскивании нескольких файлов за один раз каждый проверяется только против уже сохранённых, а не против добавляемых в этой же пачке: два файла по 300 МБ в пустой synth-заявке оба пройдут как 'queue' (каждый видит total≈300), а итоговая сумма 600 > 500 — превышение не поймано. По одному файлу всё считается верно.",
+      "evidence": "const addFiles = (list) => {\n  Array.from(list).forEach(file => {\n    const sizeMB = Math.max(0.1, file.size / 1048576)\n    const cls = classifyFile(file.name, sizeMB, app.nomination || 'media', app.files)\n    dispatch({ type: 'add-file', id, file: { id: crypto.randomUUID(), name: file.name, sizeMB, pct: 0, ...cls } })\n  })\n  touch()\n}",
+      "recommendation": "Аккумулировать добавляемые файлы в локальном массиве и передавать его в classifyFile нарастающим итогом (let acc = [...app.files]; внутри forEach: classifyFile(..., acc); acc.push(новый)). Иначе synth-кап на суммарный размер не держится при мультизагрузке.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В src/screens/form/ApplyForm.jsx:110-117 цикл `Array.from(list).forEach(file => { ... classifyFile(file.name, sizeMB, app.nomination || 'media', app.files) ... dispatch({type:'add-file', ...}) })` для каждого файла передаёт один и тот же замкнутый снимок `app.files`. `app` берётся из стора на рендере, а `dispatch` (useReducer, store.jsx:434-435 — `add-file` лишь возвращает новый state) асинхронен и не переопределяет переменную `app` внутри цикла, поэтому все итерации видят одинаковый старый список файлов.\n\nВ classifyFile (store.jsx:725-744) для synth: `total = files.filter(...).reduce(sum sizeMB) + sizeMB; if (total > nom.maxMB) return {state:'over', ...}`. У synth maxMB=500 (NOMINATIONS, store.jsx:13), и это единственная номинация с лимитом на СУММАРНЫЙ размер. Сценарий из находки реальный: два MP4 по 300 МБ, перетащенные разом в пустую synth-заявку, каждый видит total≈300 ≤ 500 и получает state:'queue'; суммарные 600 > 500 не ловятся.\n\nЭффект материальный, не косметика: state 'over' читается computeTodos (store.jsx:151-155) и гейтит подачу — без файла в состоянии 'over' форма не требует облачную ссылку и пропускает невалидную synth-заявку на 600 МБ. По одному файлу всё считается верно (находка это признаёт). classifyFile — единый источник правды валидации (используется и в openReplace/onReplacePicked через addFiles). Рекомендация про нарастающий аккумулятор (let acc=[...app.files]; classifyFile(...,acc); acc.push) корректна.\n\nSeverity снижена до medium: это прототип с симулированной загрузкой и реальный бэкенд (applications.tvortsy.online) должен перепроверять размеры; формат synth=['mp4'], и одиночный файл >500 МБ всё равно ловится. Но мультидроп — частая операция, обход держится только на synth-капе, и при переносе клиентской валидации это реальный дефект, а не намеренная упрощённость."
+      }
+    },
+    {
+      "n": 4,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "78-82",
+      "title": "Доля старших 35+ считается от всего состава, включая ещё не принявших и отклонивших",
+      "description": "teamSeniorStat в знаменателе берёт members.length — полный массив, включая участников с tag:'invited' (возраст неизвестен, dob пустой) и tag:'declined' (отказался, в команде его нет). При этом числитель (count) считает только тех, у кого реально есть senior-dob. Получается, что капитан может «разблокировать» лишнего старшего, просто разослав приглашения-пустышки или оставив отклонившихся в составе: каждый invited/declined раздувает max = floor(len*0.2). Пример: команда из 4 реальных (1 старший) — floor(4*0.2)=0 → over=true, подать нельзя; но добавь один invited без ответа — len=5, floor(5*0.2)=1 → over=false, правило обходится. teamSeniorStat вызывается везде с полным app.members (canSubmit:233, ApplyForm:106), фильтрации по статусу членства нет ни в одном месте.",
+      "evidence": "export function teamSeniorStat(members = []) {\n  const count = members.filter(m => isSenior(m.dob)).length\n  const max = Math.floor(members.length * SENIOR_SHARE)\n  return { count, max, over: count > max }\n}",
+      "recommendation": "Считать долю по фактическому составу: знаменатель — только реально входящие в команду (tag 'in'|'confirmed', т.е. occupiesSlot/role-капитан + подтверждённые), исключая 'invited' и 'declined'. Напр. const real = members.filter(m => m.tag === 'in' || m.tag === 'confirmed'); затем count/max от real. Это согласуется с reserve-on-confirm и не даёт обходить правило приглашениями-пустышками. Округление (floor vs round) — отдельный открытый вопрос к заказчику, но композиция знаменателя — уже баг.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду src/state/store.jsx:78-82. teamSeniorStat: числитель count = members.filter(m => isSenior(m.dob)).length — реальный возраст есть только у вошедших; знаменатель max = Math.floor(members.length * SENIOR_SHARE) берёт ПОЛНЫЙ массив. Между тем сам проект считает реальным членством только tag 'in'|'confirmed' (occupiesSlot, строки 205-208), а 'invited' идут с пустыми name/dob (структура на строке 129, сид-приглашённый на 287), 'declined' же физически остаётся в массиве при демо-отклонении (member-tag, 448-451 — меняет только tag; удаляют лишь remove-member/leave-team, 447/475). Итог: каждый invited/declined раздувает знаменатель, не добавляясь в числитель, и обходит правило. Проверил математику примера: команда из 4 реальных с 1 старшим → floor(4*0.2)=0 → over=true (нельзя подать); добавляем один invited без ответа → len=5 → floor(5*0.2)=1 → over=false — правило обходится. teamSeniorStat вызывается с полным app.members и в canSubmit (233), и в ApplyForm (106); фильтрации по статусу членства нет нигде. Дополнительно код противоречит собственному комментарию на строке 77 («приглашённые в подсчёт не идут — возраст неизвестен»): они не идут в числитель, но идут в знаменатель. Текст для пользователя тоже врёт — «X из Y допустимых» (ApplyForm:171 и 403) показывает Y, посчитанный от раздутого знаменателя. Это материальный логический баг, а не придирка и не безвредная особенность прототипа: правило 35+ — реальное доменное ограничение (память senior-35-team-rule.md), и оно переносится в прод. Severity = medium: эффект пермиссивный (пропускает лишнего старшего, не теряет данные), требует совпадения условий (режим team + наличие старшего + наличие приглашённых/отклонившихся), и это прототип. Рекомендация аудитора корректна — считать долю по составу с tag 'in'|'confirmed'; floor-vs-round остаётся отдельным открытым вопросом (строки 22, 76)."
+      }
+    },
+    {
+      "n": 5,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "658-665",
+      "title": "Гидрация из localStorage — поверхностный merge: битые или частичные данные ломают приложение",
+      "description": "Инициализация стора делает { ...initialState, ...JSON.parse(raw) } — это shallow-merge. Любое значение из localStorage целиком замещает поле initialState без проверки типа/формы. Если в хранилище окажется apps:null (или не массив), все потребители (state.apps.some в useEffect загрузки файлов:679, countUsed/takenNominations:215/221, Cabinet) упадут на .some/.filter is not a function — белый экран без возможности самовосстановиться, т.к. поломанный стейт продолжит писаться обратно. То же с profile: если сохранён старый profile без какого-то поля, fullName/firstNameCity получат undefined. try/catch ловит только ошибку JSON.parse, но не структурную несовместимость распарсенного объекта. Это прямая ловушка при переносе в прод (там реальные пользователи с устаревшим/битым localStorage от прошлых версий v3).",
+      "evidence": "const raw = localStorage.getItem(LS_KEY)\n      if (raw) return { ...initialState, ...JSON.parse(raw) }",
+      "recommendation": "Добавить валидацию формы после parse: проверить Array.isArray(parsed.apps), наличие/тип ключевых полей (stage из известного множества, profile — объект), и при несоответствии откатываться на сценарий по умолчанию (как в catch). Минимум — нормализовать: apps: Array.isArray(parsed.apps) ? parsed.apps : initialState.apps и т.п. Для прод-двойника завести версию схемы внутри значения и явную миграцию, а не только bump LS_KEY (bump теряет данные пользователя молча).",
+      "verdict": {
+        "isReal": true,
+        "confidence": "medium",
+        "severityAdjusted": "medium",
+        "reasoning": "Находка подтверждена по фактическому коду, но с уточнениями. ФАКТЫ: src/state/store.jsx:661 действительно делает поверхностный merge `{ ...initialState, ...JSON.parse(raw) }` без проверки формы; try/catch (659-662) ловит только синтаксис JSON.parse, не структуру. Потребители вызывают методы массива без защиты: `state.apps.some(...)` на 679, `state.apps.filter(...)` на 215 (countUsed) и 221 (takenNominations) — всего 25 обращений к .apps в 7 файлах (Cabinet, ApplyForm, JoinInvite и др.). При apps не-массиве будет `.filter/.some is not a function`. Error boundary в src/ ОТСУТСТВУЕТ (grep по ErrorBoundary/componentDidCatch пуст), поэтому необработанный throw при рендере размонтирует всё дерево — реально белый экран без самовосстановления. Это подтверждает основной механизм находки.\n\nСЛАБЫЕ МЕСТА находки (почему не выше medium и не critical): (1) Пример с profile/fullName частично неверен — fullName (store.jsx:91) использует optional chaining `profile?.lastName` и устойчив к {}; небезопасен лишь firstNameCity:103 (`profile.lastName`), но автор сослался именно на fullName. (2) Тезис «поломанный стейт пишется обратно» неточен: если бросок происходит в ленивом инициализаторе useReducer (661), useReducer не вернётся, дерево не смонтируется, и autosave-useEffect (672) НЕ запишет — обратной записи нет; запись назад возможна только если плохое значение переживёт init и упадёт уже в дочернем рендере (что и есть реальный путь, т.к. сам спред не итерирует). (3) Кросс-версийный риск «устаревший localStorage» в значительной мере снят документированной стратегией bump LS_KEY (сейчас v3, коммент на 655): смена формы бампает ключ, старые данные просто игнорируются (getItem→null→дефолтный сценарий), несовместимый старый apps в merge НЕ попадает. (4) Сам код приложения никогда не пишет apps как не-массив (initialState.apps=[]), поэтому триггер требует ручного вмешательства в localStorage, усечённой/частичной записи или будущего несовместимого writer'а — в прототипе без бэкенда вероятность низкая.\n\nИТОГ: дефект реальный и материальный (shallow merge + ноль валидации + незащищённые .filter/.some + нет error boundary = подтверждённый путь к белому экрану без восстановления), рекомендация (нормализовать apps/profile после parse, откат на дефолт при несоответствии) корректна и дёшева. Но вероятность срабатывания в самом прототипе низкая (нужна внешняя порча данных), поэтому severity = medium, а не high/critical. Для боевого двойника с реальными пользователями и эволюцией схемы это законная задача на харднинг."
+      }
+    },
+    {
+      "n": 6,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "205-221",
+      "title": "Совпадение email чувствительно к регистру в occupiesSlot/takenNominations/respond-invite/leave-team",
+      "description": "Все сопоставления участника с текущим пользователем идут точным === по email: occupiesSlot (m.email === email), takenNominations (через occupiesSlot), respond-invite (m.email === email, 467), leave-team (m.email !== state.email, 475), ensure-captain. Email при этом нигде не нормализуется (нет toLowerCase/trim) ни при вводе приглашения (ApplyForm sendInvite: inviteEmail.trim() без lower), ни при сравнении. Если капитан пригласил «K.Dmitriev@inbox.ru», а вошедший залогинен как «k.dmitriev@inbox.ru», occupiesSlot вернёт false → слот не зарезервируется, takenNominations не учтёт членство, leave-team не найдёт участника. Для демо-данных совпадает, но это реальная хрупкость правила «2 на всё» и резерва слота.",
+      "evidence": "export const occupiesSlot = (app, email) => {\n  const asMember = app.mode === 'team' && app.members.find(m => m.email === email && m.role !== 'captain')",
+      "recommendation": "Нормализовать email в одном месте: при добавлении участника/приглашении и при сравнении приводить к email.trim().toLowerCase(). Лучше всего — хранить уже нормализованный email в members[].email и в state.email, тогда все === по-прежнему корректны без правок в каждом месте сравнения.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду src/state/store.jsx. Все сопоставления участника с пользователем идут точным === по email без нормализации:\n- occupiesSlot (стр. 206): app.members.find(m => m.email === email && m.role !== 'captain');\n- takenNominations (стр. 220-221) зависит от occupiesSlot — наследует ту же чувствительность;\n- respond-invite (стр. 460, 467): a.members.some(m => m.email === email) и .map(m => (m.email === email ...));\n- leave-team (стр. 475): m.email !== state.email;\n- ensure-captain (стр. 482) кладёт state.email как есть.\n\nНормализации нет нигде на вводе: sendInvite (ApplyForm.jsx:138) хранит inviteEmail.trim() — только trim, без toLowerCase; Login.jsx:18,21 и Register.jsx:28 хранят emailF.value.trim() как есть; валидатор vEmail (validation.js) тоже только trim. Значит расхождение в регистре реально доживает до state.email и members[].email.\n\nМатериальный эффект реален: если капитан пригласил «K.Dmitriev@inbox.ru», а вошедший залогинен как «k.dmitriev@inbox.ru», то в respond-invite known=false → вместо обновления существующего invited-участника добавляется ДУБЛЬ (стр. 464); occupiesSlot вернёт false → слот не зарезервируется, takenNominations не учтёт членство, leave-team (стр. 475) не найдёт участника. Это ломает инвариант ядра — правило «2 на всё» и reserve-on-confirm.\n\nSeverity = medium, а не high: на сидовых демо-данных все email в нижнем регистре и согласованы, демо-логин ограничен m.sokolova@mail.ru, так что в текущем демо-флоу баг недостижим и UX сейчас не ломается. Это латентный дефект корректности, который тривиально проявляется при переносе в реальное использование (email на практике регистронезависимы). CLAUDE.md прямо просит отмечать такие риски при переносе в прод. Рекомендация автора верна: хранить уже нормализованный email (trim().toLowerCase()) при добавлении участника/приглашении и в state.email — тогда все === остаются корректными без правок в каждом месте."
+      }
+    },
+    {
+      "n": 7,
+      "severity": "medium",
+      "bucket": "code-quality",
+      "dimension": "error-handling",
+      "file": "src/state/store.jsx",
+      "line": "148-156",
+      "title": "Файл в состоянии 'error' (неверный формат) не учитывается в computeTodos и не блокирует подачу",
+      "description": "При добавлении файла неверного формата classifyFile возвращает state:'error' (store.jsx:732), и файл попадает в app.files. Но computeTodos смотрит только на состояния done/progress/queue/broken/over — ветки для 'error' нет. Если у заявки есть хотя бы один валидный done-файл И один 'error'-файл, то done.length>0, broken/over отсутствуют, а misfitFiles проверяет только файлы в состоянии 'done' (fileMisfit на store.jsx:751 возвращает null при f.state!=='done'). В итоге форма считает раздел «Работа» готовым и РАЗРЕШАЕТ подачу, хотя в списке висит файл с ошибкой формата. А если 'error'-файл единственный — пользователь видит общий тудушку «файлы работы» вместо причины, потому что done.length===0. Это тихий провал валидации, который в проде с реальным API даст рассинхрон: UI разрешит подать заявку с непригруженным/ошибочным файлом.",
+      "evidence": "const done = app.files.filter(f => f.state === 'done')\n  const loading = app.files.find(f => f.state === 'progress' || f.state === 'queue')\n  const broken = app.files.find(f => f.state === 'broken')\n  const over = app.files.find(f => f.state === 'over')\n  // ветки для f.state === 'error' нет",
+      "recommendation": "Добавить в computeTodos проверку файлов в состоянии 'error' (например const errored = app.files.find(f => f.state === 'error')) и выдавать тудушку «файл не подходит по формату — замени» с anchor s02, до проверки done.length. Либо при добавлении 'error'-файла не класть его в app.files как блокирующий, а показывать ошибку отдельно. Сейчас единый источник истины (computeTodos) не покрывает один из шести задокументированных состояний файла.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. classifyFile при неверном формате возвращает { state: 'error' } (store.jsx:732), а редьюсер add-file безусловно кладёт файл в app.files (store.jsx:435; вызов в ApplyForm.jsx:114 через ...cls). computeTodos (store.jsx:148-156) разбирает только done/progress/queue/broken/over — ветки для 'error' нет. Прослеживается сценарий «один валидный done + один error»: done.length>0, loading/broken/over отсутствуют, поэтому строки 152-155 не срабатывают; misfitFiles тоже пуст, так как fileMisfit возвращает null при f.state!=='done' (store.jsx:752). Итог — computeTodos().length===0, и canSubmit (store.jsx:228-234, проверка на 230) возвращает true: заявку можно подать, хотя в списке висит error-файл. submit-app (store.jsx:406-412) лишь дублирует canSubmit как бэкстоп, так что тоже пропустит. Второй подслучай тоже верен: при единственном error-файле done.length===0 даёт общую тудушку «файлы работы» (строка 155), а не сообщение про формат. Это реальный дефект единого источника истины: в комментарии store.jsx:130 перечислены шесть состояний файла, включая 'error', но computeTodos покрывает только пять — налицо пропуск, а CLAUDE.md прямо называет computeTodos/sectionState/filledCount единственным источником правды.\n\nSeverity снижена до medium (не high): error-файл всё же ВИДИМО помечен в FileRow — красная иконка, errText и кнопка «заменить файл» (ui.jsx:239,245-263,266), то есть для глаза пользователя это не полностью тихий провал, только для логики тудушек. Тезис о «рассинхроне с прод-API» частично гипотетичен: реальный upload-endpoint отверг бы файл неверного формата на загрузке, так что серверного двойника у error-файла не возникло бы. Тем не менее баг материален и воспроизводим: подача проходит при наличии явно ошибочного файла в материалах, что нарушает заявленный инвариант. Рекомендация аудитора корректна — добавить в computeTodos ветку const errored = app.files.find(f => f.state === 'error') с тудушкой/якорем s02 до проверки done.length, либо не учитывать error-файл как валидную часть материалов."
+      }
+    },
+    {
+      "n": 8,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "routing-guards",
+      "file": "src/App.jsx",
+      "line": "54",
+      "title": "Активный пользователь может «расстадироваться» через /confirm — петля-ловушка, теряется доступ к кабинету",
+      "description": "Экраны авторизации (/confirm, /onboarding, /login, /register, /recovery) не защищены от уже активного пользователя — в App.jsx у них нет ни RequireGuest-гарда, ни редиректа по stage (защищается только /cabinet и т.п. через RequireActive). Это само по себе странно (active user открывает экран входа), но /confirm — настоящая ловушка: его кнопка «Подтвердить» безусловно диспатчит confirm-email, а редьюсер confirm-email пересчитывает stage из dobVerdict профиля и возвращает 'confirmed' (или 'minor-wall' для 14–17). То есть active-пользователь, открывший /confirm по истории/закладке/кнопке «назад» и нажавший «Подтвердить», теряет stage 'active' и выпадает из кабинета на онбординг/стену — без всякого предупреждения. RequireActive после этого начнёт выкидывать его из /cabinet.",
+      "evidence": "App.jsx:54 `<Route path=\"/confirm\" element={<Confirm />} />` (без гарда). store.jsx:364-367 `case 'confirm-email': { const verdict = dobVerdict(state.profile.dob); return { ...state, stage: verdict === 'minor' ? 'minor-wall' : 'confirmed' } }`. Confirm.jsx:34-38 `const submit = () => { if (!full) return; dispatch({ type: 'confirm-email' }); nav(...) }`.",
+      "recommendation": "Добавить гард для auth-экранов: если state.stage === 'active', редиректить на /cabinet (по аналогии с RequireActive сделать RequireGuestOrStage). Минимум — внутри Confirm/Onboarding ранний `if (state.stage === 'active') return <Navigate to=\"/cabinet\" replace />`, как уже сделано в Wall.jsx (строки 49-50). Так закладки и кнопка «назад» не будут ломать стадию.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. (1) App.jsx:54 `<Route path=\"/confirm\" element={<Confirm />} />` — у /confirm (как и /onboarding, /login, /register, /recovery) нет гарда, в отличие от /cabinet,/profile,/apply,/view,/success, которые обёрнуты в RequireActive (App.jsx:61-65). (2) store.jsx:364-367 `case 'confirm-email'` безусловно пересчитывает stage из dobVerdict(state.profile.dob) и возвращает 'minor-wall'|'confirmed' — нет проверки текущей стадии, поэтому active затирается. (3) Confirm.jsx:34-39 `submit` при 4 введённых цифрах безусловно `dispatch({type:'confirm-email'})` и навигирует на /wall или /onboarding. Итог: active-пользователь, открывший /confirm по закладке/истории/«назад» и нажавший «Подтвердить», теряет stage 'active' → confirmed (или minor-wall для 14–17), и RequireActive начнёт выкидывать его из /cabinet. Прецедент гарда уже есть — Wall.jsx:49-50 редиректит confirmed/active прочь; Onboarding.jsx (проверен, строки 1-40) такого гарда тоже не имеет. Severity снижена до medium, а не high: путь не на happy-path (HOME.active='/cabinet', внутренних ссылок active→/confirm нет — нужна ручная навигация), и данные не теряются (profile/apps/email живут в state+localStorage; повторная подача онбординга, предзаполненного из state.profile, восстанавливает 'active'). Жёстче случай active-минора (14–17, прошедшего стену): он улетает на minor-wall, откуда быстрого пути назад в active нет (accept-docs — действие модератора). Это реальная воспроизводимая UX-ловушка с лёгким восстановлением, а не разрушение данных; рекомендация (ранний `if (state.stage==='active') return <Navigate to=\"/cabinet\" replace/>` или общий RequireGuest-гард, по аналогии с Wall) корректна и для прод-переноса актуальна."
+      }
+    },
+    {
+      "n": 9,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "142-168",
+      "title": "Лейблы полей не связаны с инпутами программно (label — это <span>, у input нет id)",
+      "description": "В примитиве `Field` подпись выводится через `<span className=\"ff-label\">{label}</span>`, а `<input>`/`<textarea>` не имеют ни `id`+`htmlFor`, ни `aria-label`/`aria-labelledby`. То же в `PasswordInput` (ui.jsx:116-135) — у поля пароля вообще нет связанного лейбла (подпись «Пароль» рисуется отдельным `<span class=ff-label>` в экранах Login/Register/Recovery/Profile). В итоге скринридер при фокусе на поле не зачитывает его название — пользователь не знает, что вводить. Затрагивает все формы: регистрация, вход, онбординг, восстановление, форма заявки, профиль. WCAG 1.3.1 / 4.1.2 / 3.3.2.",
+      "evidence": "<span className=\"ff-label\" ...>{label}...</span>  ...  <input className={'ff-input'...} type={type} value={value} ... />   // ни id, ни htmlFor, ни aria-label",
+      "recommendation": "Связать подпись и поле: сгенерировать id (`useId()`), повесить его на `<input id={id}>`, а лейбл сделать `<label htmlFor={id} className=\"ff-label\">`. Для `PasswordInput` принимать проп `label`/`id` и пробрасывать `aria-label` или связанный `<label>`.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В примитиве `Field` (src/components/ui.jsx:138-182) подпись рисуется как `<span className=\"ff-label\">{label}</span>` (строки 142-145), а `<input>` (158-168) и `<textarea>` (148-156) не имеют ни `id`/`htmlFor`, ни `aria-label`/`aria-labelledby` — программной связи лейбла с полем нет. `PasswordInput` (116-135) вообще не принимает проп label/id: у `<input type=password>` (120-128) нет связанного названия, единственный aria-label стоит только на кнопке-глазике (`aria-label=\"Показать пароль\"`, строка 130). Подпись «Пароль» каждый экран рисует отдельным несвязанным `<span class=ff-label>`: Login.jsx:73, Register.jsx:60, Recovery.jsx:142/149, Profile.jsx:204/209/216. По всему src нет ни одного `<label htmlFor>` и ни одного `useId()` (проверено rg). Это реальный системный дефект доступности: скринридер при фокусе на поле не зачитывает его имя — нарушения WCAG 1.3.1 (связь информации) и 4.1.2 (имя/роль/значение), затрагивает все формы (регистрация, вход, онбординг, восстановление, форма заявки, профиль). Рекомендация аудитора (useId + `<label htmlFor>` в Field, проброс label/id или aria-label в PasswordInput) корректна. Severity понижена до medium: это клиентский demo-прототип без текущего требования по a11y, визуальные подписи для зрячих присутствуют, реальный эффект — только для пользователей вспомогательных технологий; устранять обязательно перед переносом в боевой двойник applications.tvortsy.online."
+      }
+    },
+    {
+      "n": 10,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "158-172",
+      "title": "У полей с ошибкой нет aria-invalid и aria-describedby — текст ошибки не озвучивается",
+      "description": "В `Field` при ошибке инпут получает только визуальный класс `err`, но не `aria-invalid=\"true\"`, а текст ошибки `<span className=\"ff-err\">{error}</span>` (ui.jsx:172) не связан с полем через `aria-describedby`. Скринридер при фокусе на невалидном поле не сообщит ни о факте ошибки, ни о её тексте («Укажи почту», «В номере не хватает цифр» и т.п.). Ошибка передаётся только цветом рамки/иконкой — а для незрячих и для людей, не различающих цвет, это недоступно. WCAG 1.3.1 / 3.3.1 / 4.1.2.",
+      "evidence": "<input className={'ff-input' + (kind ? ' ' + kind : '')} ... />   {error && <span className=\"ff-err\">{error}</span>}   // нет aria-invalid, нет aria-describedby/id у ошибки",
+      "recommendation": "Добавить на инпут `aria-invalid={!!error}` и `aria-describedby={error ? errId : hintId}`, а `<span className=\"ff-err\" id={errId} role=\"alert\">`. Это свяжет поле с сообщением и озвучит ошибку при фокусе/сабмите.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду src/components/ui.jsx. В примитиве `Field` инпут (строки 158-168) и textarea (148-156) получают только визуальный класс через `(kind ? ' ' + kind : '')`, где kind='err' при ошибке. Текст ошибки рендерится как `{error && <span className=\"ff-err\">{error}</span>}` (строка 172) — без `id`, без `role=\"alert\"`. На инпуте нет ни `aria-invalid`, ни `aria-describedby`. Поле также не связано с подписью: лейбл — это `<span className=\"ff-label\">` (строка 142), а не `<label htmlFor>`, то есть у инпута вообще нет программного имени. Тот же дефект в `PasswordInput` (строки 116-135). Grep по всему src подтвердил: нигде нет aria-invalid/aria-describedby/aria-errormessage/role=\"alert\"/role=\"status\" (0 совпадений). `Field` — это основной примитив ввода, используется 15+ раз в экранах auth/form. Таким образом ошибка («Укажи почту», «В номере не хватает цифр» и т.п.) передаётся только цветом рамки и иконкой `!` — недоступно для скринридеров и не различающих цвет. Реальное нарушение WCAG 1.3.1 / 3.3.1 / 4.1.2. Severity снижена до medium (не critical): это клиентский демо-прототип без бэкенда, боевой двойник живёт отдельно, и это не баг корректности данных/рантайма. Но дефект материален — реально ломает UX для незрячих уже сейчас и перенесётся в прод, если разметка переиспользуется."
+      }
+    },
+    {
+      "n": 11,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "306-310",
+      "title": "Модалки без управления фокусом, Esc, role=dialog и aria-modal",
+      "description": "Примитив `Modal` — это `<div className=\"scrim\">` + `<div className=\"modal-card\">` без `role=\"dialog\"`, `aria-modal=\"true\"`, без переноса фокуса внутрь при открытии, без фокус-трапа, без возврата фокуса на триггер при закрытии и без обработки Esc (закрыть можно только кликом по затемнению). На нём построены диалоги «Отозвать заявку?», «Покинуть команду?», «Удалить черновик?» (Cabinet.jsx) и «Сменить пароль» (Profile.jsx) — деструктивные подтверждения. Пользователь клавиатуры/скринридера может «потерять» фокус за модалкой, не закрыть её с Esc и не понять, что открылся диалог. Для сравнения: меню профиля в Nav.jsx Esc обрабатывает (Nav.jsx:42), а модалки — нет. WCAG 2.1.2 / 2.4.3 / 4.1.2.",
+      "evidence": "export const Modal = ({ onClose, children, width = 480 }) => (\n  <div className=\"scrim\" onClick={e => { if (e.target === e.currentTarget) onClose?.() }}>\n    <div className=\"modal-card\" style={{ width }}>{children}</div>\n  </div>\n)",
+      "recommendation": "Добавить `role=\"dialog\" aria-modal=\"true\"` (+ aria-label/aria-labelledby по заголовку), переносить фокус на первый интерактивный элемент при монтировании и возвращать на триггер при размонтировании, ловить Esc (`keydown` → onClose) и зацикливать Tab внутри карточки (фокус-трап).",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. Примитив `Modal` (src/components/ui.jsx:306-310) — это `<div className=\"scrim\" onClick=...><div className=\"modal-card\">{children}</div></div>`. В нём действительно нет: `role=\"dialog\"`, `aria-modal=\"true\"`, `aria-label/aria-labelledby`; нет `useEffect`/keydown — Esc не ловится (единственный путь закрытия — клик по затемнению, проверка `e.target === e.currentTarget`); нет ref, переноса фокуса при монтировании, фокус-трапа и возврата фокуса на триггер при размонтировании. CSS (app.css:209-216) подтверждает: `.scrim` — fixed-оверлей на весь экран (inset:0, z-index:60), поэтому без фокус-трапа фокус клавиатуры реально уходит за модалку. На примитиве построены деструктивные подтверждения: Cabinet.jsx «Отозвать заявку?» (332), «Покинуть команду?» (354), «Удалить черновик?» (376), Profile.jsx «Сменить пароль» (193), а также ApplyView.jsx «Отозвать заявку?» (270) и «Покинуть команду?» (284) — то есть аудитор даже недосчитал использований (6, а не 4), что усиливает находку. Контраст с Nav.jsx реален: там Esc обрабатывается (Nav.jsx:42 `if (e.key === 'Escape') setOpen(false)`), а в модалке — нет. Это настоящий дефект доступности (WCAG 2.1.2/2.4.3/4.1.2 + de-facto 2.1.1: нет Esc-закрытия), не придирка. Severity снижаю до medium: это дизайн-прототип без бэкенда и без заявленных a11y-обязательств, модалки достижимы и закрываются кликом по фону, фактической потери данных без подтверждения нет; но примитив переносится в прод и затрагивает деструктивные диалоги, поэтому риск для пользователей клавиатуры/скринридера материальный и не косметический."
+      }
+    },
+    {
+      "n": 12,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "208-213",
+      "title": "Чекбоксы согласий (Check) не имеют role=checkbox / aria-checked",
+      "description": "`Check` — это `<button>` с визуальным квадратом `.box`, переключающий состояние через CSS-класс `on`, но без `role=\"checkbox\"` и `aria-checked`. Скринридер объявит его как обычную кнопку и не сообщит, отмечена галочка или нет. На этом примитиве стоят обязательные юридические согласия: ПДн при регистрации (Register.jsx:104) и два согласия с Положением/лицензией в форме заявки (ApplyForm.jsx:440-445). Пользователь не понимает состояние обязательной галочки, без которой нельзя зарегистрироваться/подать заявку. WCAG 4.1.2 / 1.3.1.",
+      "evidence": "<button type=\"button\" className={'ff-check' + (on ? ' on' : '')} ... onClick={() => onChange?.(!on)}>\n    <span className=\"box\"></span><span>{children}</span></button>   // нет role=checkbox, нет aria-checked",
+      "recommendation": "Добавить `role=\"checkbox\"` и `aria-checked={on}` на кнопку (либо перейти на нативный `<input type=checkbox>` с визуально скрытым контролом). Состояние сейчас передаётся только классом — продублировать его в ARIA.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. src/components/ui.jsx:208-213 — Check это `<button type=\"button\" className={'ff-check' + (on ? ' on' : '')} onClick={() => onChange?.(!on)}>` с декоративным `<span className=\"box\">`; нет ни role=\"checkbox\", ни aria-checked, ни нативного `<input type=checkbox>`. Грепом по src других ARIA-атрибутов на этом примитиве нет. Состояние «отмечено» рисуется ИСКЛЮЧИТЕЛЬНО через CSS: forms.css:91 `.ff-check.on .box { background: var(--ink) }` и forms.css:92-95 `.ff-check.on .box::after` рисует галочку псевдоэлементом — псевдоэлемент скринридеру не виден. Скринридер объявит контрол как обычную кнопку (с текстом согласия в качестве имени) без состояния checked/unchecked. Это нарушает WCAG 4.1.2 (Name, Role, Value): роль и значение отсутствуют. Примитив стоит на обязательных юридических согласиях: ПДн при регистрации (Register.jsx:104; чекбокс блокирует кнопку «Создать аккаунт» через agreeErr) и двух согласиях Положение/лицензия в форме заявки (ApplyForm.jsx:440,443). Это материальный a11y-дефект на блокирующих контролах, не придирка. Severity снижаю до medium: это прототип без прод-гарантий доступности (боевой двойник отдельный), фикс тривиален (role=\\\"checkbox\\\" + aria-checked={on}), но дефект реальный и должен попасть в хэндофф на прод."
+      }
+    },
+    {
+      "n": 13,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "185-205",
+      "title": "Группы чипсов (Chips) без семантики radiogroup/group и без озвучивания выбора",
+      "description": "`Chips` рендерит набор `<button>` в `<div className=\"ff-seg\">` без обёртки `role=\"radiogroup\"`/`role=\"group\"` и без `fieldset/legend`. Для одиночного выбора (`multi=false`) кнопки не получают `aria-pressed`/`aria-checked`, поэтому выбранный вариант («Одному»/«С командой» в ApplyForm.jsx:330, направления синтеза) не объявляется как активный — состояние передаётся только цветом и (для multi) галочкой в тексте. Подпись группы («Направления внутри синтеза · минимум 2») — обычный `<span class=ff-label>`, не связанный с группой. Скринридер не свяжет варианты в группу и не сообщит, что выбрано. WCAG 1.3.1 / 4.1.2.",
+      "evidence": "<div className=\"ff-seg\">{options.map(o => { const on = ... ; return (<button ... className={'ff-chip' + (on ? ...)} onClick={...}>{o.label}{multi && on ? ' ✓' : ''}</button>) })}</div>   // нет role, нет aria-pressed/checked, нет связанной подписи группы",
+      "recommendation": "Обернуть в `<fieldset>`+`<legend>` (или `role=\"group\"`/`role=\"radiogroup\"` с `aria-labelledby`), для одиночного выбора задать каждой кнопке `role=\"radio\" aria-checked={on}` (или `aria-pressed={on}` для toggle), для множественного — `aria-pressed={on}`.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. src/components/ui.jsx:185-205: компонент Chips рендерит `<div className=\"ff-seg\">` без role=\"group\"/\"radiogroup\" и без aria-labelledby; внутри — `<button type=\"button\" className={'ff-chip' + (on ? (multi ? ' sky' : ' on') : '')}>` без aria-pressed, aria-checked и role=\"radio\". Текстовый маркер выбора `{multi && on ? ' ✓' : ''}` добавляется ТОЛЬКО для multi.\\n\\nПроверены оба места вызова. ApplyForm.jsx:330-334 — одиночный выбор «Одному»/«С командой» (multi=false): активный вариант не получает ни ✓, ни aria-атрибута, его состояние видно лишь по классу .on, который в forms.css:82 (`.ff-chip.on { background: var(--ink); color:#fff; border-color:var(--ink) }`) отличается от базового только цветом/фоном/границей — то есть передаётся исключительно цветом. ApplyForm.jsx:248-253 — мультивыбор направлений синтеза (multi): здесь есть ✓ в доступном имени, но всё равно нет роли группы и aria-pressed. Подпись группы ApplyForm.jsx:244-247 — обычный `<span className=\"ff-label\">…Направления внутри синтеза · минимум 2…`, не связанный с группой через aria-labelledby/legend.\\n\\nИтог: реальные нарушения WCAG 1.3.1 (группа вариантов не объявлена как группа, подпись не связана) и 4.1.2 (для одиночного выбора нет программно выраженного selected-состояния). Это не придирка: солo/команда и направления синтеза — функциональные элементы формы, которые скринридер/клавиатурный пользователь обязан использовать.\\n\\nSeverity снижен до medium: кнопки остаются фокусируемыми и работоспособными, мультивыбор хотя бы озвучивает выбор через ✓, проблема — деградация доступности, а не полная неработоспособность; репозиторий — клиентский прототип без бэкенда. Но при переносе в боевой двойник (applications.tvortsy.online) это реальный барьер, который стоит закрыть (fieldset/legend или role + aria-checked/aria-pressed)."
+      }
+    },
+    {
+      "n": 14,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/screens/auth/Confirm.jsx",
+      "line": "33-39",
+      "title": "Неверный код подтверждения не имеет состояния ошибки — ловушка при переносе в прод",
+      "description": "На экране подтверждения почты любые 4 цифры считаются верными: submit просто диспатчит confirm-email и навигирует дальше. Состояния «код неверный» нет вообще — ни визуального (красные ячейки), ни текстового. В прототипе это намеренно (код = любые 4 цифры), но дизайн не предусматривает ВООБЩЕ никакого пути для ошибки. При подключении боевого API (FastAPI/JWT) реальный неверный код просто проглотится без обратной связи — пользователь застрянет, не понимая, что ввёл не то. Это явная ловушка переноса в прод.",
+      "evidence": "const full = code.every(d => /^\\d$/.test(d))\n  const submit = () => {\n    if (!full) return\n    dispatch({ type: 'confirm-email' })",
+      "recommendation": "Зарезервировать состояние ошибки уже в прототипе: добавить useState(codeErr), при неверном коде подсвечивать .code-cell классом err и показывать строку вроде «Код не подошёл — проверь и введи ещё раз или запроси новый». Даже на mock-логике можно завести демо-правило (например, код 0000 = ошибка), чтобы состояние было задизайнено и протестировано до интеграции с API.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В src/screens/auth/Confirm.jsx:33-39 единственная проверка перед навигацией — const full = code.every(d => /^\\d$/.test(d)) и if (!full) return; затем dispatch({ type: 'confirm-email' }) и nav(...). Никакого сравнения введённого кода с эталоном нет. Редьюсер confirm-email (src/state/store.jsx:364-368) вообще не принимает код как аргумент — он лишь читает dobVerdict(state.profile.dob) и переводит stage в minor-wall/confirmed. То есть любые 4 цифры всегда «верны». Состояния ошибки нет ни в компоненте (нет useState вроде codeErr), ни в стилях: в src/styles/forms.css:162-170 для .code-cell определены только базовый вид и :focus, модификатора .err/.error для ячеек кода нет нигде; то же касается дубля логики в Recovery.jsx (тот же .code-cell, тот же подход). Вывод аудитора фактически точен: путь «код неверный» в дизайне не зарезервирован вообще. Текущее поведение в прототипе намеренно (CLAUDE.md: код = любые 4 цифры, mock-auth «известно и трекается»), поэтому это не функциональный баг здесь и сейчас. Но это реальный материальный пробел дизайна и ловушка при переносе на боевой FastAPI/JWT: реальный неверный код проглотится без обратной связи, пользователь застрянет. Это согласуется с трекаемыми «расхождениями с прототипом на доработку» (HANDOFF/память prod-api-integration), то есть находка в зоне реальной работы, а не придирка. Severity снижаю до medium: это UX/handoff-пробел проектирования, а не текущий функциональный сбой; рекомендация (завести состояние ошибки и демо-правило, напр. 0000 = ошибка) обоснована и в духе существующего слоя валидации проекта."
+      }
+    },
+    {
+      "n": 15,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "logic-bugs-screens",
+      "file": "src/screens/cabinet/Cabinet.jsx",
+      "line": "38-42, 53-56",
+      "title": "Отклонённое приглашение исчезает из кабинета без возможности вернуться",
+      "description": "В Cabinet можно отклонить приглашение прямо из кабинета (declineInvite → respond-invite, tag:'declined'). Заявка при этом остаётся в state.apps, но после отклонения она пропадает из кабинета целиком: myMemberIn(a) возвращает участника с tag='declined' (truthy) → заявка исключается из own (own = state.apps.filter(a => !myMemberIn(a))); memberships требует tag==='confirmed' → не попадает; invites требует tag==='invited' → не попадает. В итоге ни одна из трёх секций кабинета её не показывает. Передумать («Передумать и принять») можно только на экране /join/:id, но ссылки на него после отклонения в кабинете больше нигде нет — пользователь теряет доступ к собственному решению.",
+      "evidence": "const own = state.apps.filter(a => !myMemberIn(a))\n...\nconst memberships = state.apps.filter(a => { const m = myMemberIn(a); return m && m.tag === 'confirmed' })\nconst invites = state.apps.filter(a => { const m = myMemberIn(a); return m && m.tag === 'invited' })\n...\nconst declineInvite = (app) => {\n  dispatch({ type: 'respond-invite', id: app.id, tag: 'declined' })\n  toast('Приглашение отклонено')\n}",
+      "recommendation": "Либо показывать отклонённые приглашения отдельной свёрнутой секцией с кнопкой «Передумать» (как на /join), либо, если приглашение пришло по ссылке и заявки в кабинете быть не должно, удалять declined-членство из state.apps этого пользователя. Сейчас оно подвисает в сторе невидимым.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В Cabinet.jsx:38-42 три секции строятся так: myMemberIn(a)=a.mode==='team' && a.members.find(m=>m.email===state.email && m.role!=='captain') — возвращает участника при ЛЮБОМ tag; memberships требует tag==='confirmed'; invites требует tag==='invited'; own=state.apps.filter(a=>!myMemberIn(a)). declineInvite (54-56) шлёт respond-invite tag:'declined'. Редьюсер respond-invite (store.jsx:454-473) для 'declined' идёт в ветку map и проставляет моему участнику tag:'declined', НЕ удаляя его из app.members и не убирая заявку из state.apps. Итог: после отклонения участник существует с tag==='declined' → myMemberIn truthy → заявка выпадает из own; не 'confirmed' → не в memberships; не 'invited' → не в invites. Заявка исчезает из всех трёх секций кабинета — проверено, как и заявлено. Вернуть решение можно только на /join/:id (JoinInvite.jsx:147-161, кнопка «Передумать и принять»), но единственная ссылка туда из кабинета («о приглашении», строка 157) живёт ВНУТРИ invites.map, который эту заявку уже не содержит. То есть внутри приложения путь назад действительно теряется — находка корректна и не основана на неверном прочтении. Severity снижаю до medium: это не порча данных (occupiesSlot, store.jsx:205-208, корректно считает declined как НЕ занимающий слот, поэтому счётчик «X из 2» остаётся верным), заявка не теряется из стора и технически восстановима по прямой ссылке /join/:id (в демо — стабильный /join/team-shum) или повторно присланному инвайту; кнопка «Отклонить» в кабинете вторична относительно основного флоу /join. Но как UX-дефект это реально и воспроизводимо: пользователь жмёт «Отклонить» в кабинете, карточка пропадает целиком без отмены и без видимого пути назад. Рекомендация аудитора (отдельная свёрнутая секция «отклонённые» с кнопкой «Передумать», либо удаление declined-членства из state.apps) обоснована."
+      }
+    },
+    {
+      "n": 16,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "logic-bugs-screens",
+      "file": "src/screens/cabinet/Profile.jsx",
+      "line": "136",
+      "title": "Национальность нельзя отредактировать в профиле (нет editable)",
+      "description": "Поле «Национальность» выводится без пропа editable, поэтому в профиле его нельзя изменить — кнопка «Редактировать/Добавить» не появляется (см. ветку editable в PRow). При этом национальность собирается как ОБЯЗАТЕЛЬНОЕ поле в онбординге (vRequired('Укажи национальность')) и подставляется в заявку (solo-facts в ApplyForm). Соседние поля того же ряда (work, phone, city) — editable. Это похоже на пропущенный проп: опечатку в национальности участник исправить не сможет, в отличие от прода, где данные правят.",
+      "evidence": "<PRow label=\"Дата рождения\" {...prow('dob')} />\n<PRow label=\"Национальность\" {...prow('nationality', vRequired('Укажи национальность'))} />\n<PRow label=\"Место работы / учёбы\" editable {...prow('work')} />",
+      "recommendation": "Добавить editable к строке «Национальность» (валидатор уже передан). Если недоступность намеренная (как у dob), убрать введённый валидатор и согласовать с тем, что поле обязательно в онбординге.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В Profile.jsx (строки 12-44) компонент PRow рисует кнопку «Редактировать/Добавить» ТОЛЬКО в ветке `: editable ? (<button className=\"mlink\"…>)` (строка 38-39); без пропа `editable` срабатывает ветка `: (<span></span>)` (строки 40-41) — действия нет. Строка 136 `<PRow label=\"Национальность\" {...prow('nationality', vRequired('Укажи национальность'))} />` пропа `editable` НЕ имеет, тогда как соседние строки того же ряда — work (137), phone (138), city (139), а также lastName/firstName/middleName (132-134) — все с `editable`. Значит национальность в профиле не отредактировать.\n\nЭто именно пропущенный проп, а не намеренный read-only: переданный валидатор `validate` потребляется лишь внутри ветки `editing` (строки 14, 21-28), в которую без `editable` войти невозможно — то есть валидатор оказывается мёртвым кодом. Сравнение с `dob` корректно: dob (строка 135) и read-only, и БЕЗ валидатора — внутренне согласован (ДР задаётся на регистрации и гейтит ветвление по возрасту). Национальность отличается: валидатор передан, а `editable` нет — рассогласование.\n\nМатериальный вред подтверждён цепочкой: национальность — ОБЯЗАТЕЛЬНОЕ поле онбординга (Onboarding.jsx:20,24), подставляется в каждую заявку (ApplyForm.jsx:358), и форма заявки прямо отсылает пользователя править её в профиле — «изменить в профиле» (ApplyForm.jsx:352) и «Эти данные подставятся в заявку из профиля — менять их можно там» (строка 368). При этом сам профиль такого контрола не даёт — UI обещает то, чего нет. Опечатку в национальности участник исправить не может.\n\nРелевантно и для прод-переноса: HANDOFF.md:947 и расхождение №5 (строка 969, T1 на строке 1014) явно перечисляют `nationality` среди полей, которые поддерживает боевой `PATCH /users/me` (`phone/city/nationality`) — то есть редактирование национальности заложено как целевая возможность продукта. Это реальный пробел, а не «известное ограничение прототипа».\n\nSeverity = medium: не падение и не потеря данных, репозиторий — прототип, но это противоречие в UI (форма направляет к несуществующему контролу) ломает явно обещанный флоу уже сейчас и расходится с прод-роадмапом; фикс тривиален — добавить `editable` к строке 136 (валидатор уже передан)."
+      }
+    },
+    {
+      "n": 17,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "error-handling",
+      "file": "src/state/store.jsx",
+      "line": "78-82",
+      "title": "teamSeniorStat: при малых командах max=floor(N*0.2)=0 — один приглашённый старше 35 делает заявку неподаваемой без явного объяснения порога",
+      "description": "max допустимых старших = Math.floor(members.length * 0.2). Для команды из 1–4 человек max=0 (floor(4*0.2)=0). Значит капитан, пригласивший одного участника 35+ в команду из, скажем, 3 человек, получает over=true и блок подачи с текстом «старше 35 — 1 из 0 допустимых». Формулировка «1 из 0» выглядит как баг для пользователя и не объясняет, что нужно добрать ОБЫЧНЫХ участников, чтобы 20% дало хотя бы 1. По памяти проекта округление — открытый вопрос к заказчику, но краевое UX-состояние «X из 0» материально: оно появляется на реальном экране (ApplyForm.jsx:171, 403) и читается как ошибка системы.",
+      "evidence": "export function teamSeniorStat(members = []) {\n  const count = members.filter(m => isSenior(m.dob)).length\n  const max = Math.floor(members.length * SENIOR_SHARE)\n  return { count, max, over: count > max }\n}",
+      "recommendation": "Для случая max===0 дать отдельную человекочитаемую подсказку вместо «1 из 0»: например «чтобы взять участника старше 35, в команде должно быть не меньше N человек». Либо пересмотреть формулу округления (ceil/минимум 1) — но это решение заказчика. Сейчас текст порога при малых командах сбивает с толку.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. src/state/store.jsx:78-82 — teamSeniorStat: count = members.filter(isSenior).length, max = Math.floor(members.length * SENIOR_SHARE), SENIOR_SHARE = 0.2 (строка 24), over = count > max. Для N=2..4 floor(N*0.2)=0.\n\nКраевое состояние «X из 0» реально достижимо с правдоподобными данными. Капитан при переключении в team добавляется в members со своим dob (case 'ensure-captain', строка 482), причём капитан гарантированно НЕ старший — ApplyForm.jsx:86 редиректит isSenior-профиль из формы. Старший 35+ не может зарегистрироваться сам, но может быть приглашён и принять инвайт: на accept ему проставляется dob из профиля (case 'respond-invite', строки 464/468), после чего isSenior(m.dob)=true. Значит команда «капитан + 1 подтверждённый старший» (N=2) даёт count=1 > max=floor(2*0.2)=0 → over=true → блок подачи (canSubmit: store.jsx:233 «if app.mode==='team' && teamSeniorStat(app.members).over return false»). Чтобы max стал 1, нужно N=5 (капитан + 4 участника).\n\nТекст «X из 0» рендерится на реальном экране в двух местах: ApplyForm.jsx:171 (statusHint: «старше 35 в команде — {count} из {max} допустимых: оставь не более 20% состава…») и ApplyForm.jsx:403 (блок под списком участников: «старше 35 — {count} из {max} допустимых · убери лишних…»). Блок 403 показывается всегда при teamSenior.count>0 (строка 401). Формулировка «1 из 0» читается как баг, а подсказка «убери лишних / оставь не более 20%» указывает неверное направление: проблему можно решить и наоборот — добрать обычных участников до N=5, чтобы 20% дало хотя бы 1. Это усиливает путаницу.\n\nОпровергающих факторов нет: минимального гейта на размер команды, который бы скрывал это состояние, нет; CSS-класс err/warn (строка 402) текст не прячет.\n\nSeverity снижена до medium: это прототип, и память проекта явно фиксирует округление/долю как открытый вопрос к заказчику (store.jsx:22, 76; HANDOFF.md:836, 970) — не баг логики, а UX-формулировка порога. Не крэш и не потеря данных, но материальный сбивающий UX-дефект на реальном экране, который к тому же легко всплывёт при переносе правила в прод (HANDOFF.md помечает квоту 35+ как пункт на согласование). Рекомендация аудитора верна: для max===0 дать человекочитаемую подсказку (сколько обычных участников добрать) вместо «X из 0» и одностороннего «убери лишних»."
+      }
+    },
+    {
+      "n": 18,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/state/store.jsx",
+      "line": "712-714",
+      "title": "Тосты не объявляются скринридером (нет aria-live / role=status)",
+      "description": "Контейнер тостов `<div className=\"toast-wrap\">` рендерит уведомления без `aria-live`/`role=status`. Через тосты приходит критичная для понимания флоу обратная связь: «Приглашение отправлено», «Ссылка скопирована», «Готово — ты в команде», «У тебя уже 2 заявки — освободи место», «Демо: быстрый вход недоступен». Незрячий пользователь не получает ни одного из этих сообщений — действие как будто молча проваливается. WCAG 4.1.3 (Status Messages, AA).",
+      "evidence": "<div className=\"toast-wrap\">{toasts.map(t => <div key={t.id} className=\"toast\">{t.msg}</div>)}</div>   // в app.css .toast-wrap тоже без role/aria-live",
+      "recommendation": "Повесить на контейнер `role=\"status\"` и `aria-live=\"polite\"` (для ошибок-блокировок — `aria-live=\"assertive\"`), и `aria-atomic=\"true\"`. Контейнер должен существовать в DOM постоянно (он уже постоянный), чтобы вставка текста объявлялась.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. В src/state/store.jsx:712-714 контейнер тостов отрендерен как `<div className=\"toast-wrap\">{toasts.map(t => <div key={t.id} className=\"toast\">{t.msg}</div>)}</div>` — без role, aria-live и aria-atomic. Grep по всему src/ на `aria-live|role=\"status\"|role=\"alert\"` дал «No matches found», то есть никакой альтернативной live-области, объявляющей эти сообщения, в проекте нет. CSS .toast-wrap (app.css:220-223) содержит только позиционирование/раскладку, ARIA-семантики не несёт. Сообщения реальны и содержательны (подтверждено обходом всех вызовов toast()): «Приглашение отправлено» (ApplyForm.jsx:139), «Ссылка скопирована» (ApplyForm.jsx:148), «Готово — ты в команде «…»» (Cabinet.jsx:51, JoinInvite.jsx:139), «У тебя уже 2 заявки — освободи место…» (Cabinet.jsx:47, JoinInvite.jsx:135), «Данные сохранены» (Profile.jsx:73), «Пароль обновлён», «Заявка отозвана» и др. Для части действий (копирование ссылки, отправка приглашения, сохранение профиля) тост — единственная обратная связь, поэтому для пользователя скринридера действие выглядит молча провалившимся/беззвучным. Это реальное нарушение WCAG 4.1.3 Status Messages (AA). Рекомендация технически верна: контейнер постоянно в DOM (смонтирован в провайдере, рендерится всегда) — это как раз условие, при котором вставка текста в live-область будет объявлена; авто-скрытие через 2.6с (store.jsx:705) достаточно для polite-объявления. Severity снижаю до medium, а не high/critical: дефект деградирует UX для незрячих, но не ломает флоу полностью — зрячих не затрагивает, тосты в основном подтверждения/вторичная обратная связь, а критичные блокирующие состояния (APP_LIMIT, правило 35+) отражены и в видимом состоянии UI, а не только в тосте; потери данных нет."
+      }
+    },
+    {
+      "n": 19,
+      "severity": "medium",
+      "bucket": "ux",
+      "dimension": "responsive-mobile",
+      "file": "src/styles/base.css",
+      "line": "111-115",
+      "title": "Тач-цели действий .mlink меньше 44px (всего ~16px по высоте)",
+      "description": "Класс .mlink (mono-ссылка действия) задаёт font-size 12px без padding и min-height. Это основные построчные действия на мобайле: «убрать» (файл/участник), «заменить файл», «напомнить», «изменить в профиле», «удалить черновик», «о приглашении», «покинуть команду». Измеренная высота кликабельной зоны — 16px (ширина «убрать» ≈43px), что втрое меньше рекомендованного минимума 44×44px для пальца. На телефоне в плотных member-row/file-row эти ссылки стоят рядом и в них легко промахнуться. Для сравнения .fbtn.sm — 44px (норм).",
+      "evidence": ".mlink { font-family: var(--font-jbm); font-size: var(--fs-xs); color: var(--gray-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; }  — измерено: mlink «убрать» {w:43,h:16}, «заменить файл» {w:94,h:16}",
+      "recommendation": "На сенсорных экранах увеличить тач-зону: добавить вертикальный padding/min-height ~44px (напр. через @media (pointer: coarse) или мобильный брейкпоинт) либо невидимую кликабельную область (псевдоэлемент ::before с inset-отрицанием). Минимум — padding: 8px 0 в member-row/file-row контекстах.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "medium",
+        "reasoning": "Подтверждено по фактическому коду. src/styles/base.css:111-115 — класс .mlink задан ровно как в находке: font-size: var(--fs-xs) (= 12px, tokens.css:65), padding: 0, без min-height. Высота line-box ~16px, то есть реальная тач-зона ~16px по высоте — почти втрое меньше рекомендованных 44px. Это не одиночное декоративное правило: .mlink — основной построчный actions-примитив. В MemberRow (src/components/ui.jsx:296-297) кнопки «напомнить» и «убрать» стоят соседними .mlink в одном flex-ряду; в FileRow (ui.jsx:266,268) рядом «заменить файл» и «убрать»; ещё «о приглашении» / «удалить черновик» / «покинуть команду» (Cabinet.jsx:157,217,262), «изменить в профиле» (ApplyForm.jsx:352). .member-row имеет flex-wrap: wrap (app.css:152), так что на узких экранах ссылки сближаются. Смягчения нет: по всему src/styles НЕТ ни одного @media (pointer: coarse), и .mlink не переопределяется ни в одном мобильном брейкпоинте (560/480/400px) — значит 12px/padding:0 действует и на телефоне. Контраст с .fbtn.sm { height: 44px } (base.css:43) подтверждает, что проект осознанно размеряет первичные действия под палец, а .mlink — нет. Это материальный UX/a11y-дефект (нарушение WCAG 2.5.5 Target Size), а не придирка и не безвредная особенность прототипа: затрагивает в т.ч. деструктивные действия («убрать», «удалить черновик», «покинуть команду»), легко промахнуться на мобайле, и проблема перенесётся в прод. Severity снижена до medium (а не high), потому что это стилевой дефект, а не логика/данные; контролы остаются операбельными (риск — мис-тап, не блокировка), а часть .mlink-инстансов изолированы (например «Выйти», «Забыли пароль?»), где риск ошибочного нажатия мал — критичен в основном плотный кейс соседних ссылок в member-row/file-row."
+      }
+    },
+    {
+      "n": 20,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "accessibility",
+      "file": "src/components/NominationCards.jsx",
+      "line": "46-54",
+      "title": "SynthCard: интерактивный div role=button без disabled-семантики, дублирует роль вложенных кнопок",
+      "description": "Карта «Синтез» сделана `<div role=\"button\" tabIndex>` с ручным `onKeyDown` (Enter/Space). Само по себе это сделано аккуратно (есть tabIndex и обработчик клавиш), но: (1) при `disabled` ставится только `aria-disabled` и `tabIndex=-1`, тогда как у соседних `NomCard` это нативный `<button disabled>` — поведение и озвучивание расходятся; (2) внутри карты-кнопки лежит интерактивная группа чипсов направлений (вложенные кнопки внутри role=button — невалидная вложенность интерактивных элементов, сбивает обход с клавиатуры и скринридер). При выборе синтеза фокус-обход становится неоднозначным. WCAG 4.1.2 / 1.3.1.",
+      "evidence": "<div role=\"button\" tabIndex={disabled ? -1 : 0} aria-disabled={disabled} ... onKeyDown={e => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) {...} }}> ... {children /* Chips с кнопками */} </div>",
+      "recommendation": "Сделать кликабельной только «шапку» карты (отдельный `<button>` для выбора номинации), а раскрывающийся блок направлений вынести из интерактивного контейнера — чтобы внутри role=button не было других кнопок. Либо явно убрать tabIndex/role с контейнера, оставив кнопку выбора.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду src/components/NominationCards.jsx:46-81. Карта «Синтез» — это <div role=\"button\" tabIndex={disabled ? -1 : 0} aria-disabled={disabled}> с ручным onKeyDown по Enter/Space и e.preventDefault() (строки 46-52). Обе претензии находки верны:\n\n(1) Расхождение disabled-семантики реально. Соседняя NomCard (строки 18-23) — нативный <button disabled aria-disabled>; SynthCard в disabled-состоянии использует только aria-disabled + tabIndex=-1 (строки 48-49), без нативного disabled. Это разное озвучивание у скринридера (нативно отключённая кнопка vs «кнопка, недоступна») и разное поведение в обходе.\n\n(2) Вложенные интерактивные элементы реально присутствуют. В ApplyForm.jsx:239-254 в SynthCard передаётся <Chips multi> как children, а Chips (ui.jsx:185-204) рендерит набор <button type=\"button\">. Эти кнопки — потомки div role=button (children-блок на строках 72-80 находится внутри контейнера, закрывающегося на строке 81). Интерактивный контент внутри role=button невалиден по HTML/ARIA и сбивает обход скринридером/клавиатурой — это и есть WCAG 4.1.2 / 1.3.1.\n\nПочему severity снижена до low, а не выше: это DEV-прототип без бэкенда (по CLAUDE.md), а не боевое приложение. Функционально всё работает: на children-обёртке стоят onClick/onKeyDown с e.stopPropagation() (строки 75-76), так что клики по чипсам не триггерят выбор карты, мышью и клавиатурой выбор направлений работает. Кроме того, по app.css:86 неоткрытый блок направлений имеет visibility:hidden — вложенные кнопки становятся фокусируемыми только когда синтез выбран (класс .open, visibility:visible, строка 95). То есть дефект бьёт только по UX вспомогательных технологий (скринридер/клавиатура) и только в раскрытом состоянии, ничего не ломая функционально. Это настоящий, но узкий a11y-дефект, не блокер. Рекомендация находки (сделать кликабельной отдельную <button>-шапку, а блок направлений вынести из интерактивного контейнера) технически корректна и решает обе проблемы."
+      }
+    },
+    {
+      "n": 21,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/auth/Recovery.jsx",
+      "line": "20-59",
+      "title": "Логика ввода 4-значного кода (setCell/onKey/refs) скопирована в Confirm и Recovery",
+      "description": "Экран подтверждения почты (Confirm.jsx) и шаг 2 восстановления (Recovery.jsx) содержат идентичный блок ввода кода: useState(['','','','']), массив из 4 useRef, setCell (вырезает цифру, фокус на следующую), onKey (Backspace → предыдущая), codeFull-проверка и одинаковую разметку .code-cells/.code-cell с aria-label. Плюс fmtTimer объявлен дважды дословно (Confirm.jsx:8 и Recovery.jsx:11). Это значимое дублирование — примитива CodeInput для 4-значного кода в ui.jsx нет, хотя по CLAUDE.md общие примитивы должны жить там.",
+      "evidence": "Recovery.jsx:51  const setCell = (i, raw) => { const d = raw.replace(/\\D/g, '').slice(-1); setCode(c => c.map((v, j) => (j === i ? d : v))); if (d && i < 3) refs[i + 1].current?.focus() }\nConfirm.jsx:24  const setCell = (i, raw) => { ... } — тот же код; fmtTimer продублирован в обоих файлах",
+      "recommendation": "Вынести в ui.jsx компонент CodeInput (value, onChange, length=4) и хелпер fmtTimer в validation.js или store.jsx. Confirm и Recovery будут переиспользовать один примитив.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка подтверждена по фактическому коду. Дублирование реальное и дословное между Confirm.jsx и Recovery.jsx:\n\n1) fmtTimer объявлен идентично: Confirm.jsx:8 и Recovery.jsx:11 — `const fmtTimer = s => \\`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}\\`` (байт-в-байт).\n\n2) setCell идентичен: Confirm.jsx:24-28 и Recovery.jsx:51-55 — одинаковые `raw.replace(/\\D/g,'').slice(-1)`, `setCode(c => c.map(...))` и `if (d && i < 3) refs[i + 1].current?.focus()`.\n\n3) onKey идентичен: Confirm.jsx:29-31 и Recovery.jsx:56-58 — `if (e.key === 'Backspace' && !code[i] && i > 0) refs[i - 1].current?.focus()`.\n\n4) Состояние и рефы дублируются: `useState(['','','',''])` (Confirm:13 / Recovery:20) и массив из 4 `useRef(null)` (Confirm:15 / Recovery:24).\n\n5) Проверка полноты `code.every(d => /^\\d$/.test(d))` (Confirm:33 как full / Recovery:59 как codeFull).\n\n6) Разметка .code-cells/.code-cell идентична (Confirm:63-78 / Recovery:108-123): inputMode=\"numeric\", maxLength={1}, aria-label=`Цифра ${i+1}`, onChange→setCell, onKeyDown→onKey.\n\nGrep по src подтверждает, что примитива CodeInput в ui.jsx нет — единственные вхождения setCell/fmtTimer/code-cell это два этих экрана и CSS. CLAUDE.md действительно предписывает держать общие примитивы в ui.jsx.\n\nРасхождения между файлами не по сути: Recovery оборачивает шаг кода в многошаговый флоу (step===2) и использует другой текст копирайта/таймера, но ядро (ввод 4-значного кода) идентично — это не неверное прочтение.\n\nSeverity снижен до low: функционального бага нет, дублированный код работает корректно в обоих местах; это вопрос поддерживаемости/DRY. Рекомендация (вынести CodeInput в ui.jsx и fmtTimer в общий модуль) корректна и соответствует собственной конвенции проекта."
+      }
+    },
+    {
+      "n": 22,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/cabinet/Cabinet.jsx",
+      "line": "296",
+      "title": "Цвет фона ошибки rgba(179, 64, 46, .08) захардкожен вместо токена",
+      "description": "Плашка reworkNote использует инлайн background: 'rgba(179, 64, 46, .08)' — это var(--err) #B3402E с альфой, но записанный сырым rgba. Та же магическая строка повторяется в ApplyView.jsx:124 и в CSS (.mtag.err, .doc-status.replace, .umenu-item.danger:hover — base.css/app.css). Токена для «фон ошибки» (--err-bg по аналогии с уже существующим --warn-bg) нет, хотя --warn-bg/--warn-line заведены. Нарушает принцип CLAUDE.md «используй токены вместо хардкода».",
+      "evidence": "Cabinet.jsx:296  background: 'rgba(179, 64, 46, .08)'\nApplyView.jsx:124  background: 'rgba(179, 64, 46, .08)'\nДублируется и в base.css:124 .mtag.err, app.css:172 .doc-status.replace",
+      "recommendation": "Завести в tokens.css --err-bg: rgba(179, 64, 46, .08) (и при желании --err-line) по аналогии с --warn-bg, и заменить инлайн-rgba на var(--err-bg) в JSX и CSS.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка подтверждена фактическим кодом. Cabinet.jsx:296 — инлайн `background: 'rgba(179, 64, 46, .08)'` на плашке reworkNote (рядом стоит `color: 'var(--err)'`, при этом фон записан сырым rgba). ApplyView.jsx:124 — идентичная строка `background: 'rgba(179, 64, 46, .08)'` для той же reworkNote-плашки. rgba(179,64,46) точно равно var(--err) = #B3402E (0xB3=179, 0x40=64, 0x2E=46), то есть это именно токен ошибки при 8% альфы, но захардкоженный. Та же магическая строка дублируется в CSS: base.css:124 (.mtag.err), base.css:83 (.umenu-item.danger:hover), app.css:172 (.doc-status.replace) — все `rgba(179, 64, 46, .08)`. В tokens.css при этом заведены --err:#B3402E, --warn-bg:rgba(255,185,0,.07) и --warn-line, но НЕТ --err-bg/--err-line — то есть асимметрия реальна: warn-фон токенизирован, error-фон нет. Это нарушает явное правило CLAUDE.md «используй токен-переменные вместо хардкода». Severity — low: эффект чисто maintainability/консистентность, без функциональных или визуальных дефектов (цвета корректны и совпадают), и без риска при переносе в прод. Рекомендация аудитора (завести --err-bg, опц. --err-line, и заменить инлайн-rgba и CSS) корректна."
+      }
+    },
+    {
+      "n": 23,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/cabinet/Profile.jsx",
+      "line": "47-60",
+      "title": "SVG-иконки VK и Яндекс продублированы между ui.jsx (SocialRow) и Profile.jsx (SOCIALS)",
+      "description": "Длинные path-данные иконок VK и Яндекса присутствуют двумя копиями: в ui.jsx (VK_SVG/YA_SVG для SocialRow, строки 216-227) и в Profile.jsx (массив SOCIALS, строки 47-60). Это одни и те же векторы (отличается лишь размер 24 vs 26). Дублирование тяжёлых SVG-литералов — при смене логотипа сервиса (или добавлении третьего входа) править нужно в двух местах, легко разойтись.",
+      "evidence": "Profile.jsx:50  <path d=\"m9.489.004.729-.003h3.564...\" fill=\"#0077FF\"/> — тот же путь, что и ui.jsx:218 в VK_SVG",
+      "recommendation": "Вынести VkIcon/YandexIcon (с пропом size) в ui.jsx и переиспользовать в SocialRow и в Profile. Один источник для брендовых иконок.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. Path-данные логотипов VK и Яндекса действительно дублируются двумя байт-идентичными копиями:\n\n1) src/components/ui.jsx:216-227 — константы VK_SVG и YA_SVG, используются в SocialRow (строки 229-234, на экранах авторизации). Размер 24×24.\n2) src/screens/cabinet/Profile.jsx:47-60 — массив SOCIALS, живой код, рендерится на экране «Быстрые входы» (Profile.jsx:168 `SOCIALS.map(...)`, иконка вставляется на строке 172 `{icon}`). Размер 26×26.\n\nВнутренние path d=... для VK (`m9.489.004...` + белый путь `M6.79 7.3...`) и для Яндекса (`M2.04 12...` + `M13.32 7.666...`) совпадают дословно в обоих файлах; отличается только width/height (24 vs 26) и наличие fill=\"none\" на svg. Grep по уникальному фрагменту `m9.489.004` находит ровно эти два файла — других копий нет. SOCIALS не мёртвый код: он реально мапится и отображается.\n\nТак что фактическая основа находки верна: это настоящее дублирование тяжёлых SVG-литералов, нарушение DRY. Рекомендация вынести VkIcon/YandexIcon с пропом size в ui.jsx корректна и реализуема (size — единственное отличие).\n\nОднако severity занижаю до low: материальный эффект минимален. Это статичные брендовые логотипы (VK/Яндекс), которые практически не меняются; ветки авторизации и кабинета визуально консистентны (один и тот же вектор). Риск «разойдутся при смене логотипа» теоретический и применим лишь к редкому ребрендингу. Ни UX, ни перенос в прод это не ломает — чисто гигиена кода/поддерживаемость. Поэтому: реальная находка, но низкого приоритета, nice-to-have рефакторинг."
+      }
+    },
+    {
+      "n": 24,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "react-perf",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "98-108, 453-464, 476",
+      "title": "Тяжёлые производные (computeTodos/sectionState/canSubmit) пересчитываются по нескольку раз за рендер без мемоизации",
+      "description": "В рендере формы computeTodos(app) вызывается напрямую (стр. 98), плюс внутри filledCount(app)→sectionState→computeTodos, плюс sectionState(app, i+1) дёргается в трёх местах разметки (мобильные чипы 192-203, правая навигация 453-464) — каждый такой вызов заново прогоняет computeTodos целиком. canSubmit(app, state) вызывается отдельно в statusHint (172) и ещё раз в футере (476), и внутри тоже зовёт computeTodos. На каждый ввод символа в поле (patch → re-render) это десяток повторных полных проходов по файлам/участникам/согласиям. Для прототипа объём данных мал и это не тормозит, но это лишняя работа и размазанный источник истины по рендеру.",
+      "evidence": "const todos = computeTodos(app)\n  const filled = filledCount(app)\n  ...\n  {canSubmit(app, state) ? ( ... )}  // в statusHint\n  ...\n  {canSubmit(app, state) ? ( <button ...>Подать заявку</button> ) : ( ... )}  // в футере",
+      "recommendation": "Мемоизировать производные через useMemo по [app, state.apps, state.email]: const todos = useMemo(() => computeTodos(app), [app]); const submittable = useMemo(() => canSubmit(app, state), [app, state.apps, state.email]); и переиспользовать одно вычисленное значение sectionState для каждой секции (например, собрать массив states один раз). Это убирает дублирующие проходы и даёт единый снимок готовности на рендер.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждаю фактологию находки по реальному коду src/screens/form/ApplyForm.jsx и src/state/store.jsx.\n\nМемоизации в файле нет вообще — grep по useMemo|useCallback|React.memo даёт 0 совпадений. Производные считаются «голыми» на каждый рендер:\n- стр. 98: const todos = computeTodos(app) — 1 проход;\n- стр. 100: filledCount(app) = [1,2,3,4].filter(n => sectionState(app,n)==='done') (store.jsx:197), а sectionState (store.jsx:176-178) внутри сам зовёт computeTodos — это ещё 4 прохода;\n- sectionState(app, N) дёргается напрямую как проп st у каждой FSection (стр. 227,258,328,438) — 4 прохода; в мобильных чипах map (стр. 194) — ещё 4; в правой навигации map (стр. 455) — ещё 4;\n- canSubmit(app, state) (store.jsx:228-235) внутри тоже зовёт computeTodos и вызывается в statusHint (стр. 172, при незакороченных limitReached/nomTaken/seniorOver) и повторно в футере (стр. 476) — ещё до 2 проходов, плюс там же дублируются countUsed/takenNominations/teamSeniorStat.\n\nИтого порядка ~19 полных прогонов computeTodos за один рендер (computeTodos ещё и внутри зовёт misfitFiles(app), store.jsx:156 — лишний проход по файлам). Каждая правка поля идёт через patch (ApplyForm.jsx:95) → dispatch('patch-app') → patchApp возвращает новый state (store.jsx:404-405) → полный ре-рендер, то есть весь этот десяток проходов повторяется на каждый введённый символ. Дублирование источника истины по рендеру и лишняя работа — реальны, рекомендация (useMemo по [app, state.apps, state.email] + один раз собрать массив sectionState) корректна и идиоматична.\n\nСнижаю severity до low: это клиентский прототип, объёмы данных крошечные (app.files — единицы, app.members — единицы, app.consents — 2), все функции O(n) по этим спискам, поэтому ~19 тривиальных проходов на нажатие клавиши не дают измеримого лага и не ломают UX. Сама находка это и признаёт («для прототипа объём данных мал и это не тормозит»). Это вопрос чистоты кода/избыточности, а не корректности, производительности на практике или риска переноса в прод."
+      }
+    },
+    {
+      "n": 25,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "react-perf",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "66-80",
+      "title": "Прямой доступ к window.scrollY / DOM при каждом событии scroll без троттлинга",
+      "description": "Скролл-спай вешает обработчик scroll, который на каждом событии читает window.scrollY и вызывает getBoundingClientRect()+document.getElementById для всех четырёх секций (форсированный reflow), после чего setCur. Слушатель добавлен с passive:true (хорошо), но без троттлинга/rAF: при быстром скролле это сотни синхронных чтений layout в секунду и потенциальные setState на каждый кадр. На слабых устройствах/длинной форме это заметная нагрузка.",
+      "evidence": "const onScroll = () => {\n      const probe = window.scrollY + 170\n      ...\n      ids.forEach(sid => { const el = document.getElementById(sid); if (el && el.getBoundingClientRect().top + window.scrollY <= probe) active = sid })\n      setCur(active)\n    }\n    window.addEventListener('scroll', onScroll, { passive: true })",
+      "recommendation": "Обернуть тело onScroll в requestAnimationFrame с флагом ticking (классический rAF-троттлинг) или перейти на IntersectionObserver для определения активной секции — это убирает синхронные reflow на каждый scroll-event и лишние setState.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Код в src/screens/form/ApplyForm.jsx:66-80 точно соответствует evidence. Обработчик onScroll действительно навешан без троттлинга/rAF: на КАЖДОЕ событие scroll он делает window.scrollY + по 4 вызова document.getElementById('s01'..'s04') и el.getBoundingClientRect() (строки 71-74). getBoundingClientRect форсирует синхронный layout reflow — это реальный и общеизвестный анти-паттерн, и он подтверждается. passive:true стоит (строка 78), что снимает блокировку самого скролла, но не убирает синхронные чтения layout.\n\nОднако материальный эффект скромный, поэтому severity = low, а не выше:\n1) Самое тяжёлое из обвинений — «лишние setState на каждый кадр» — почти не действует. setCur(active) вызывается безусловно (строка 75), но React делает bailout по Object.is: active — строка ('s01'..'s04'), и пока активная секция не меняется, ререндера НЕ происходит. Реальный ререндер случается только при пересечении границы секции (несколько раз за весь скролл), а не на каждый кадр. Используется cur лишь в лёгкой разметке мини-чипов и сайд-нава (строки 195, 200, 460) — дешёвый ререндер.\n2) Остаётся реальная нагрузка — 4 getElementById + 4 getBoundingClientRect на каждое scroll-событие (форс-reflow). Но это всего 4 элемента, layout формы статичен, форма не бесконечная. На десктопе это незаметно; ощутимо лишь на очень слабых устройствах при длинной форме, как и пишет аудитор. Это деградация, а не функциональный баг.\n3) Рекомендация корректна: rAF-троттлинг с флагом ticking или переход на IntersectionObserver уберёт синхронные reflow. Это валидное улучшение качества кода.\n\nИтого: находка подтверждена фактическим кодом (форс-reflow на каждый scroll без троттлинга — есть), но из-за React-bailout по строке и всего 4 элементов реальный UX/перф-эффект минимален. Severity = low."
+      }
+    },
+    {
+      "n": 26,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "171",
+      "title": "Доля 20% зашита литералом в трёх UI-строках вместо вывода из SENIOR_SHARE",
+      "description": "SENIOR_SHARE = 0.2 в сторе помечен как открытый вопрос («10% или 20%?», store.jsx:22) и «меняется одной строкой». Но текст «20%» захардкожен минимум в трёх местах UI: ApplyForm.jsx:171 ('не более 20% состава'), ApplyForm.jsx:404 ('старше 35 можно не более 20% состава'), Cabinet.jsx:188 ('до 20% команды'). Если заказчик поменяет SENIOR_SHARE на 0.1, расчёт обновится, а тексты соврут пользователю — классическая рассинхронизация значения и его словесного описания. Это ловушка при переносе/правке прода.",
+      "evidence": "ApplyForm.jsx:171  ...оставь не более 20% состава, чтобы подать заявку.\nApplyForm.jsx:404  ' · убери лишних: старше 35 можно не более 20% состава'\nCabinet.jsx:188  ...старше 35 разрешено участвовать в составе, до 20% команды.",
+      "recommendation": "Вывести процент из константы: завести SENIOR_SHARE_PCT = Math.round(SENIOR_SHARE * 100) в сторе и подставлять `${SENIOR_SHARE_PCT}%` в строки. Тогда правка одной константы синхронизирует и расчёт, и тексты.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. SENIOR_SHARE = 0.2 объявлен в store.jsx:24, а соседний комментарий store.jsx:22 прямо помечает значение как открытый вопрос к заказчику («10% или 20%?») и обещает, что оно «меняется одной строкой». Расчёт реально привязан к этой константе: teamSeniorStat (store.jsx:78-81) делает max = Math.floor(members.length * SENIOR_SHARE). При этом «20%» захардкожено литералом ровно в трёх UI-строках, как и заявлено: ApplyForm.jsx:171 («оставь не более 20% состава, чтобы подать заявку»), ApplyForm.jsx:404 («старше 35 можно не более 20% состава»), Cabinet.jsx:188 («старше 35 разрешено участвовать в составе, до 20% команды»). Других вхождений «20%» в src нет (grep). Таким образом, если заказчик примет 0.1, изменив одну строку (как и приглашает сделать комментарий), Math.floor пересчитает лимит, а три текста соврут пользователю — классическая рассинхронизация значения и его словесного описания. Это материальный риск сопровождения/прод-переноса, а не придирка. Рекомендация аудитора корректна: вывести процент из константы (например, SENIOR_SHARE_PCT = Math.round(SENIOR_SHARE*100)) и подставлять в строки. Severity понижаю до low: при текущем 0.2 ничего не сломано, пользователь сейчас видит верное число; дефект латентный (срабатывает только при правке константы), не ломает UX и не блокирует прод сегодня."
+      }
+    },
+    {
+      "n": 27,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "25",
+      "title": "Хелпер nowHM в ApplyForm дублирует инлайн-формат времени в submit",
+      "description": "В ApplyForm объявлен nowHM = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) и используется для updatedAt. Но внутри submit() ровно та же конструкция написана повторно инлайн для submittedTime (строка 160), вместо вызова nowHM(). Мелкое дублирование форматтера времени в одном файле.",
+      "evidence": "ApplyForm.jsx:25  const nowHM = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })\nApplyForm.jsx:160  submittedTime: now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),  // тот же формат вручную",
+      "recommendation": "Переиспользовать nowHM() для submittedTime (now уже есть — можно сделать hmOf(date) и вызвать hmOf(now)). Убрать повтор опций форматирования.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Дублирование подтверждено по фактическому коду. ApplyForm.jsx:25 объявляет const nowHM = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), который используется для updatedAt в строках 95-96 (patch/touch). В submit() на ApplyForm.jsx:160 ровно та же конструкция toLocaleTimeString с теми же опциями { hour: '2-digit', minute: '2-digit' } написана инлайн для submittedTime, вместо переиспользования форматтера. Это реальный, но чисто косметический дубль одной строки опций форматирования в пределах одного файла — функционального и UX-эффекта нет, формат вывода идентичен. Важный нюанс: прямая замена на nowHM() была бы НЕверной, т.к. nowHM создаёт собственный new Date(), а в строке 160 намеренно используется уже существующая переменная now (строка 155), общая с submittedAt на строке 159 — чтобы дата и время были снимком одного момента. Поэтому корректный рефактор — это hmOf(date)/dateOf(date) с вызовом от now, как и предложил аудитор. Severity low: это мелкая чистота кода (DRY), не баг, не риск для прод-переноса и не ломает UX. Опечаток в опциях нет, обе строки согласованы, так что даже риск рассинхрона форматов минимален."
+      }
+    },
+    {
+      "n": 28,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/form/ApplyView.jsx",
+      "line": "14-20",
+      "title": "Объект SIDE_NOTE дублируется дословно в Cabinet.jsx и ApplyView.jsx",
+      "description": "Словарь пояснений статуса заявки (submitted/review/rework/admitted/results) определён двумя идентичными копиями: в Cabinet.jsx:25-31 и ApplyView.jsx:14-20. Тексты совпадают слово в слово. Это дублирование UI-строк: при правке формулировки (например текста для 'admitted') легко поправить одну копию и забыть вторую, и кабинет с витриной разойдутся. По конвенции CLAUDE.md доменные/справочные данные живут в store.jsx как единый источник.",
+      "evidence": "ApplyView.jsx:14  const SIDE_NOTE = { submitted: 'Заявка принята. До результата проверки её можно отозвать.', review: 'Заявка на проверке. До результата её можно отозвать.', ... }\nCabinet.jsx:25  const SIDE_NOTE = { submitted: 'Заявка принята. До результата проверки её можно отозвать.', review: 'Заявка на проверке. ...' } — те же пять строк",
+      "recommendation": "Вынести SIDE_NOTE в store.jsx (рядом со STATUS/CYCLE) и импортировать в оба экрана. Один источник правды для статусных пояснений.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. Объект SIDE_NOTE определён двумя дословно идентичными копиями: src/screens/cabinet/Cabinet.jsx:25-31 и src/screens/form/ApplyView.jsx:14-20. Все пять значений совпадают слово-в-слово (сверял построчно): submitted='Заявка принята. До результата проверки её можно отозвать.', review='Заявка на проверке. До результата её можно отозвать.', rework='Исправь работу и подай снова — дедлайн не сгорает.', admitted='Работа в программе мастерских. Следующий этап — показы, июль.', results='Сезон завершён — спасибо за участие!'. Grep подтверждает ровно два определения `const SIDE_NOTE =` во всём src. Обе копии — живой UI, а не мёртвый код: рендерятся в Cabinet.jsx:306 (SIDE_NOTE[app.status]) и ApplyView.jsx:120 (SIDE_NOTE[app.status]). Конвенция из находки тоже верна: соседняя статусная справка уже централизована в store.jsx как export (STATUS:26, CYCLE:35, CYCLE_DATES:36), то есть SIDE_NOTE — выпадающее исключение. Риск реален: при правке формулировки одного статуса (напр. admitted) в одном экране легко забыть второй, и кабинет с витриной разойдутся. Но материальный эффект мал: это DRY-замечание о поддерживаемости в прототипе, а не функциональный баг; UX сейчас не ломается, обе строки синхронны; риска при переносе в прод нет (чистые клиентские UI-строки). Поэтому severity снижаю до low."
+      }
+    },
+    {
+      "n": 29,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/screens/form/ApplyView.jsx",
+      "line": "268-294",
+      "title": "Модалки «Отозвать заявку?» и «Покинуть команду?» дублируются между Cabinet и ApplyView",
+      "description": "Разметка и копирайт подтверждающих модалок повторяются: «Отозвать заявку?» есть в Cabinet.jsx:331-350 и ApplyView.jsx:269-280 с идентичным телом (заголовок fs-lg/600, абзац, две кнопки Отмена/Отозвать со style background var(--err)); «Покинуть команду?» — в Cabinet.jsx:353-372 и ApplyView.jsx:283-294 с дословно совпадающим текстом «Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.». Инлайн-стили кнопок подтверждения (flex:1, background var(--err), color #fff) повторяются ~6 раз.",
+      "evidence": "ApplyView.jsx:286  «{app.teamName || 'Без названия'}» · {app.title || 'Без названия'}. Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.\nCabinet.jsx:357  «{leaveApp.teamName}» · {leaveApp.title || 'Без названия'}. Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.",
+      "recommendation": "Ввести в ui.jsx общий ConfirmModal({ title, body, confirmLabel, danger, onConfirm, onClose }) и переиспользовать для отзыва/удаления/выхода. Убрать повторяющиеся инлайн-стили опасной кнопки в CSS-класс (напр. .fbtn.danger).",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. Модалка «Отозвать заявку?» дублируется: Cabinet.jsx:330-350 и ApplyView.jsx:268-280 — идентичный заголовок (fontSize var(--fs-lg), fontWeight 600, letterSpacing -.015em), идентичный текст абзаца («Заявку удалим, а освободившееся место сможешь занять новой работой.») и одинаковый ряд кнопок Отмена/Отозвать. Модалка «Покинуть команду?»: Cabinet.jsx:352-372 и ApplyView.jsx:282-294 — тело совпадает дословно («Капитан увидит, что ты вышел. Вернуться можно по новому приглашению.», ApplyView.jsx:287 / Cabinet.jsx:357). Инлайн-стиль опасной кнопки `{ flex: 1, background: 'var(--err)', color: '#fff' }` повторяется 5 раз (grep: Cabinet.jsx:341,363,385 + ApplyView.jsx:277,291), плюс в Cabinet есть третья такая же модалка «Удалить черновик?» (374-394). Общего ConfirmModal в ui.jsx нет (grep по ConfirmModal — 0 совпадений), так что рекомендация ввести ConfirmModal и CSS-класс .fbtn.danger обоснована. Это реальное дублирование разметки/копирайта (нарушение DRY) с риском расхождения копий — например, «Удалить черновик?» живёт только в Cabinet, а две копии общих модалок могут разъехаться при правке. Severity понижена до low: это вопрос поддерживаемости, а не функциональный баг — модалки рендерятся и работают корректно, UX-дефекта и риска при переносе в прод нет. «~6 раз» в находке слегка завышено (фактически 5 danger-кнопок), но это не меняет сути."
+      }
+    },
+    {
+      "n": 30,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "401",
+      "title": "Номер заявки ломает формат после 999: жёсткий префикс '0' + appSeq",
+      "description": "newDraft(`ТВ-2026-0${state.appSeq}`) и аналогично в сценариях (555,576) строят номер конкатенацией строки '0' с числом appSeq. appSeq стартует с 849, т.е. формат держится только пока appSeq <= 999 (ТВ-2026-0849...0999). На appSeq=1000 выйдет «ТВ-2026-01000» — 5 цифр вместо 4, формат сломан. Плюс сид team-shum и seedApps.a1 используют один и тот же номер 'ТВ-2026-0847' (строки 250 и 295), а seed-draft — '0848' при appSeq=849: номера сидов и генератора не образуют единую непротиворечивую нумерацию (дубликат 0847 виден, если открыть и обычные сиды, и команду). Для прототипа некритично, но это ловушка при переносе генерации номеров в прод.",
+      "evidence": "const draft = action.draft || newDraft(`ТВ-2026-0${state.appSeq}`)",
+      "recommendation": "Форматировать номер с фиксированной шириной: `ТВ-2026-${String(state.appSeq).padStart(4,'0')}` и убрать ручной префикс '0'. В проде номер всё равно придёт с сервера — но пока генерится клиентом, padStart снимает баг. Заодно выровнять сид-номера, чтобы не было дубля 0847.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду src/state/store.jsx. Строка 347: `appSeq: 849`. Строка 401: `newDraft(`ТВ-2026-0${state.appSeq}`)` — номер строится конкатенацией литерального префикса '0' с числом appSeq; тот же приём на строках 555 и 576, а также вне стора (DemoPanel.jsx:107, Cabinet.jsx:74, Success.jsx:23). Ручной '0' — это псевдо-паддинг под 3-значный appSeq: при 849 выходит ТВ-2026-0849 (4 цифры), но при appSeq=1000 получится ТВ-2026-01000 (5 цифр) — формат действительно ломается. Так что баг реальный, описание точное. Дубль номера тоже подтверждён: 'ТВ-2026-0847' стоит и в seedApps.a1 (строка 250), и в teamShumApp (строка 294), при этом seed-draft — '0848' (274), а генератор стартует с 849 — единой непротиворечивой нумерации сидов и генератора нет. Рекомендация padStart(4,'0') корректна. Severity занижаю до low: (1) чтобы достичь appSeq=1000 в одной localStorage-сессии без бэкенда нужно ~151 создание черновика — нереалистично для прототипа; (2) поле num чисто отображаемое, на логику (id, статусы, лимиты) не влияет — ни краша, ни функциональной поломки нет; (3) дубль 0847 — косметика сид-данных, заметная лишь если пользователь увидит и обычную заявку, и команду team-shum. В проде номер придёт с сервера. Это латентная ловушка/мигра-футган и мелкая несогласованность демо-данных, а не материальный UX/прод-баг сейчас — но находка фактологически верна, поэтому isReal=true."
+      }
+    },
+    {
+      "n": 31,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "385-391",
+      "title": "login переводит guest сразу в active, минуя подтверждение почты и анкету",
+      "description": "Редьюсер login сохраняет только стадии из keep=['registered','confirmed','minor-wall'], а всё остальное (в т.ч. 'guest') принудительно ставит в 'active'. Это значит: если состояние стартовало гостем (сценарий fresh, или гидрация гостя), а пользователь вошёл как Мария (Login допускает m.sokolova@mail.ru с любым паролем), он окажется stage:'active' с пустым profile, не пройдя ни confirm-email, ни onboarding. RequireActive его пустит в /cabinet, где fullName(profile)/firstNameCity получат пустые поля. Для мок-авторизации прототипа это известный компромисс, НО при переносе на боевой JWT-логин такая трактовка «неизвестная стадия → active» — ловушка: реальный сервер вернёт стадию, и форсить active нельзя.",
+      "evidence": "const keep = ['registered', 'confirmed', 'minor-wall']\n      const stage = keep.includes(state.stage) ? state.stage : 'active'",
+      "recommendation": "Явно перечислить переход и для guest: вход гостя без серверной стадии не должен молча выдавать active. В прод-версии стадию задаёт ответ сервера, а не клиентский фолбэк — отметить это в HANDOFF как точку, где мок-логику обязательно заменить, чтобы не пускать неподтверждённых в кабинет.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка подтверждается фактическим кодом. В src/state/store.jsx:388-390 редьюсер login делает `const keep = ['registered','confirmed','minor-wall']; const stage = keep.includes(state.stage) ? state.stage : 'active'` и возвращает `{ ...state, stage, email }` — профиль НЕ заполняется, а любая стадия вне keep (включая 'guest') форсится в 'active'. Гостевое состояние с пустым профилем реально достижимо: initialState (стр.341-343) имеет stage:'guest' и пустой profile; сценарии 'fresh' (стр.492-493) и 'senior-reg' (стр.536) дают stage:'guest', а action 'logout' (стр.393) сбрасывает в 'guest', сохраняя профиль. Login.jsx:19-20 пускает по литералу `m.sokolova@mail.ru` с любым непустым паролем и диспатчит login. Навигация Login.jsx:23-27 читает дотдиспатчевый state.stage==='guest', не попадает ни в одну из веток confirmed/registered/minor-wall, при отсутствии pendingInvite ведёт на /cabinet. RequireActive (App.jsx:36) пропускает, т.к. stage уже 'active'. В итоге свежий гость без confirm-email/onboarding оказывается в /cabinet с пустым profile: fullName(profile) вернёт '' (store.jsx:90-92), firstNameCity деградирует (стр.101-107). То есть механизм реальный, не придирка и не неверное прочтение. Severity понижена до low: это документированная мок-авторизация прототипа (m.sokolova@mail.ru + любой пароль — демо-доступ), эксплуатация требует знания демо-почты, а экраны имеют фолбэки (fullName||'Участник' в ApplyForm/Profile), так что вред для UX минимален. Материально ценная часть — прод-ловушка: трактовка «неизвестная стадия → active» опасна при замене на JWT-логин, где стадию задаёт сервер; это стоит явно зафиксировать в HANDOFF как точку обязательной замены мок-логики, а для guest добавить явный переход (например, в /confirm или /onboarding), а не молчаливый active-фолбэк."
+      }
+    },
+    {
+      "n": 32,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/state/store.jsx",
+      "line": "101-107",
+      "title": "Экспортированная функция firstNameCity нигде не используется",
+      "description": "Функция firstNameCity(profile) экспортируется из стора, имеет нетривиальную логику (склейка ФИ, возраста через ageWord и города), но grep по всему src/ не находит ни одного вызова. Это мёртвый код: он создаёт ложное впечатление, что где-то есть строка вида «Соколова Мария, 22 года, Казань», тогда как на экранах профиль/соло собирается инлайн через [profile.city, state.email].join(' · ') и [lastName, firstName].join(' '). Поддерживать неиспользуемый публичный API дороже, чем удалить.",
+      "evidence": "export function firstNameCity(profile) {\n  // «Соколова Мария, 22 года, Казань»\n  const short = [profile.lastName, profile.firstName].filter(Boolean).join(' ')\n  ... } — единственное вхождение firstNameCity в src/ это само объявление (store.jsx:101)",
+      "recommendation": "Удалить firstNameCity целиком. Если строка-сводка участника понадобится — сначала найти реальное место использования и собрать там. Сейчас это снижает сигнал/шум в сторе на 768 строк.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. Функция объявлена и экспортирована в src/state/store.jsx:101-107 (export function firstNameCity(profile) { ... }). Grep по всему репозиторию (src/, docs/, emails/) даёт ровно одно вхождение строки \"firstNameCity\" — само объявление на store.jsx:101. Ни одного вызова, импорта, реэкспорта или динамической/строковой ссылки нет. Я перепроверил списки именованных импортов во ВСЕХ файлах, которые тянут из стора (App.jsx, ui.jsx, Nav.jsx, DemoPanel.jsx, JoinInvite.jsx, Success.jsx, ApplyForm.jsx, ApplyView.jsx, Profile.jsx, Login.jsx, Wall.jsx, validation.js) — firstNameCity не импортируется нигде; барреля/обёртки над стором нет, store.jsx импортируется напрямую. Утверждение аудитора о том, как сводка участника собирается на самом деле, тоже верно: идентичность строится инлайн через [state.profile.city, state.email].filter(Boolean).join(' · ') (Profile.jsx:124, ApplyForm.jsx:349, ApplyView.jsx:188) и имя через fullName(state.profile). Значит firstNameCity — действительно мёртвый экспортированный код, а не помощник этих экранов. Однако это прототип на 768 строк без эффекта на UX, корректность или перенос в прод; проблема чисто сигнал/шум на публичном API стора, поэтому severity = low, а не выше."
+      }
+    },
+    {
+      "n": 33,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "dead-code-consistency",
+      "file": "src/state/store.jsx",
+      "line": "23",
+      "title": "Константа SENIOR_AGE = 35 экспортируется, но не используется в коде",
+      "description": "SENIOR_AGE объявлена и экспортирована, но фактический порог 35 зашит литералом в dobVerdict (`if (age > 35) return 'old'`, строка 67), а isSenior работает через dobVerdict, не через SENIOR_AGE. То есть константа не является источником истины: поменяв SENIOR_AGE, поведение НЕ изменится — порог останется 35 в dobVerdict. Это ловушка при переносе в прод: разработчик подумает, что правит порог в одном месте, а реальная проверка останется старой.",
+      "evidence": "export const SENIOR_AGE = 35  // (store.jsx:23)\n...\nif (age > 35) return 'old'   // dobVerdict, store.jsx:67 — литерал, а не SENIOR_AGE",
+      "recommendation": "Либо использовать SENIOR_AGE в dobVerdict (`if (age > SENIOR_AGE) return 'old'`) и заодно сделать порог 14 константой, либо удалить неработающую константу. Сейчас она вводит в заблуждение.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. `export const SENIOR_AGE = 35` объявлена в src/state/store.jsx:23 и больше НИГДЕ в кодовой базе не используется: rg по всему репозиторию даёт единственное упоминание-объявление (остальные хиты — только в HANDOFF.md, это документация, не код). Реальный порог зашит литералом: dobVerdict содержит `if (age > 35) return 'old'` (store.jsx:67), а `isSenior` (строка 73) и `teamSeniorStat` (строка 79) работают через dobVerdict, не через SENIOR_AGE. Значит, изменение SENIOR_AGE не изменит поведение — порог останется 35. Константа мёртвая и вводит в заблуждение. Ловушка усилена тем, что рядом стоит SENIOR_SHARE = 0.2, которая, в отличие от SENIOR_AGE, реально используется в teamSeniorStat (Math.floor(members.length * SENIOR_SHARE), строка 80), а комментарий строк 20–22 подаёт обе константы как «крутилки» правила 35+. Более того, HANDOFF.md:673 прямо документирует правило как «SENIOR_AGE = 35, isSenior ← dobVerdict === old», закрепляя ложное впечатление, что SENIOR_AGE — источник истины. Аналогично порог 14 тоже литерал (store.jsx:66), отдельной константы нет. Severity = low: текущий UX не сломан (порог 35 корректен сегодня), функционального бага нет; вред чисто maintenance/при переносе в прод — разработчик правит SENIOR_AGE рядом с живой SENIOR_SHARE и ожидает, что порог сдвинется, а он не сдвинется. Рекомендация аудитора верна: использовать `if (age > SENIOR_AGE)` в dobVerdict (и завести константу для 14) либо удалить мёртвую константу."
+      }
+    },
+    {
+      "n": 34,
+      "severity": "low",
+      "bucket": "code-quality",
+      "dimension": "states-feedback-copy",
+      "file": "src/state/store.jsx",
+      "line": "430-431",
+      "title": "Тон и формулировка note доработки расходятся между сидом и демо-действием",
+      "description": "Дефолтный reworkNote из демо-действия — «Заявку вернули на доработку — что поправить, написали тебе на почту.» — отправляет пользователя искать детали в почте. А сид-заявка a2 даёт конкретную, полезную причину прямо в note: «Видео длиннее 3 минут. Загрузи версию до 3:00...» (store.jsx:271). Поскольку reworkNote — единственный текст, объясняющий, ЧТО исправить (он же выводится красным блоком в кабинете и ApplyView), дефолт без конкретики обесценивает состояние «На доработку»: статус есть, а инструкции нет.",
+      "evidence": "{ status: 'rework', reworkNote: action.note || 'Заявку вернули на доработку — что поправить, написали тебе на почту.' }",
+      "recommendation": "Сделать дефолтный note самодостаточным (без отсылки «смотри почту») или хотя бы шаблонным с местом под причину. Состояние rework без конкретной причины внутри продукта — слабая обратная связь; почта не должна быть единственным каналом «что не так».",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Факты подтверждены по коду. store.jsx:431 — дефолт демо-действия rework-app действительно «Заявку вернули на доработку — что поправить, написали тебе на почту.» (отсылает в почту, без конкретики). Сид-заявка a2 (store.jsx:271) даёт самодостаточную причину «Видео длиннее 3 минут. Загрузи версию до 3:00 и подай снова — дедлайн не сгорит.» reworkNote — единственный внутрипродуктовый текст «что поправить», и он выводится красным блоком в двух местах: Cabinet.jsx:296 и ApplyView.jsx:123-126. То есть тональное/качественное расхождение между сидом (конкретно) и дефолтом демо-действия (отсылка в почту) реально существует.\\n\\nНо материальность низкая: (1) дефолт на строке 431 срабатывает только через DEV-only DemoPanel (DemoPanel.jsx:233, «модераторское» действие) и лишь когда action.note пуст — в бою текст приходит от реального модератора через API (HANDOFF.md:759: rework-app → POST /admin/applications/:id/status), так что эта строка — демо-плейсхолдер, а не прод-путь. (2) Email-шаблоны (emails/rework.html, emails/index.html:121) трактуют reworkNote как контент модератора, подтверждая, что реальная причина всегда конкретна. (3) Отсылка «написали на почту» не ложна: письмо о доработке действительно есть (целый шаблон emails/rework.html). В демо все видимые rework-состояния используют богатый сид-текст; слабый фолбэк всплывает, только если демо-оператор вернёт заявку, не введя причину. Это полировочная правка копирайта (тон/самодостаточность), а не функциональный дефект — отсюда severity=low."
+      }
+    },
+    {
+      "n": 35,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "routing-guards",
+      "file": "src/App.jsx",
+      "line": "66",
+      "title": "Нет настоящего 404 — любой опечатанный/битый deep-link молча редиректит на домашнюю стадию",
+      "description": "Catch-all `path=\"*\"` рендерит <Index/>, который делает Navigate на HOME[stage]. Любой несуществующий путь (опечатка, устаревшая ссылка, /apply без id) бесшумно выбрасывает на /login или /cabinet без какого-либо «страница не найдена». Пользователь, перешедший по сломанной ссылке, не понимает, что ссылка битая — он просто оказывается на другом экране. Для прод-двойника (BrowserRouter + реальные ссылки в письмах) это хуже: устаревшая ссылка на заявку даст не 404, а тихий редирект в кабинет.",
+      "evidence": "App.jsx:66 `<Route path=\"*\" element={<Index />} />`; App.jsx:28-31 `const Index = () => { const { state } = useStore(); return <Navigate to={HOME[state.stage] || '/login'} replace /> }`.",
+      "recommendation": "Сделать отдельный экран NotFound для `path=\"*\"` (короткий текст + кнопка «В кабинет/Ко входу»), а Index оставить только на `path=\"/\"`. Это даёт обратную связь и не маскирует битые ссылки под нормальную навигацию.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. App.jsx:66 `<Route path=\"*\" element={<Index />} />` направляет любой несуществующий путь на компонент Index, а Index (App.jsx:28-31) делает только `<Navigate to={HOME[state.stage] || '/login'} replace />` — это чистый редирект без какого-либо экрана «страница не найдена». Отдельного NotFound в роутере нет (маршруты App.jsx:52-66 не содержат 404-экрана). vercel.json подтверждает SPA-fallback `{ \"source\": \"/(.*)\", \"destination\": \"/index.html\" }`, то есть сервер отдаёт index.html на ЛЮБОЙ путь, и все опечатанные/битые URL гарантированно доходят до клиентского `*`-маршрута и молча редиректятся. Описание поведения и evidence верны.\n\nРиск для прод-переноса материален и подтверждается косвенно: в emails/ лежат шаблоны писем с реальными deep-link плейсхолдерами ({{appUrl}}, {{joinUrl}}, {{confirmUrl}}, {{resetUrl}}, {{resultsUrl}} — emails/submitted.html:107, invite.html:80, confirm.html:78, recovery.html:70, results.html:104 и др.). Боевой двойник на BrowserRouter рассылает такие ссылки; устаревшая ссылка на удалённую/изменённую заявку при той же схеме тихо выбросит пользователя в /cabinet или /login без объяснения — это реальный UX-дефект и нагрузка на поддержку.\n\nПочему severity = low, а не выше: в самом прототипе сегодня нет реальных внешних рассылок и нет потери данных, безопасности или сломанного флоу — редирект на домашнюю стадию для stage-gated SPA является защитимым дефолтом, вред ограничен отсутствием обратной связи на битой ссылке. Это не придирка (находка корректна и имеет конкретную рекомендацию: отдельный NotFound на `path=\"*\"`, Index оставить только на `/`), но и не высокий приоритет — материальный эффект проявляется в основном при переносе в прод и сводится к деградации обратной связи, без функциональных или защитных последствий."
+      }
+    },
+    {
+      "n": 36,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "dead-code-consistency",
+      "file": "src/components/ui.jsx",
+      "line": "274-279",
+      "title": "Три словаря тегов участника (MEMBER_TAGS / MEMBER_STATE) расходятся по копирайту",
+      "description": "Статус участника команды описан тремя независимыми маппингами с разными подписями для одних и тех же тегов: в ui.jsx MEMBER_TAGS (in='в команде', confirmed='подтвердил', invited='не ответил', declined='отклонил'); в ApplyView.jsx MEMBER_STATE (in/confirmed оба='в команде', invited='ждёт ответа', declined='отклонил'); а MemberRow ещё принимает invitedLabel чтобы переопределить 'не ответил' на 'приглашён'. В итоге для tag='invited' пользователь видит в форме «не ответил», в кабинете-витрине «ждёт ответа», а через invitedLabel может быть «приглашён» — три формулировки одного состояния. Это бьёт по консистентности UX уже сейчас.",
+      "evidence": "ui.jsx:274  invited: { label: 'не ответил', cls: 'wait' }\nApplyView.jsx:23  invited: { label: 'ждёт ответа', cls: 'wait' }; confirmed: { label: 'в команде' } (а в ui.jsx confirmed='подтвердил')",
+      "recommendation": "Свести подписи тегов участника в один словарь в store.jsx (или ui.jsx) и переиспользовать; контекстные различия (форма vs витрина) задавать явным параметром, а не дублированием объекта. Зафиксировать единый язык: одно состояние — одна формулировка.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено фактическим кодом. Действительно есть два независимых словаря для одних и тех же значений member.tag: ui.jsx:274-279 MEMBER_TAGS (in='в команде', confirmed='подтвердил', invited='не ответил', declined='отклонил') и ApplyView.jsx:23-28 MEMBER_STATE (in='в команде', confirmed='в команде', invited='ждёт ответа', declined='отклонил'). Расхождение по копирайту реальное и видимое уже сейчас: капитан, редактирующий форму (ApplyForm.jsx:390 рендерит MemberRow→MEMBER_TAGS), видит «подтвердил»/«не ответил», а тот же состав в read-only ApplyView (строка 204, MEMBER_STATE) показывает «в команде»/«ждёт ответа» — разные формулировки одного состояния на разных экранах. Это бьёт по консистентности UX.\n\nДве поправки к находке, снижающие тяжесть. (1) Третья формулировка «приглашён» через invitedLabel фактически НЕ используется: grep по src показывает, что MemberRow вызывается ровно один раз (ApplyForm.jsx:390-396) и invitedLabel туда не передаётся; комментарий ui.jsx:283 («в кабинете — приглашён, it3-cabinet») ссылается на путь, которого в коде нет — Cabinet.jsx вообще не рендерит статусы участников (нет ни MemberRow, ни MEMBER_STATE). То есть «приглашён» — латентная мёртвая ветка, а не третий лейбл, который пользователь видит. (2) Поле cls (цвет тега) согласовано между словарями (wait/ok/''), расходится только текст. Функционального эффекта нет, риск при переносе в прод низкий — это чисто копирайт/консистентность. Severity low. Рекомендация аудитора (свести в один словарь, контекст задавать параметром, заодно убрать неиспользуемый invitedLabel) корректна."
+      }
+    },
+    {
+      "n": 37,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/components/ui.jsx",
+      "line": "104-113",
+      "title": "Иконочные SVG-кнопки и декоративные иконки статуса без альтернатив/aria-hidden",
+      "description": "Декоративные иконки `EyeIcon`/`StatusIcon` (ui.jsx:96-113) и иконки внутри `FileRow` (ui.jsx:244-248) не помечены `aria-hidden=\"true\"` (в отличие от иконок в Nav.jsx, где это сделано правильно). Сами по себе это не блокер: иконка пароля сидит в кнопке с `aria-label=\"Показать пароль\"`, а статус-иконки дублируют текст. Но иконки состояния файла («загрузка», «ошибка», «превышение») несут смысл только графически — для скринридера состояние читается из соседнего текста `.ff-hint`, что приемлемо, однако сами svg стоит скрыть от дерева доступности, чтобы не зачитывался мусор. WCAG 1.1.1.",
+      "evidence": "export const StatusIcon = ({ kind, size = 18 }) => kind === 'ok' ? (<svg width={size} ...>...) : (<svg ...>...)   // без aria-hidden, в отличие от Nav.jsx IconUser/IconDoc (aria-hidden=\"true\")",
+      "recommendation": "Проставить `aria-hidden=\"true\"` (и `focusable=\"false\"`) всем чисто декоративным svg (EyeIcon, StatusIcon, иконки FileRow), как уже сделано в Nav.jsx. Где иконка — единственный носитель смысла (состояние файла), продублировать состояние текстом/`aria-label` на строке.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Фактическая часть находки подтверждается кодом. В src/components/ui.jsx декоративные SVG действительно не помечены aria-hidden/focusable: EyeIcon (ui.jsx:96-101), StatusIcon (ui.jsx:104-113) и три инлайновых svg внутри FileRow (ui.jsx:244, 246, 248) — все без атрибутов доступности. Контраст реален: в src/components/Nav.jsx все три svg-иконки (строки 11, 18, 27) несут aria-hidden=\"true\", то есть в проекте уже есть устоявшаяся практика, которую эти примитивы нарушают (NominationCards.jsx:59 тоже использует aria-hidden). Это согласованность кода, не выдумка.\n\nОднако материальный вред минимален, поэтому severity = low:\n1) EyeIcon вставлен в <button ... aria-label=\"Показать пароль\"> (ui.jsx:130) — aria-label переопределяет доступное имя кнопки, вложенный svg ничего вредного не привносит.\n2) StatusIcon (галочка валидации) дублирует уже видимый текстовый статус поля — чисто декоративен.\n3) Иконки FileRow — это инлайновые svg без <title>, без role и без текстового содержимого; состояние файла продублировано словами в соседнем .ff-hint (ui.jsx:253-259: «загружается», «соединение прервалось», и т.п.). SVG без доступного имени и без текста скринридер, как правило, пропускает или отдаёт как пустую группу — «зачитываться мусор» в строгом смысле не будет, так как читать нечего. Сам автор находки это признаёт («приемлемо»).\n\nИтог: это валидная, но косметическая a11y-недоработка / нарушение внутренней консистентности (WCAG 1.1.1 формально не падает, т.к. смысл продублирован текстом). Подтверждаю как реальную проблему низкой важности; рекомендация (проставить aria-hidden=\"true\" и focusable=\"false\" декоративным svg, как в Nav.jsx) корректна и дёшева. Это не блокер и не баг прода — скорее polish."
+      }
+    },
+    {
+      "n": 38,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/components/ui.jsx",
+      "line": "274-279",
+      "title": "Несогласованные подписи статуса участника между формой, кабинетом и просмотром",
+      "description": "Для одного и того же tag используются разные слова в разных местах: в MemberRow (форма/кабинет) invited = «не ответил», confirmed = «подтвердил», in = «в команде»; в ApplyView.MEMBER_STATE те же tag'и подписаны иначе: invited = «ждёт ответа», confirmed = «в команде». Плюс в карточке приглашения кабинета статус подписан «Ждёт ответа» (Cabinet.jsx:154). Три формулировки одного состояния («не ответил» / «ждёт ответа» / «Ждёт ответа») на соседних экранах подрывают ощущение единого продукта.",
+      "evidence": "invited:   { label: 'не ответил', cls: 'wait' },  // ui.jsx\n  invited:   { label: 'ждёт ответа', cls: 'wait' },  // ApplyView.jsx:26",
+      "recommendation": "Свести подписи статусов участника в один справочник (как STATUS для заявок) и переиспользовать его в MemberRow, ApplyView и Cabinet. Выбрать один вариант для invited — например, «ждёт ответа» — и применить везде.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. Существуют ДВА независимых справочника статусов участника с расходящимися подписями для одних и тех же tag'ов:\n\n1) src/components/ui.jsx:274-279 — MEMBER_TAGS: invited='не ответил', confirmed='подтвердил', in='в команде'.\n2) src/screens/form/ApplyView.jsx:23-28 — MEMBER_STATE: invited='ждёт ответа', confirmed='в команде', in='в команде'.\n\nРасхождение реально по двум tag'ам: invited ('не ответил' vs 'ждёт ответа') и confirmed ('подтвердил' vs 'в команде').\n\nГде что показывается на практике:\n- Форма (ApplyForm.jsx:390) рендерит <MemberRow> БЕЗ пропа invitedLabel, поэтому invited = дефолтный t.label = 'не ответил' (ui.jsx:284).\n- Просмотр заявки (ApplyView.jsx:204) использует MEMBER_STATE → invited = 'ждёт ответа'.\n- Карточка приглашения в кабинете (Cabinet.jsx:154) — хардкод <span className=\"fst wait\">Ждёт ответа</span> с заглавной буквы.\n\nИтого для состояния invited на соседних экранах три формулировки: «не ответил» / «ждёт ответа» / «Ждёт ответа». Это материальная (видимая в UI) несогласованность копирайтинга, а не выдумка.\n\nНюанс, снижающий тяжесть: комментарий ui.jsx:283 фиксирует, что разные подписи формы и кабинета — намеренный выбор из макетов («в форме — «не ответил» (it3-form), в кабинете — «приглашён» (it3-cabinet)»), и под это сделан проп invitedLabel. Но дубль-справочник MEMBER_STATE в ApplyView и третий вариант «ждёт ответа», а также рассогласование confirmed («подтвердил» vs «в команде») этим намерением не покрыты — это реальный пробел консистентности продукта.\n\nЭффект чисто косметический: ничего не ломается, машина состояний и логика не затронуты, риска для прод-переноса (боевой двойник applications.tvortsy.online) нет. Поэтому severity=low. Рекомендация автора верна по сути: свести подписи в единый справочник (как STATUS для заявок) и переиспользовать в MemberRow/ApplyView/Cabinet, выбрав один вариант для invited."
+      }
+    },
+    {
+      "n": 39,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "ux-flows",
+      "file": "src/screens/auth/Confirm.jsx",
+      "line": "13-22",
+      "title": "Потеря введённого кода и сброс таймера при перезагрузке на экране подтверждения почты",
+      "description": "Состояние стадии 'registered' персистится в localStorage, поэтому после релоада пользователь возвращается на /confirm — это хорошо. Но сам код (4 ячейки) и таймер «новый код через 0:60» живут в локальном useState и при перезагрузке посреди ввода обнуляются: введённые цифры пропадают, а отсчёт до повторной отправки стартует заново с 60 секунд. Пользователь, который перезагрузил страницу, ожидая письмо, не сможет сразу запросить код повторно. В проде с реальным TTL кода это рассинхронизирует UI-таймер и серверный срок жизни кода.",
+      "evidence": "const [code, setCode] = useState(['', '', '', ''])\n  const [left, setLeft] = useState(60)",
+      "recommendation": "Не критично для прототипа, но при переносе в прод таймер «отправить ещё раз» считать от серверной метки времени отправки (persisted), а не от монтирования компонента. Ввод кода можно не сохранять, но таймер не должен сбрасываться при релоаде.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Фактическая часть находки подтверждается кодом. В src/screens/auth/Confirm.jsx:13 код хранится в локальном useState (`const [code, setCode] = useState(['', '', '', ''])`), а таймер — в useState(60) на строке 14. useEffect (строки 18-22) тикает от текущего `left`, который при каждом монтировании инициализируется заново 60-ю. Никакой persisted/серверной метки времени отправки нет: grep по store.jsx не нашёл ни codeSentAt/sentAt/resendAt — только stage и email сохраняются. При этом stage:'registered' действительно персистится в localStorage (store.jsx:363 ставит stage='registered'; строка 672 пишет весь state в LS_KEY), а App.jsx:22 маппит registered→/confirm и Index (App.jsx:30) редиректит туда при релоаде. Значит, сценарий реален: после перезагрузки пользователь возвращается на /confirm, введённые цифры теряются, а отсчёт «новый код через 0:60» стартует заново — кнопка «Отправить код ещё раз» (строки 88-90) снова блокируется до 60с. Эффект существует и сейчас (UX-неудобство при релоаде в ожидании письма), и тем более при переносе в прод с реальным TTL кода рассинхронит UI-таймер с серверным сроком. Однако материальность низкая: это mock-auth прототип, где код подтверждения — любые 4 цифры (терять, по сути, нечего), реального TTL нет, а сам сценарий «релоад ровно посреди ввода» — редкий край. CLAUDE.md прямо относит mock-auth к известным и трекаемым особенностям прототипа, а сама находка признаёт «не критично для прототипа» и формулирует рекомендацию как задачу на прод-перенос (считать таймер от persisted-метки отправки). Поэтому подтверждаю как реальную, но низкоприоритетную UX/прод-перенос-заметку, а не баг для немедленного исправления."
+      }
+    },
+    {
+      "n": 40,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/screens/auth/Confirm.jsx",
+      "line": "91-95",
+      "title": "«Изменить почту» уводит на пустую регистрацию, теряя введённые email и дату рождения",
+      "description": "Ссылка «Изменить почту» диспатчит change-email (stage → guest) и ведёт на /register. Но редьюсер change-email не сбрасывает email/profile, а форма регистрации стартует с пустыми useField('') — то есть пользователь теряет уже введённые почту, пароль, дату рождения и согласие, и должен заполнять всё заново. Микрокопия «Изменить почту» обещает правку одного поля, а по факту обнуляет весь шаг 1. Ожидание не совпадает с результатом.",
+      "evidence": "onClick={() => { dispatch({ type: 'change-email' }); nav('/register') }}\n        >Изменить почту</button>",
+      "recommendation": "Либо предзаполнять форму регистрации текущими state.email/state.profile.dob (тогда «изменить почту» правда меняет одно поле), либо переименовать действие в «Начать заново» / «Регистрация заново», чтобы копия честно отражала потерю введённого.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. В Confirm.jsx:91-95 кнопка «Изменить почту» делает `onClick={() => { dispatch({ type: 'change-email' }); nav('/register') }}`. Редьюсер `change-email` в store.jsx:369-370 возвращает `{ ...state, stage: 'guest' }` — он НЕ сбрасывает `state.email` и НЕ трогает `state.profile.dob`, то есть старые данные остаются в сторе. Однако форма Register.jsx стартует с пустыми полями: `emailF = useField('')`, `passF = useField('')`, `dobF = useField('')` (строки 16-18), и форма НЕ читает `state.email`/`state.profile.dob` для предзаполнения (из стора используется только `state.pendingInvite`, строка 15). Итог: при переходе по «Изменить почту» пользователь видит пустой шаг 1 и должен заново вводить email, пароль, дату рождения и ставить галочку согласия. Микрокопия «Изменить почту» обещает правку одного поля, а по факту обнуляет весь видимый шаг 1 — ожидание не совпадает с результатом. Описание находки точно. Severity занижаю до low: это прототип на mock-auth без бэкенда, пароль всё равно нигде не хранится, реальной потери данных в БД нет, а email/dob фактически сохранены в сторе (просто не подтягиваются) — это фрикция повторного ввода и рассинхрон копии с поведением, без функционального слома и без риска при прод-переносе. Рекомендация аудитора (предзаполнять форму из state либо переименовать действие в «Начать заново») корректна."
+      }
+    },
+    {
+      "n": 41,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "ux-flows",
+      "file": "src/screens/auth/Login.jsx",
+      "line": "17-31",
+      "title": "Демо-логин принимает только зашитый email, а свежезарегистрированный пользователь после logout не сможет войти",
+      "description": "submit считает email «известным», только если он равен 'm.sokolova@mail.ru' ИЛИ совпадает с текущим state.email. После logout state.email сохраняется (logout меняет только stage), поэтому в рамках одной сессии вход свежим email работает. Но это хрупко: если пользователь зарегистрировался под своим адресом, затем сценарий/демо-панель сбросили state (scenario 'fresh' обнуляет email), его адрес перестаёт быть «известным» и вход возвращает общую ошибку «Не удалось войти», хотя аккаунт «есть». Для демо это ловушка: человек регистрируется своим email, выходит, после сброса не может войти и не понимает почему. Явно отметить как ограничение mock-auth, ломающее ожидаемый сценузарегистрировался→вышел→вошёл.",
+      "evidence": "const known = e === 'm.sokolova@mail.ru' || (state.email && e === state.email)\n    if (known && pass) { ... } else { setErr(true) }",
+      "recommendation": "Для прода — заменить на реальную проверку. Для демо хотя бы в тексте ошибки или хинте на экране входа явно указать демо-доступ (m.sokolova@mail.ru / любой пароль), чтобы пользователь не пытался войти несуществующим адресом и не упирался в немой отказ.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Технические факты находки подтверждены по коду. Login.jsx:19 действительно считает email «известным» только так: `const known = e === 'm.sokolova@mail.ru' || (state.email && e === state.email)`, и при !known ветка `else { setErr(true) }` (стр. 28-29). Редьюсер `logout` (store.jsx:392-393) меняет только стадию: `return { ...state, stage: 'guest' }`, email сохраняется — поэтому в рамках одной сессии «зарегистрировался→вышел→вошёл своим email» РАБОТАЕТ (register на стр. 363 кладёт `email: action.email` в стор). Также подтверждено, что сценарий `'fresh'` (store.jsx:492-493 → `{ ...base }`, base наследует `initialState.email = ''`, стр. 342) обнуляет email, после чего свежий пользовательский адрес перестаёт быть «известным» и вход даёт немой отказ.\n\nОднако материальность ограничена. Путь, ломающий вход (сброс через 'fresh'), достижим ТОЛЬКО из DemoPanel: чип «Регистрация» (DemoPanel.jsx:24) и reset() (стр. 127), а сам DemoPanel смонтирован лишь в DEV (`App.jsx:68`, `import.meta.env.DEV && <DemoPanel />`). В прод-сборке этого пути из UI нет. Глубже — это намеренная mock-auth: бэкенда нет, «аккаунт» = текущий `state.email` в localStorage плюс зашитый демо-адрес; любая очистка localStorage и так теряет аккаунт. CLAUDE.md прямо помечает mock-auth как известное и трекаемое, не баг.\n\nРеальный остаток находки — UX-зазор: экран входа не подсказывает демо-доступ, а ошибка «Не удалось войти… или восстанови доступ» (Login.jsx:68) уводит в recovery, который для несуществующего аккаунта тоже не поможет — для демо-аудитории это правдоподобная ловушка register→reset→login. Это реально, но мелко: счастливый путь в сессии работает, поломка DEV-only и вытекает из намеренного дизайна. Severity = low. Рекомендация по хинту с демо-доступом на экране входа уместна."
+      }
+    },
+    {
+      "n": 42,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "validation-layer",
+      "file": "src/screens/auth/Register.jsx",
+      "line": "67-73",
+      "title": "revealInvalid не сфокусирует поле даты рождения в Register, т.к. warn-подсветка подавлена баннером",
+      "description": "revealInvalid ищет первое невалидное поле по селектору '.ff-input.err, .ff-input.warn' и фокусирует его. В Register для вердиктов minor/old объяснение выносится в баннер, а у самого поля warn принудительно гасится (warn={dobBanner ? null : dobF.bind.warn}), поэтому input НЕ получает класс .warn. Если единственная причина блокировки сабмита — возраст 35+ без приглашения (warn+block), то при нажатии «Создать аккаунт» revealInvalid не найдёт поле и не сфокусирует/не подскроллит к нему — внешне кнопка просто «не срабатывает». Сама блокировка отрабатывает корректно (dobF.valid=false), но фокус-подсказка теряется.",
+      "evidence": "<Field label=\"Дата рождения\" {...dobF.bind} warn={dobBanner ? null : dobF.bind.warn} ... />  // revealInvalid: container.querySelector('.ff-input.err, .ff-input.warn')",
+      "recommendation": "В кейсе old-без-инвайта явно показывать ошибку на поле (или скроллить к баннеру), либо в revealInvalid принимать список refs/первое невалидное поле из самих объектов useField, а не полагаться только на CSS-классы в DOM.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Механизм подтверждён по фактическому коду. В Register.jsx:70 поле даты получает `warn={dobBanner ? null : dobF.bind.warn}`, а `dobBanner` (строки 21-23) истинно при verdict 'minor'/'old'. В ui.jsx:139 класс инпута выводится как `kind = error ? 'err' : warn ? 'warn' : ok ? 'ok' : null` и навешивается строкой 159 `className={'ff-input' + (kind ? ' ' + kind : '')}`. При погашенном warn у поля нет класса .warn. Одновременно для кейса «35+ без приглашения» vDobRegister(false) (validation.js:76-80) возвращает `warn(..., true)` → в useField (validation.js:151) `blocked = !!res.warn && !!res.block` → `valid:false`, поэтому submit (Register.jsx:26) корректно блокируется и возвращается без перехода. revealInvalid (validation.js:170-177) делает `container.querySelector('.ff-input.err, .ff-input.warn')`: email/password валидны (класс ok), у даты класса .warn нет (ok тоже false, т.к. res.warn истинно), значит el === null и .focus()/скролла не происходит. Это единственный блокирующий сабмит сценарий с потерянным фокусом: для 'old'+invite warn неблокирующий (submit проходит), для 'young' dobBanner=false и .warn проставляется, для 'minor' valid=true. Так что находка про реальный, а не воображаемый кейс. ОДНАКО severity занижаю до low: прямо под полем (Register.jsx:94-101) рендерится заметный красный баннер «Самостоятельно участвовать нельзя» с объяснением, и он появляется живо по мере ввода (по verdict, не по сабмиту), то есть к моменту клика объяснение уже на экране. Кнопка не «молчит» — теряется только авто-фокус/авто-скролл к полю, что для одноколоночной auth-формы, где поле и баннер видны без прокрутки, почти не ощущается. Это прототип, но дефект реален для будущего прод-переноса; материальный вред UX минимален."
+      }
+    },
+    {
+      "n": 43,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "ux-flows",
+      "file": "src/screens/cabinet/Cabinet.jsx",
+      "line": "44-52",
+      "title": "Принятие приглашения при занятых слотах — тихий no-op в редьюсере, а в кабинете disabled-состояния у кнопки «Принять» нет",
+      "description": "В кабинете карточка приглашения всегда показывает активные кнопки «Принять»/«Отклонить» (без disabled), даже когда у участника уже занято 2 из 2 слотов. При клике acceptInvite показывает тост «У тебя уже 2 заявки — освободи место», но кнопка визуально не объясняет заранее, почему действие не сработает, и причина видна только постфактум. На экране /join/:id для того же случая сделано лучше (есть поясняющий блок noSlot и класс disabled на кнопке) — поведение между двумя точками входа в одно и то же действие несогласованно.",
+      "evidence": "<button className=\"fbtn sm\" onClick={() => acceptInvite(app)}>Принять</button>\n  <button className=\"fbtn sm line\" onClick={() => declineInvite(app)}>Отклонить</button>  // нет проверки noSlot для disabled/подсказки",
+      "recommendation": "В карточке приглашения в кабинете при countUsed>=APP_LIMIT добавить тот же поясняющий хинт и disabled-состояние кнопки «Принять», что и на /join/:id, чтобы причина блокировки была видна до клика и поведение совпадало.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. В src/screens/cabinet/Cabinet.jsx карточка приглашения (строки 153-158) рендерит кнопки безусловно: `<button className=\"fbtn sm\" onClick={() => acceptInvite(app)}>Принять</button>` и «Отклонить». Переменная noSlot в Cabinet вообще не вычисляется, поясняющего хинта нет, класс disabled на кнопке не навешивается. Сам acceptInvite (строки 44-52) при `countUsed(state, state.email, app.id) >= APP_LIMIT` лишь показывает тост «У тебя уже 2 заявки — освободи место…» и делает return — то есть тихий no-op до клика причина не видна. Редьюсер respond-invite (store.jsx:458) дублирует страховку `return state` при превышении лимита, так что данные не портятся.\\n\\nДля сравнения, в src/screens/team/JoinInvite.jsx для того же действия сделано лучше: строка 132 `const noSlot = countUsed(state, state.email, id) >= APP_LIMIT`; строки 178-182 — поясняющий блок `<p className=\\\"ff-hint\\\">…освободи место в кабинете…</p>`, который виден ДО клика; строка 184 — `className={'fbtn submit' + (noSlot ? ' disabled' : '')}`, а `.fbtn.disabled` в base.css:44 задаёт `opacity:.45; cursor:default; pointer-events:none`. То есть один и тот же домен-экшен из двух точек входа ведёт себя несогласованно: на /join причина блокировки объяснена и кнопка задизейблена, в кабинете — только постфактум-тост.\\n\\nНаходка не придирка и не неверное прочтение — рассогласование реально. Severity понижаю до low: это прототип без бэкенда, сценарий — узкий краевой случай (занято 2/2 слотов И есть неотвеченное приглашение), действие безопасно гейтится (no-op + тост, без потери данных), а пользователь всё же получает объяснение тостом. Это полировка консистентности UX, а не функциональный баг. На прод-перенос влияет минимально, но устранять стоит для единообразия."
+      }
+    },
+    {
+      "n": 44,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "ux-flows",
+      "file": "src/screens/cabinet/Cabinet.jsx",
+      "line": "53-56",
+      "title": "Отклонение приглашения происходит мгновенно и без подтверждения, тогда как принятие и выход из команды — через явные шаги",
+      "description": "declineInvite сразу диспатчит respond-invite с tag 'declined' по одному клику, без модалки подтверждения. На /join это тоже одна кнопка decline без подтверждения. Отказ обратим (приглашение бессрочно, можно «передумать»), поэтому риск невелик, но это единственное командное действие без какого-либо барьера — на фоне модалок для «Отозвать», «Удалить черновик», «Покинуть команду» выглядит непоследовательно, и случайный клик «Отклонить» сразу меняет состояние, которое капитан увидит.",
+      "evidence": "const declineInvite = (app) => {\n    dispatch({ type: 'respond-invite', id: app.id, tag: 'declined' })\n    toast('Приглашение отклонено')\n  }",
+      "recommendation": "Либо добавить лёгкое подтверждение/undo-тост для отклонения, либо явно опираться на обратимость (тост «Отклонено · вернуть» с действием). Главное — выровнять с остальными командными действиями.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. В src/screens/cabinet/Cabinet.jsx:53-56 declineInvite по одному клику диспатчит `dispatch({ type: 'respond-invite', id: app.id, tag: 'declined' })` и показывает тост — без модалки. Кнопка «Отклонить» (строка 156) вызывает declineInvite напрямую через onClick. На фоне трёх других командных/заявочных действий это действительно единственное без барьера: «Отозвать» (316 → setWithdrawApp → модалка 331-350), «удалить черновик» (217 → setDeleteDraft → модалка 375-394), «покинуть команду» (262 → setLeaveApp → модалка 353-372) — все через Modal с явным подтверждением. На /join (JoinInvite.jsx:142-144, кнопка 185) decline тоже мгновенный, по одному клику, даже без тоста. Так что и описание, и evidence, и сравнение с другими действиями фактически верны.\n\nОднако материальный эффект мал, что признаёт и сам аудитор. Отказ полностью обратим: редьюсер respond-invite (store.jsx:454+) лишь меняет tag участника; экран declined в JoinInvite (147-162) явно предлагает «Передумать и принять», а текст 153 — «приглашение бессрочное, примешь в любой момент». Единственное последствие — капитан увидит отказ (JoinInvite.jsx:152 «Капитан увидит отказ в составе команды»), но это восстановимо повторным принятием. Это реальная, но мелкая несогласованность UX (polish), а не баг и не риск для прод-переноса. Рекомендация аудитора (undo-тост «Отклонено · вернуть» или опора на обратимость) адекватна. Severity понижаю до low."
+      }
+    },
+    {
+      "n": 45,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/screens/cabinet/Profile.jsx",
+      "line": "175-181",
+      "title": "Тосты появляются без подтверждения реального результата (оптимистичная обратная связь)",
+      "description": "Подключение/отвязка соцсети сразу диспатчит social-toggle и показывает toast «{name} подключён» / «{name} отвязан» — без какого-либо шага реальной авторизации (в прототипе это ок, но обратная связь утверждает свершившийся факт). То же с «Данные сохранены», «Пароль обновлён», «Приглашение отправлено» — все тосты безусловны. При переносе в прод эта модель «toast = успех» не оставляет места для состояния «не удалось»: ни одного error-тоста в кодовой базе нет, тост всегда позитивный.",
+      "evidence": "dispatch({ type: 'social-toggle', key })\n                          toast(on ? `${name} отвязан` : `${name} подключён`)",
+      "recommendation": "Заложить вариант негативного тоста/состояния (например, toast с типом error и иным стилем) и использовать оптимистичные тосты только там, где откат не критичен. Сейчас успех гарантирован самим клиентом — при подключении API нужен путь для отказа, и его стоит задизайнить заранее.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Фактура находки подтверждается дословно. Profile.jsx:178-179 действительно безусловно диспатчит social-toggle и показывает toast(on ? `${name} отвязан` : `${name} подключён`) без шага реальной авторизации. То же безусловно: saveEdit (стр.73 — dispatch profile-patch + toast 'Данные сохранены'), savePw (стр.86 — toast 'Пароль обновлён', причём диспатча смены пароля там вообще нет, только тост), ApplyForm.jsx:139 'Приглашение отправлено'. Примитив toast подтверждает суть: store.jsx:702-706 — toast(msg) принимает только строку, нет параметра type; рендер один div className=\"toast\" (стр.713); app.css:224 — единственный стиль .toast (тёмная плашка, белый текст), нет .toast.error/.ok. То есть оси «тип тоста» (успех/ошибка) в системе нет — это верно.\n\nОднако находка переоценивает в формулировке «ни одного error-тоста, тост всегда позитивный»: негативные по смыслу тосты ЕСТЬ — гард-сообщения Cabinet.jsx:47 и JoinInvite.jsx:135 «У тебя уже 2 заявки — освободи место», Cabinet.jsx:73 «Старше 35 — участвовать можно только в команде». Они доносят «так нельзя», просто тем же единым стилем. Реально отсутствует именно отдельный стиль/тип ошибки и путь async-отказа.\n\nСущественность низкая. Это по сути известная особенность прототипа: CLAUDE.md прямо относит mock-auth/upload к «known and tracked, not bugs». Без бэкенда операция упасть не может, поэтому оптимистичные тосты для прототипа корректны — сама находка это признаёт («в прототипе это ок»). Текущего вреда UX нет. Материальная часть — форвард-лук-замечание: примитив тоста не имеет оси типа, и при подключении боевого API (трекается в памяти prod-api-integration.md как расхождения прототип↔прод) для состояния «не удалось» нет готового аффорданса; добавление — один параметр позже. Это валидный, привязанный к коду дизайн-долг, но без поломки в работающем коде и с частично неточной посылкой про «полное отсутствие негативной обратной связи». Поэтому подтверждаю как реальное, но severity low."
+      }
+    },
+    {
+      "n": 46,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "error-handling",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "144-149",
+      "title": "copyInviteLink: ошибка clipboard проглатывается, но тост «Ссылка скопирована» показывается всегда",
+      "description": "Копирование ссылки-приглашения оборачивает navigator.clipboard?.writeText в try/catch и .catch(()=>{}), полностью гася любой сбой (нет clipboard API, отказ в правах, не-secure-context/http). При этом toast('Ссылка скопирована') вызывается безусловно — после try/catch. Пользователь увидит подтверждение «скопировано», даже когда в буфер ничего не попало (например на http в проде или в небезопасном контексте). Это вводит в заблуждение и ломает UX уже сейчас: человек идёт вставлять ссылку, а её там нет.",
+      "evidence": "const copyInviteLink = () => {\n    try {\n      navigator.clipboard?.writeText(location.origin + '/join/' + app.id)?.catch?.(() => {})\n    } catch { /* clipboard недоступен — демо */ }\n    toast('Ссылка скопирована')\n  }",
+      "recommendation": "Показывать тост успеха только в .then() от writeText(), а в .catch()/catch — либо тост-ошибку («Не удалось скопировать — скопируй вручную»), либо показать саму ссылку для ручного копирования (fallback с выделением текста). Сейчас успех сообщается без проверки факта копирования.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Код в src/screens/form/ApplyForm.jsx:144-149 точно соответствует evidence. copyInviteLink оборачивает navigator.clipboard?.writeText(...)?.catch?.(()=>{}) в try/catch, полностью гася любой сбой: (1) оптическая цепочка ?. означает, что в небезопасном контексте (http), где navigator.clipboard === undefined, writeText вообще не вызывается, выражение схлопывается в undefined, ошибки нет; (2) если writeText вызван, но reject (отказ в правах) — .catch(()=>{}) глушит; (3) try/catch ловит синхронный throw. После этого toast('Ссылка скопирована') вызывается БЕЗУСЛОВНО, вне зависимости от факта копирования. То есть на http или при отказе в правах пользователь увидит «Ссылка скопирована», хотя в буфер ничего не попало — тост лжёт. Находка фактически верна.\n\nОднако severity занижаю до low по контексту: (1) это заявленный прототип, а сам автор пометил случай комментарием «clipboard недоступен — демо», то есть деградация осознанная; (2) развёрнутый прототип живёт на crrff.vercel.app по https (по CLAUDE.md/памяти), где navigator.clipboard доступен и writeText в норме успешен — ложный тост проявляется только в edge-case (http/отказ в правах), а не в типовом сценарии демо; (3) аргумент «риск при переносе в прод» слабый: боевой двойник applications.tvortsy.online — отдельная кодовая база (FastAPI), этот код туда не едет. Материальный эффект реален, но узкий: настоящий UX-баг (успех сообщается без проверки факта копирования), но в реальном https-окружении демо почти не срабатывает. Рекомендация аудитора корректна — показывать success только в .then() от writeText(), а в .catch()/catch давать тост-ошибку или fallback с выделением ссылки."
+      }
+    },
+    {
+      "n": 47,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "error-handling",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "266-274",
+      "title": "Декларированный пользователю лимит описания (1000) обеспечен только maxLength — счётчик и валидация не предупреждают на границе",
+      "description": "Поле «Описание работы» ограничено max={1000}, что транслируется в maxLength textarea (ui.jsx:151,163). Браузер молча обрезает ввод/вставку на 1000-м символе. Счётчик `${app.description.length} / 1000` показывает цифру, но нет ни предупреждения у границы, ни обратной связи при попытке вставить длинный текст — символы просто пропадают. Для публичного поля каталога (как указано в hint) тихая обрезка вставленного описания — ловушка: автор может не заметить, что конец текста потерян.",
+      "evidence": "<Field\n  area\n  label=\"Описание работы\"\n  value={app.description}\n  count={`${app.description.length} / 1000`}\n  max={1000}\n  onChange={v => patch({ description: v })}\n/>",
+      "recommendation": "Подсвечивать счётчик при приближении к лимиту (например warn при >900) и/или показывать тост при обрезке вставки. Сейчас единственный сигнал — статичный счётчик, а потеря хвоста вставленного текста происходит молча.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка подтверждается фактическим кодом. В ApplyForm.jsx:266-274 поле «Описание работы» рендерится с max={1000}, статичным count={`${app.description.length} / 1000`} и hint «Публичное — видно в каталоге работ фестиваля» — то есть это действительно публичное каталожное поле. В ui.jsx:152 (textarea) проп max передаётся прямо в нативный maxLength={max}, без onPaste-обработчика, без тоста и без какой-либо обратной связи при обрезке — браузер молча режет ввод/вставку на 1000-м символе. Состояния warn/error/ok в Field (ui.jsx:139,170-178) управляются только пропами error/warn/ok, а описание их не передаёт, поэтому счётчик выводится как обычный ff-hint (ui.jsx:177) без подсветки у границы. В validation.js валидатора длины для description нет. Таким образом, у границы лимита есть только статичный счётчик, а потеря хвоста вставленного текста происходит молча — как и описано.\\n\\nОднако материальный эффект невелик. Счётчик «X / 1000» всё же присутствует и даёт непрерывную обратную связь: при наборе цифра перестаёт расти на 1000 — это (слабый) сигнал. Реальный пробел — только молчаливая обрезка ВСТАВКИ длинного текста, которую счётчик не подсвечивает в момент вставки. Это не баг потери данных в строгом смысле (лимит намеренный и декларирован), не проблема корректности/безопасности, и поле на прототипе. Это легитимная, но низкоприоритетная UX-шероховатость (warn у >900 и/или тост при обрезке вставки — разумная доработка, переносимая в прод). Severity — low."
+      }
+    },
+    {
+      "n": 48,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "415-428",
+      "title": "Кнопка «Пригласить» молча неактивна — не объясняет, почему ничего не происходит",
+      "description": "Инлайн-форма приглашения: ошибка email показывается только когда showInviteErr = inviteEmail.trim() && inviteErr, то есть при пустом поле подсказки нет. Кнопка «Пригласить» при невалидном email получает класс disabled (pointer-events:none по base.css:44), и пользователь, нажав на пустую/кривую почту, не получает никакой реакции — ни ошибки, ни тоста. Состояние «почему нельзя» не объяснено в момент попытки.",
+      "evidence": "<button type=\"button\" className={'fbtn sm' + (emailOk ? '' : ' disabled')} onClick={sendInvite}>Пригласить</button>\n                      </div>\n                      {showInviteErr && <div className=\"ff-err\">{inviteErr}</div>}",
+      "recommendation": "Показывать подсказку под полем сразу (например «Введи email участника» при пустом значении) и/или не глушить onClick полностью, а при невалидном email раскрывать ошибку через revealInvalid-подобный приём. Кнопка в состоянии disabled без объяснения причины — частый источник недоумения.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка фактически подтверждается кодом ApplyForm.jsx:133-135 и 425-427. Цепочка: `inviteErr = (vEmail(inviteEmail)||{}).error`; для пустого поля `vEmail('')` возвращает `err('Укажи почту')` (validation.js:18), значит `inviteErr` truthy и `emailOk=false`. Но `showInviteErr = inviteEmail.trim() && inviteErr` — при пустом поле `''.trim()` даёт falsy, поэтому подсказка под полем НЕ показывается (строка 427 не рендерится). Кнопка при `!emailOk` получает класс `disabled`, а base.css:44 задаёт `.fbtn.disabled { pointer-events: none }`, то есть `onClick={sendInvite}` физически не сработает — клик по пустому полю не даёт ни ошибки, ни тоста. Прочтение аудитора верное: «тихая» неактивность есть именно в состоянии пустого поля сразу после открытия панели (inviteEmail стартует как '' на строке 57 и обнуляется после отправки на 140).\n\nОднако материальный эффект небольшой. Смягчающие факты: (1) кнопка визуально приглушена (`opacity:.45` в base.css:44) — это конвенциональный disabled-аффорданс, он сам по себе сигналит «пока нельзя»; (2) есть placeholder «name@mail.ru», подсказывающий формат; (3) как только пользователь печатает хоть что-то невалидное, `showInviteErr` становится truthy и ошибка показывается; (4) поле с autoFocus (строка 421) — фокус уже в инпуте, естественный следующий шаг — печатать. Реального тупика нет: пользователь печатает email и кнопка активируется. Это полиш-недочёт момента «пустое поле без подсказки», а не функциональный баг и не риск для прод-переноса. Severity: low."
+      }
+    },
+    {
+      "n": 49,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/screens/form/ApplyForm.jsx",
+      "line": "216-219",
+      "title": "Хинт в шапке формы дублирует savemark — двойная индикация автосохранения",
+      "description": "На экране формы статус автосохранения показывается одновременно в трёх местах: в шапке (savemark «Черновик сохранён · HH:MM»), в правой sticky-колонке («Черновик сохраняется автоматически.», строка 470) и в футере подачи (ff-save savemark «Сохранено · HH:MM», строка 482-484). Шапка и футер при этом показывают РАЗНЫЙ текст для одного состояния («Черновик сохранён» vs «Сохранено»). Тройное дублирование плюс расхождение в формулировке создаёт визуальный шум и микро-рассинхрон.",
+      "evidence": "{saving ? 'Сохраняем…' : `Черновик сохранён · ${app.updatedAt}`}  // шапка\n...\n{saving ? 'Сохраняем…' : `Сохранено · ${app.updatedAt}`}  // футер",
+      "recommendation": "Оставить один индикатор автосохранения (логично — в футере рядом с кнопкой подачи) и согласовать формулировку. Дублирующую подпись в шапке убрать или свести к единому тексту, чтобы не было двух разных слов для одного состояния.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду src/screens/form/ApplyForm.jsx. На экране формы статус автосохранения действительно показан в трёх местах одновременно: (1) шапка, строки 216-218 — `<span className=\"savemark\">{saving ? 'Сохраняем…' : `Черновик сохранён · ${app.updatedAt}`}</span>`; (2) правая sticky-колонка, строка 470 — `<div className=\"ff-hint\">Черновик сохраняется автоматически.</div>`; (3) sticky-футер подачи, строки 482-484 — `<span className=\"ff-save savemark\">{saving ? 'Сохраняем…' : `Сохранено · ${app.updatedAt}`}</span>`. Все три рендерятся без условного гейтинга в одном компоненте, так что на десктопе видны одновременно. Расхождение в формулировке реально: шапка пишет «Черновик сохранён», футер — «Сохранено» для ровно одного и того же состояния — это два разных слова для одного смысла.\n\nДве поправки к описанию находки, снижающие тяжесть. Во-первых, «микро-рассинхрон» как функциональная проблема отсутствует: оба живых индикатора управляются ОДНИМ общим состоянием `const [saving, setSaving] = useState(false)` (строка 58) и читают один и тот же `app.updatedAt`, поэтому они всегда логически синхронны — расходится только текст, не значение/таймстемп. Во-вторых, элемент в правой колонке (строка 470) — это статическая описательная подпись без таймстемпа («сохраняется автоматически»), а не третий живой индикатор; к тому же он лежит в `.anchor-desktop`, который скрыт через `display:none` на брейкпоинтах ≤1000px и ≤720px (src/styles/app.css:339, 349), то есть на планшете/мобиле исчезает. Так что «тройное дублирование» точнее звучит как «два живых индикатора + одна статическая подсказка, только на десктопе».\n\nИтог: материальная, но чисто косметическая/копирайтная избыточность с расхождением формулировок («Черновик сохранён» vs «Сохранено»). Функционального вреда и риска при переносе в прод нет, это полировка UX-текста на прототипе. Рекомендация автора разумна (свести к единому индикатору/формулировке), severity — low."
+      }
+    },
+    {
+      "n": 50,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "store-correctness",
+      "file": "src/state/store.jsx",
+      "line": "454-473",
+      "title": "respond-invite: отклонение по пересланной ссылке от неизвестного участника — молчаливый no-op",
+      "description": "В respond-invite ветка добавления себя в состав срабатывает только при !known && action.tag === 'confirmed'. Если пользователь пришёл по пересланной ссылке (его email НЕ в members) и нажимает «Отклонить» (tag:'declined'), known=false → переходим в else-ветку с members.map, который ищет m.email === email и ничего не находит → состав не меняется. UI (JoinInvite.decline) при этом вызывает dispatch и показывает экран «Приглашение отклонено» по me?.tag==='declined', но me останется undefined, так что после ре-рендера экран отказа может не показаться, а pendingInvite всё равно обнулится. Поведение неконсистентно: принятие по чужой ссылке себя добавляет, отказ — нет.",
+      "evidence": "const known = a.members.some(m => m.email === email)\n        if (!known && action.tag === 'confirmed') {\n          return { members: [...a.members, { id: action.memberId, ... tag: 'confirmed' }] }\n        }",
+      "recommendation": "Либо при !known && tag==='declined' тоже добавлять запись с tag:'declined' (чтобы отказ фиксировался и капитан его видел, и me был определён), либо явно решить, что отказ незнакомца — это просто сброс pendingInvite без записи, и тогда не полагаться на me.tag==='declined' в JoinInvite для такого случая. Сейчас два пути (принять/отклонить) обрабатывают «незнакомца» асимметрично.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждаю асимметрию в коде. store.jsx:459-471: ветка `if (!known && action.tag === 'confirmed')` (461) добавляет нового участника при принятии по «чужой» ссылке, а else-ветка (466-470) делает `a.members.map(m => m.email === email ? ...)`. Для незнакомца (его email НЕ в members) при tag:'declined' условие 461 ложно → идём в else → map никого не находит → состав НЕ меняется. Возвращается `{ ...next, pendingInvite: null }` (472), т.е. pendingInvite обнуляется, members нетронут.\\n\\nUI-следствие реально. JoinInvite.jsx:74 `me = app.members.find(m => m.email === state.email && m.role !== 'captain')`; для незнакомца me=undefined → проходим мимо ветки confirmed (120) и declined (147) и попадаем в финальный return (165), где кнопка «Отклонить» (185) действительно рендерится и вызывает `dispatch({type:'respond-invite', id, tag:'declined'})` (143) БЕЗ memberId. После ре-рендера me по-прежнему undefined → экран «Приглашение отклонено» (147) не показывается, виден тот же экран «Принять/Отклонить». Молчаливый no-op подтверждён: приём по чужой ссылке себя добавляет (138 передаёт memberId, редьюсер 464), отказ — нет. Диагноз аудитора точен, включая то, что decline даже не передаёт memberId, поэтому записать declined-участника редьюсер сейчас не смог бы.\\n\\nПочему severity = low, а не выше: в фактически достижимых флоу прототипа эта ветка почти не срабатывает. (1) Демо-персоны-приглашённые (Кирилл k.dmitriev@inbox.ru, Тимур t.garipov@mail.ru) предсидены в members с tag:'invited' (TEAM_SEED, store.jsx:287,289) → known=true → баг-ветка не задействована, отказ через else-map корректно ставит tag:'declined'. (2) Свежерегистрант по pendingInvite получает `{...initialState}` с пустым apps (register, store.jsx:363) → на /join/:id срабатывает `if(!app)` (JoinInvite:58) «Приглашение недействительно», кнопки отказа нет. (3) Login.jsx:19 пускает только `m.sokolova@mail.ru` или текущий state.email — войти под произвольным незнакомым email, сохранив team-app в сторе, через штатный UI нельзя. Таким образом видимого слома в прототипе сегодня нет.\\n\\nНо это не придирка: ветка `!known && confirmed` (461) написана автором осознанно, т.е. состояние «active-пользователь + team-app в сторе + email не в members» считается достижимым (и оно реально достижимо на боевом двойнике applications.tvortsy.online, где apps приходят из /api и me может законно отсутствовать). В этом случае отказ будет молчаливо проглатываться. Итог: реальная латентная несогласованность редьюсера и зависимость UI от me.tag==='declined', без текущего user-facing вреда в прототипе, но с риском при переносе в прод — low."
+      }
+    },
+    {
+      "n": 51,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "states-feedback-copy",
+      "file": "src/state/store.jsx",
+      "line": "702-706",
+      "title": "Длительность тоста (2.6 с) мала для многословных сообщений с инструкцией",
+      "description": "Все тосты живут фиксированные 2600 мс. При этом часть тостов — длинные и содержат инструкцию к действию, например «У тебя уже 2 заявки — освободи место, чтобы вступить в команду» (Cabinet.jsx:47) или «Новый код отправили на {email}. Нет письма — загляни в «Спам»». Прочитать и осмыслить такое за 2.6 с трудно, а тост исчезает без возможности вернуть. Для информирующих тостов это нормально, но для тех, что требуют действия, тайминг короткий.",
+      "evidence": "const toast = (msg) => {\n    const id = nextId()\n    setToasts(t => [...t, { id, msg }])\n    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2600)\n  }",
+      "recommendation": "Либо масштабировать длительность от длины сообщения (минимум 2.6 с + по ~50 мс на символ, с потолком ~6 с), либо длинные инструктивные сообщения («нет слота», «загляни в Спам») показывать не тостом, а постоянной подсказкой на экране. Инструкция, которую нельзя дочитать, не выполняет свою функцию.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено по фактическому коду. В src/state/store.jsx:702-706 функция toast действительно задаёт фиксированный тайминг для ВСЕХ тостов: setTimeout(... 2600). Масштабирования от длины сообщения нет. CSS-подтверждение: src/styles/app.css:224-228 — у .toast (и .toast-wrap, app.css:222) стоит pointer-events: none, нет кнопки закрытия, нет hover-pause; max-width: min(440px,…) и line-height 1.4 — то есть длинный тост просто переносится в 2-3 строки и исчезает через 2.6 с без возможности вернуть.\n\nДлинные инструктивные тосты реальны и достижимы на боевых (не DEV) экранах, а не только в DemoPanel:\n- Cabinet.jsx:47 и JoinInvite.jsx:135 — «У тебя уже 2 заявки — освободи место, чтобы вступить в команду» (~50 символов);\n- Confirm.jsx:42 и Recovery.jsx:47 — `Новый код отправили на ${email}. Нет письма — загляни в «Спам»` (растёт вместе с длиной email, ~55+ символов);\n- Cabinet.jsx:73 — «Старше 35 — участвовать можно только в команде по приглашению» (~58 символов).\nЭто ~8-10 слов с прямой инструкцией к действию, прочитать и осмыслить за 2.6 с на грани, а механизма дочитать (клик/наведение/история) нет из-за pointer-events: none.\n\nПочему low, а не выше: материальный эффект ограничен. Сообщение про «2 заявки» дублирует устойчивое состояние интерфейса (в Cabinet есть limitReached/subCount, занятость слотов видна на экране), а «загляни в Спам» — это лишь повторяемая подсказка resend (можно вызвать повторно). То есть пользователь не теряет необратимо критичную информацию, поток не блокируется. Это настоящая, кодом подтверждаемая UX-шероховатость, а не придирка и не намеренная особенность прототипа (тосты идут на реальные экраны, при переносе в прод поведение сохранится). Рекомендация аудитора разумна: масштабировать длительность от длины (минимум 2.6 с + ~50 мс/символ, потолок ~6 с) либо инструктивные сообщения показывать постоянной подсказкой на экране, а не тостом."
+      }
+    },
+    {
+      "n": 52,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "validation-layer",
+      "file": "src/state/validation.js",
+      "line": "130-136",
+      "title": "maskDob не валидирует число месяца/дня — «99.99.2000» проходит маску и попадает в vDob",
+      "description": "maskDob только режет нецифры и группирует по 2-2-4, не проверяя диапазоны. Пользователь, набравший «99.99.2000» или «00.00.2001», видит аккуратно отформатированную дату без подсветки ошибки до тех пор, пока не сработает vDob/parseDob (которые её отбракуют как invalid). При этом сообщение vDob — «Формат: ДД.ММ.ГГГГ» — вводит в заблуждение: формат-то как раз правильный (две точки, 8 цифр), неверны сами числа. Человек смотрит на «99.99.2000», видит формат ДД.ММ.ГГГГ и не понимает, что менять.",
+      "evidence": "export function maskDob(raw) {\n  const d = (raw || '').replace(/\\D/g, '').slice(0, 8)\n  let out = d.slice(0, 2)\n  if (d.length > 2) out += '.' + d.slice(2, 4)\n  if (d.length > 4) out += '.' + d.slice(4, 8)\n  return out\n}  // + vDob: if (verdict === 'invalid') return err('Формат: ДД.ММ.ГГГГ')",
+      "recommendation": "Либо мягко клампить день/месяц прямо в маске (день 01–31, месяц 01–12), либо сделать сообщение vDob точнее для случая «формат верный, дата невозможна», например «Такой даты не существует — проверь день и месяц». Сейчас текст ошибки противоречит тому, что видит пользователь.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждаю по фактическому коду. maskDob (src/state/validation.js:130-136) действительно только вырезает нецифры (replace(/\\D/g,'')), режет до 8 цифр и группирует 2-2-4 — никакого клампа диапазона дня/месяца нет. Значит «99.99.2000» проходит маску и отображается аккуратно отформатированным. Дальше цепочка ровно такая, как описано: parseDob (store.jsx:43-50) матчит регуляркой ^(\\d{2})\\.(\\d{2})\\.(\\d{4})$ → new Date(2000, 98, 99) переполняется, проверка d.getDate()!==99 / d.getMonth()!==98 срабатывает → возвращает null; ageFrom→null; dobVerdict→'invalid'; vDob (строка 62) и vDobRegister (строка 74) возвращают err('Формат: ДД.ММ.ГГГГ'). Сообщение действительно противоречит тому, что видит пользователь: формат-то верный (две точки, 8 цифр, ДД.ММ.ГГГГ), невозможны сами числа. Это реальный UX-дефект текста ошибки, который перенесётся и в прод (та же структура vDob/parseDob). Severity снижаю до low: ошибка всё-таки ПОКАЗЫВАется и блокирует сабмит (blocked = !!res.error в useField, строка 151), то есть дыры в целостности данных нет — невозможная дата не пройдёт; вред ограничен запутывающим текстом в нечастом сценарии, когда пользователь сам набирает заведомо вне-диапазонные цифры (99/99, 00/00). Рекомендация аудитора корректна: либо клампить день/месяц в маске, либо уточнить копирайт vDob для случая «формат верный, дата невозможна»."
+      }
+    },
+    {
+      "n": 53,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "validation-layer",
+      "file": "src/state/validation.js",
+      "line": "159-164",
+      "title": "Маски (maskDob/maskPhone) сбрасывают каретку в конец при правке/вставке в середину значения",
+      "description": "useField применяет маску в onChange и кладёт результат прямо в управляемое value (<Field> — контролируемый input), но никак не восстанавливает позицию каретки. Поскольку маска вставляет/сдвигает разделители (точки в дате, пробелы и дефисы в телефоне), React после ререндера ставит каретку в конец строки. Если пользователь исправляет цифру в середине номера/даты (например ставит курсор после кода города и печатает цифру) или вставляет фрагмент в середину — курсор прыгает в конец, дальнейший ввод идёт не туда. Комментарий в коде обещает «Backspace работает естественно», но это покрывает только удаление с конца, не правку/вставку в середине.",
+      "evidence": "onChange: opts.mask ? (v) => setValue(opts.mask(v)) : setValue,  // value подаётся обратно в input как контролируемое, selectionStart не восстанавливается",
+      "recommendation": "В обработчике маски сохранять/пересчитывать позицию каретки (по числу цифр слева от курсора) и восстанавливать её через ref+setSelectionRange в layout-эффекте, либо использовать неуправляемую правку только-с-конца. Минимально — задокументировать ограничение, если правка в середине считается редким сценарием для прототипа.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Находка подтверждена по фактическому коду. В `src/state/validation.js:159-164` хук `useField` через `bind.onChange: opts.mask ? (v) => setValue(opts.mask(v)) : setValue` кладёт результат маски прямо в `value`, который в `src/components/ui.jsx:158-168` подаётся в полностью контролируемый `<input value={value} onChange={e => onChange?.(e.target.value)}>` — без `ref`, без захвата `selectionStart` и без `setSelectionRange`. Это классическое поведение контролируемого input в React с маской: когда маска вставляет/сдвигает разделители (точки в `maskDob`, пробелы/дефисы в `maskPhone`), программно установленное `value` не совпадает с тем, что браузер сформировал бы из нажатой клавиши, поэтому после ререндера каретка ставится в конец строки. Маски реально подключены в трёх местах правки коротких полей: `Register.jsx:18` (ДР, maskDob), `Onboarding.jsx:19` и `Profile.jsx:138` (телефон, maskPhone). Сценарий правки/вставки в середину (например исправить цифру в коде города) действительно ломается: после ввода одной цифры в середине курсор прыгает в конец. Комментарий в коде (`validation.js:110-111`) обещает только что «Backspace работает естественно», потому что разделители ставятся ПЕРЕД следующей цифрой — это покрывает удаление/ввод с конца, но не правку в середине, как и пишет аудитор. Severity понижена до low: распространённый путь (последовательный ввод слева-направо) работает корректно, проблема проявляется только при коррекции/вставке в середину коротких полей телефона/даты, это прототип без бэкенда; но при переносе в прод (боевой двойник с реальными формами) дефект сохранится, поэтому фиксация ограничения или восстановление каретки по числу цифр слева оправданы."
+      }
+    },
+    {
+      "n": 54,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "responsive-mobile",
+      "file": "src/styles/app.css",
+      "line": "232-244",
+      "title": "Плавающая demo-кнопка перекрывает нижний правый контент (sticky-футер/кнопки)",
+      "description": "Кнопка .demo-fab фиксирована в правом нижнем углу (right:18px; bottom:18px, 48×48px, z-index:70) и на мобайле перекрывает правый край sticky-футера формы .ff-foot и нижних кнопок экранов (например правый край «Подать заявку»/«Отозвать»). Это DEV-only элемент (известный демо-инструмент), поэтому в прод не попадёт — но на демо-показах с телефона он закрывает интерактив. На ≤400px панель раскрывается на calc(100vw-36px) и нормальна, проблема именно в перекрытии FAB поверх футера.",
+      "evidence": ".demo-fab { position: fixed; right: 18px; bottom: 18px; z-index: 70; width: 48px; height: 48px; ... }  и .ff-foot { position: sticky; bottom: 0; ... z-index: 20 }",
+      "recommendation": "Не блокирует прод (DEV-only). Для удобства демо с телефона — на мобильном брейкпоинте сместить .demo-fab выше sticky-футера (увеличить bottom) или уменьшить/притопить кнопку, чтобы она не накрывала правую кнопку футера.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Геометрия подтверждается фактическим кодом. `.demo-fab` (src/styles/app.css:232-238): `position: fixed; right: 18px; bottom: 18px; z-index: 70; width: 48px; height: 48px` — занимает квадрат 48×48 в правом нижнем углу всего вьюпорта. `.ff-foot` (src/styles/forms.css:136-141): `position: sticky; bottom: 0; ... z-index: 20` — sticky-футер с меньшим z-index, то есть FAB рисуется поверх него. Футер лежит внутри `.sheet` с боковым паддингом 0 16px (app.css:28, --sp-4=16px, на мобайле 12px), значит его содержимое доходит почти до правого края вьюпорта. На мобильном брейкпоинте (app.css:363-367) основная кнопка `.ff-foot > .fbtn` = `flex: 1 1 0; height: 52px` растягивается на ширину футера, её правый край упирается в правый паддинг (~12-16px), то есть прямо под FAB на right:18px; статус `.ff-save` уходит отдельной строкой `order:2` вниз и тоже частично под FAB. Перекрытие реально. НО: (1) это строго DEV-only элемент — App.jsx:68 `{import.meta.env.DEV && <DemoPanel />}`, в прод не попадает, риска переноса ноль; сам аудитор это признаёт; (2) FAB накрывает лишь ~48px правого угла широкой кнопки `flex:1 1 0`, основная её тап-зона слева свободна — кнопка остаётся нажимаемой, интерактив не блокируется; (3) проявляется только при демо с телефона. Это подтверждённый, но косметический/эргономический нюанс без прод-влияния и без функциональной блокировки — severity понижаю до low, ровно как обрамил аудитор («не блокирует прод, удобство демо с телефона»)."
+      }
+    },
+    {
+      "n": 55,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "responsive-mobile",
+      "file": "src/styles/base.css",
+      "line": "54-63",
+      "title": "Тач-цель пункта меню профиля (.umenu-trigger) 40px — пограничная",
+      "description": "Триггер меню профиля в шапке кабинета (.umenu-trigger с аватаром 40px и именем) имеет измеренную высоту 40px — чуть ниже порога 44px. Это единственная навигационная точка входа в «Профиль/Выйти» на каждом экране кабинета, поэтому даже небольшой недобор тач-цели заметен на телефоне.",
+      "evidence": ".umenu-ava { width: 40px; height: 40px; ... }  — измерено umenu_trigger {w:104,h:40}",
+      "recommendation": "Поднять высоту триггера до ≥44px (вертикальный padding на .umenu-trigger в мобильном брейкпоинте), не меняя визуальный размер аватара.",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Замер подтверждается фактическим кодом. В src/styles/base.css:54-57 `.umenu-trigger` объявлен как `display: inline-flex; align-items: center; padding: 0;` — высота кнопки равна самому высокому потомку. Самый высокий потомок — `.umenu-ava` (base.css:59-63): `width: 40px; height: 40px;`. Имя `.umenu-name` использует `--fs-base` = 16px (tokens.css:67), его строчная коробка (~19-21px) ниже 40px аватара. Значит итоговая высота триггера = 40px, что и совпадает с заявленным замером umenu_trigger {w:104, h:40}. Проверил все брейкпоинты: единственное упоминание `.umenu-trigger`/`.umenu-ava` — в base.css (нет @media в этом файле), а в app.css мобильные медиа (720/560/480/400px) меняют только `.fnav` padding (строка 347) и прочее, но НЕ добавляют вертикальный padding триггеру и не трогают высоту аватара — на телефоне тач-цель остаётся 40px. Кнопка используется в Nav.jsx:51-59 как единственная навигационная точка входа в Профиль/Выйти на каждом экране кабинета, так что точка реальная.\n\nОднако severity занижаю до low: (1) недобор всего 4px (40 vs рекомендованных 44px iOS HIG); по обязательному критерию WCAG 2.1 AA (2.5.8 Target Size Minimum) порог = 24px, и 40px проходит его с большим запасом — 44px это рекомендация AAA/платформенных гайдов, а не провал AA; (2) цель широкая (104px), это не крошечная точка нажатия, промахнуться сложно; (3) исправление тривиально и безопасно (вертикальный padding на триггере без изменения визуала аватара). Это полировочный нит, а не материальный дефект UX или риск прод-переноса."
+      }
+    },
+    {
+      "n": 56,
+      "severity": "low",
+      "bucket": "ux",
+      "dimension": "accessibility",
+      "file": "src/styles/forms.css",
+      "line": "16",
+      "title": "Низкий контраст плейсхолдеров полей (#9AA6B0 на белом ≈ 2.3:1)",
+      "description": "Плейсхолдеры инпутов окрашены в `#9AA6B0` на белом фоне — контраст около 2.3:1, ниже минимума 4.5:1 для текста (WCAG 1.4.3, AA). В ряде полей плейсхолдер несёт пример формата (например `ДД.ММ.ГГГГ`, `+7 999 999-99-99`, `https://…`, `Например: Город, которого нет`), и при слабом зрении он трудночитаем. Не критично, так как формат продублирован в hint, но это реальная проблема читаемости уже сейчас.",
+      "evidence": "input.ff-input::placeholder, textarea.ff-input::placeholder { color: #9AA6B0; }",
+      "recommendation": "Затемнить плейсхолдер минимум до ~`#6B7680`/`var(--gray-2)` (#646A6E ≈ 4.6:1) либо не полагаться на плейсхолдер как на единственный носитель примера формата (он уже частично продублирован в hint — оставить так системно).",
+      "verdict": {
+        "isReal": true,
+        "confidence": "high",
+        "severityAdjusted": "low",
+        "reasoning": "Подтверждено фактическим кодом. В `src/styles/forms.css:16` действительно `input.ff-input::placeholder, textarea.ff-input::placeholder { color: #9AA6B0; }` (и дубль на строке 20: `.ff-input.ph { color: #9AA6B0; }`). На белом фоне (`.ff-input { background:#fff }`, строка 10) контраст #9AA6B0/#fff ≈ 2.5:1 (я пересчитал по WCAG: L_текста≈0.375, контраст=(1.05)/(0.425)≈2.47), что близко к заявленным ~2.3 и заведомо ниже минимума AA 4.5:1 (WCAG 1.4.3). Плейсхолдеры реально несут примеры формата: `ДД.ММ.ГГГГ` (Register.jsx:71), `+7 999 999-99-99` (Onboarding.jsx:52), `https://…` (ApplyForm.jsx:319), `Например: Город, которого нет` (ApplyForm.jsx:263,379) — то есть текст осмысленный, а не декоративный. Это материальная проблема читаемости уже сейчас, не придирка. Однако severity снижаю до low: рекомендованный фикс рядом и тривиален — токен `--gray-2: #646A6E` (tokens.css:13) даёт ~4.6:1; видимый `<label>` всегда называет поле; формат продублирован/подстрахован масками (`maskDob`, `maskPhone` в validation.js), так что плейсхолдер не единственный носитель примера; required-информацию плейсхолдеры не несут. Замечание: тезис аудитора «формат продублирован в hint» точен лишь частично — у DOB hint = «от 14 до 35 лет», а не `ДД.ММ.ГГГГ`, но маска ввода это компенсирует. Это прототип без бэкенда, но проблема — чистый CSS контраст, переносимый в прод 1:1, поэтому исправление оправдано системно."
+      }
+    }
+  ]
+}

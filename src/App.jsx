@@ -1,5 +1,5 @@
 import React from 'react'
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { StoreProvider, useStore } from './state/store.jsx'
 import { DemoPanel } from './components/DemoPanel.jsx'
 
@@ -13,6 +13,7 @@ import Cabinet from './screens/cabinet/Cabinet.jsx'
 import Profile from './screens/cabinet/Profile.jsx'
 import Success from './screens/cabinet/Success.jsx'
 import ApplyForm from './screens/form/ApplyForm.jsx'
+import ApplyView from './screens/form/ApplyView.jsx'
 import JoinInvite from './screens/team/JoinInvite.jsx'
 
 // Куда ведёт стартовый «/» в зависимости от стадии аккаунта (статусная модель из handoff)
@@ -45,7 +46,7 @@ const ScrollTop = () => {
 export default function App() {
   return (
     <StoreProvider>
-      <HashRouter>
+      <BrowserRouter>
         <ScrollTop />
         <Routes>
           <Route path="/" element={<Index />} />
@@ -60,11 +61,12 @@ export default function App() {
           <Route path="/cabinet" element={<RequireActive><Cabinet /></RequireActive>} />
           <Route path="/profile" element={<RequireActive><Profile /></RequireActive>} />
           <Route path="/apply/:id" element={<RequireActive><ApplyForm /></RequireActive>} />
+          <Route path="/view/:id" element={<RequireActive><ApplyView /></RequireActive>} />
           <Route path="/success/:id" element={<RequireActive><Success /></RequireActive>} />
           <Route path="*" element={<Index />} />
         </Routes>
         {import.meta.env.DEV && <DemoPanel />}
-      </HashRouter>
+      </BrowserRouter>
     </StoreProvider>
   )
 }

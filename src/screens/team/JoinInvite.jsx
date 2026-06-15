@@ -3,7 +3,7 @@
 // приглашение ждёт в pendingInvite. Принять/отклонить можно только в стадии active.
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useStore, NOMINATIONS, shortName } from '../../state/store.jsx'
+import { useStore, NOMINATIONS, shortName, countUsed, APP_LIMIT } from '../../state/store.jsx'
 import { Logo } from '../../components/Nav.jsx'
 import { AuthSplit, PanelHead } from '../../components/AuthSplit.jsx'
 
@@ -24,7 +24,7 @@ const InviteRows = ({ app, light = false }) => {
           padding: 'var(--sp-3) 0', borderBottom: '1px solid ' + (light ? 'rgba(255,255,255,.18)' : 'var(--line)'),
         }}>
           <span className="jbm" style={{ fontSize: 'var(--fs-xs)', letterSpacing: '.06em', textTransform: 'uppercase', color: light ? 'rgba(255,255,255,.6)' : 'var(--gray-2)' }}>{label}</span>
-          <span style={{ fontSize: 'var(--fs-md)', fontWeight: 500, textAlign: 'right', color: light ? '#fff' : 'var(--ink)' }}>{value}</span>
+          <span style={{ fontSize: 'var(--fs-base)', fontWeight: 500, textAlign: 'right', color: light ? '#fff' : 'var(--ink)' }}>{value}</span>
         </div>
       ))}
     </div>
@@ -128,8 +128,14 @@ export default function JoinInvite() {
     )
   }
 
+  // правило «2 на всё»: членство тоже занимает слот — без свободного места приглашение не принять
+  const noSlot = countUsed(state, state.email, id) >= APP_LIMIT
   const accept = () => {
-    dispatch({ type: 'respond-invite', id, tag: 'confirmed' })
+    if (noSlot) {
+      toast('У тебя уже 2 заявки — освободи место, чтобы вступить в команду')
+      return
+    }
+    dispatch({ type: 'respond-invite', id, tag: 'confirmed', memberId: crypto.randomUUID() })
     toast(`Готово! Ты в команде «${app.teamName}»`)
     nav('/cabinet')
   }
@@ -145,9 +151,10 @@ export default function JoinInvite() {
           <p className="ff-hint" style={{ margin: 0 }}>
             Капитан увидит отказ в составе команды. Если передумаешь — приглашение бессрочное, примешь в любой момент.
           </p>
-          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)', flexWrap: 'wrap', alignItems: 'center' }}>
             <button type="button" className="fbtn sm" onClick={accept}>Передумать и принять</button>
             <button type="button" className="fbtn sm line" onClick={() => nav('/cabinet')}>В кабинет</button>
+            <button type="button" className="mlink" onClick={() => nav('/view/' + id)}>Посмотреть заявку</button>
           </div>
         </div>
       </CenterShell>
@@ -165,8 +172,16 @@ export default function JoinInvite() {
           Участие подтверждается с твоего email — {state.email}. Приглашение бессрочное.
         </p>
         <InviteRows app={app} />
+        <button type="button" className="mlink" style={{ marginTop: 'var(--sp-4)', alignSelf: 'flex-start' }} onClick={() => nav('/view/' + id)}>
+          Посмотреть заявку целиком →
+        </button>
+        {noSlot && (
+          <p className="ff-hint" style={{ margin: 'var(--sp-4) 0 0' }}>
+            У тебя уже 2 заявки — это максимум (считаются и команды по приглашению). Чтобы принять, сначала освободи место в кабинете: отзови заявку или выйди из другой команды.
+          </p>
+        )}
         <div style={{ display: 'flex', gap: 'var(--sp-2)', marginTop: 'var(--sp-6)', flexWrap: 'wrap' }}>
-          <button type="button" className="fbtn submit" style={{ flex: 1, minWidth: 180 }} onClick={accept}>Принять приглашение</button>
+          <button type="button" className={'fbtn submit' + (noSlot ? ' disabled' : '')} style={{ flex: 1, minWidth: 180 }} onClick={accept}>Принять приглашение</button>
           <button type="button" className="fbtn sm line" style={{ alignSelf: 'center' }} onClick={decline}>Отклонить</button>
         </div>
       </div>

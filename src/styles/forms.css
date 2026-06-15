@@ -8,7 +8,7 @@
 
 .ff-input {
   background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm);
-  padding: var(--sp-4) var(--sp-4); font-size: var(--fs-md); color: var(--ink); min-height: 54px;
+  padding: var(--sp-4) var(--sp-4); font-size: var(--fs-base); color: var(--ink); min-height: 54px;
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
   width: 100%; min-width: 0;
 }
@@ -47,6 +47,17 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 
 @keyframes ff-msg { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 @keyframes ff-pop { from { opacity: 0; } to { opacity: 1; } }
+
+/* Индикатор автосохранения — как статус-тег .fst: квадратная точка + mono, без заливки */
+.savemark {
+  display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
+  font-family: var(--font-jbm); font-size: var(--fs-sm);
+  letter-spacing: .05em; text-transform: uppercase; color: var(--ok);
+}
+.savemark::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--ok); flex-shrink: 0; }
+.savemark.saving { color: var(--ink-blue); }
+.savemark.saving::before { background: var(--accent); animation: save-pulse 1s ease-in-out infinite; }
+@keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 .ff-act  {
   font-family: var(--font-jbm); font-size: var(--fs-xs); color: var(--gray-2);
   cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
@@ -92,7 +103,7 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 .ff-file .ic {
   flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--sky);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-jbm); font-size: var(--fs-2xs); font-weight: 700; color: var(--ink-blue);
+  font-family: var(--font-jbm); font-size: var(--fs-2xs); font-weight: 500; color: var(--ink-blue);
 }
 .ff-file.done { box-shadow: inset 0 0 0 1px rgba(31, 138, 91, .4); }
 .ff-file.err  { box-shadow: inset 0 0 0 1px rgba(179, 64, 46, .5); }
@@ -130,6 +141,8 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
 }
 .ff-foot .todo a, .ff-foot .todo button { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font: inherit; }
 .ff-foot .fbtn.line { margin-left: auto; }
+/* Статус автосохранения в футере — всегда на экране, прижат вправо (оформление — .savemark) */
+.ff-foot .ff-save { margin-left: auto; }
 
 /* Соло-режим: реквизиты участника из профиля — две колонки на десктопе */
 .solo-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 var(--sp-6); }
@@ -141,8 +154,8 @@ input.ff-input.ok:focus, textarea.ff-input.ok:focus { border-color: var(--ok); b
   font-size: var(--fs-base); color: var(--gray-2); cursor: pointer; border-bottom: 1px solid var(--line);
   background: none; border-left: none; border-right: none; border-top: none; text-align: left; width: 100%;
 }
-.ff-anchor .a .n { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .05em; }
-.ff-anchor .a.cur { color: var(--ink); font-weight: 600; }
+.ff-anchor .a .n { font-family: var(--font-mono); font-size: var(--fs-xs); }
+.ff-anchor .a.cur { color: var(--ink); font-weight: 500; }
 .ff-anchor .a.done .n { color: var(--ok); }
 
 /* Ячейки кода подтверждения */

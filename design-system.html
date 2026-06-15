@@ -6,7 +6,7 @@
 <title>Дизайн-система · Творцы РФ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 
 /* ── TOKENS (tokens.css) ── */
@@ -27,7 +27,7 @@
   --warn-line:rgba(255, 185, 0, .35);
   --accent:   #5B9BC9;
   --font-sans: "Golos Text", -apple-system, sans-serif;
-  --font-mono: "Fira Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-jbm:  "JetBrains Mono", ui-monospace, monospace;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -42,7 +42,7 @@ code { font-family: var(--font-jbm); }
 
 /* ── BASE (base.css) ── */
 .jbm { font-family: var(--font-jbm); }
-.cluster { font-family: var(--font-jbm); font-size: 12.5px; line-height: 1.55; letter-spacing: .03em; color: var(--ink); }
+.cluster { font-family: var(--font-jbm); font-size: 12.5px; line-height: 1.55; color: var(--ink); }
 
 /* Buttons */
 .fbtn {
@@ -82,7 +82,7 @@ code { font-family: var(--font-jbm); }
 
 /* Mono link */
 .mlink {
-  font-family: var(--font-jbm); font-size: 12px; letter-spacing: .04em;
+  font-family: var(--font-jbm); font-size: 12px;
   color: var(--gray-2); text-decoration: underline; text-underline-offset: 3px;
   cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0;
 }
@@ -179,12 +179,12 @@ input.ff-input:focus, .ff-input.focus { border-color: var(--ink); box-shadow: 0 
   font-size: 15.5px; color: var(--gray-2); cursor: pointer;
   border: none; border-bottom: 1px solid var(--line); text-align: left; width: 100%; background: none;
 }
-.ff-anchor .a .n { font-family: var(--font-mono); font-size: 13px; letter-spacing: .05em; }
+.ff-anchor .a .n { font-family: var(--font-mono); font-size: 13px; }
 .ff-anchor .a.cur  { color: var(--ink); font-weight: 600; }
 .ff-anchor .a.done .n { color: var(--ok); }
 
 .pbar {
-  font-family: var(--font-jbm); font-size: 12.5px; letter-spacing: .04em; color: var(--gray-2);
+  font-family: var(--font-jbm); font-size: 12.5px; color: var(--gray-2);
   border-bottom: 1px solid var(--line); padding: 10px 0;
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
 }
@@ -469,7 +469,7 @@ input.ff-input:focus, .ff-input.focus { border-color: var(--ink); box-shadow: 0 
             <button class="a cur"><span class="n">02</span><span>Текущая</span></button>
             <button class="a"><span class="n">03</span><span>Пустая</span></button>
           </div>
-          <div style="font-family:var(--font-jbm);font-size:12px;color:var(--gray-2);margin-top:10px;letter-spacing:.03em">
+          <div style="font-family:var(--font-jbm);font-size:12px;color:var(--gray-2);margin-top:10px">
             Заполнено <b style="color:var(--ink)">1</b> из 3
           </div>
         </div>

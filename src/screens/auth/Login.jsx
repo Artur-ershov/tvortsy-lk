@@ -5,7 +5,7 @@ import { useStore } from '../../state/store.jsx'
 import { AuthSplit, PanelHead } from '../../components/AuthSplit.jsx'
 import { Field, PasswordInput, SocialRow, OrRow } from '../../components/ui.jsx'
 import { useField, vEmail } from '../../state/validation.js'
-import g559 from '../../assets/group559.png'
+import wing from '../../assets/wing.svg'
 
 export default function Login() {
   const { state, dispatch, toast } = useStore()
@@ -41,7 +41,7 @@ export default function Login() {
       kicker="Творцы РФ · 2026"
       title={'С возвращением'}
       titleSize="clamp(44px, 7vw, 92px)"
-      art={<img src={g559} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
+      art={<img src={wing} alt="" style={{ width: '88%', maxWidth: 560, display: 'block' }} />}
       posterBottom={
         <div className="poster-pairs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-5)', borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 'var(--sp-6)' }}>
           {[
@@ -56,14 +56,14 @@ export default function Login() {
         </div>
       }
     >
-      <PanelHead kicker="Вход" title="Войти в кабинет" kickerColor="var(--ink)" titleColor="var(--ink)" />
+      <PanelHead title="Войти в кабинет" kickerColor="var(--ink)" titleColor="var(--ink)" />
 
       <Field
         label="Email"
         type="email"
         {...emailF.bind}
         onChange={v => { emailF.setValue(v); setErr(false) }}
-        placeholder="m.sokolova@mail.ru"
+        placeholder="example@mail.ru"
         autoComplete="email"
         error={emailF.error || (err ? 'Не удалось войти. Проверь e-mail и пароль или восстанови доступ' : null)}
       />

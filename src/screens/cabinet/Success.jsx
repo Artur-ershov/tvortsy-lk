@@ -1,7 +1,7 @@
 // Успех подачи — визуал ScrSuccess, флоу it3 (лимит, «Подать ещё одну»)
 import React from 'react'
 import { useParams, useNavigate, Navigate } from 'react-router-dom'
-import { useStore, NOMINATIONS, APP_LIMIT, newDraft, countSubmitted } from '../../state/store.jsx'
+import { useStore, NOMINATIONS, APP_LIMIT, newDraft, countUsed } from '../../state/store.jsx'
 import { Nav } from '../../components/Nav.jsx'
 import { Pix, PIX_B, StatusTimeline } from '../../components/ui.jsx'
 
@@ -12,8 +12,11 @@ export default function Success() {
 
   const app = state.apps.find(a => a.id === id)
   if (!app) return <Navigate to="/cabinet" replace />
+  // экран «Заявка подана» — только для реально поданных: черновик сюда не пускаем
+  // (по аналогии с тем, как ApplyForm отсекает не-черновики)
+  if (app.status === 'draft') return <Navigate to="/cabinet" replace />
 
-  const limitReached = countSubmitted(state.apps) >= APP_LIMIT
+  const limitReached = countUsed(state, state.email) >= APP_LIMIT
   const nomLabel = app.nomination ? NOMINATIONS[app.nomination].label.toLowerCase() : ''
 
   const createDraft = () => {
@@ -37,14 +40,14 @@ export default function Success() {
         <h1 style={{ margin: 0, fontSize: 'clamp(44px, 7vw, 72px)', fontWeight: 500, letterSpacing: '-.04em', marginTop: 'var(--sp-4)', lineHeight: 1, textAlign: 'center' }}>
           Заявка подана
         </h1>
-        <p style={{ margin: 'var(--sp-4) auto 0', fontSize: 'var(--fs-md)', lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
+        <p style={{ margin: 'var(--sp-4) auto 0', fontSize: 'var(--fs-base)', lineHeight: 1.45, color: 'var(--gray-2)', maxWidth: 480, textAlign: 'center' }}>
           Сначала её проверят организаторы, а затем допущенные работы оценит жюри. Следить за статусом можно в кабинете — как только что-то изменится, напишем тебе на почту.
         </p>
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,.12)', borderRadius: 'var(--r-lg)', padding: 'var(--sp-7) var(--sp-8)', marginTop: 'var(--sp-8)', width: '100%', maxWidth: 640 }}>
           <StatusTimeline status="submitted" submittedAt={app.submittedAt} />
         </div>
         <div className="ff-hint" style={{ marginTop: 'var(--sp-3)', textAlign: 'center' }}>
-          Заявку ещё можно отредактировать или отозвать — пока она в статусе «Подана».
+          Заявку можно посмотреть или отозвать — пока она в статусе «Подана».
         </div>
         <div style={{ display: 'flex', gap: 'var(--sp-3)', marginTop: 'var(--sp-7)', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button className="fbtn" style={{ height: 54, fontSize: 'var(--fs-base)', fontWeight: 500 }} onClick={() => nav('/cabinet')}>

@@ -48,7 +48,7 @@ export const AuthSplit = ({ header, kicker, title, titleSize = 92, lede, art, st
 /* Шапка панели: кикер + заголовок (+ подпись) */
 export const PanelHead = ({ kicker, title, hint, kickerColor = 'var(--ink-blue)', titleColor = 'var(--ink-blue-2)' }) => (
   <div>
-    <span className="kick" style={{ color: kickerColor }}>{kicker}</span>
+    {kicker && <span className="kick" style={{ color: kickerColor }}>{kicker}</span>}
     {title && <div style={{ fontSize: 'var(--fs-2xl)', fontWeight: 500, letterSpacing: '-.02em', marginTop: 'var(--sp-3)', color: titleColor }}>{title}</div>}
     {hint && <div className="ff-hint" style={{ marginTop: 'var(--sp-2)' }}>{hint}</div>}
   </div>

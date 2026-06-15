@@ -28,14 +28,17 @@ const PERSONAS = [
     items: [
       { label: 'Пустой кабинет', name: 'maria-empty', to: '/cabinet' },
       { label: 'Черновик + 2 заявки', name: 'maria-full', to: '/cabinet' },
-      { label: 'Команда «Шум»', name: 'maria-team', to: '/cabinet' },
+      { label: 'Команда: черновик', name: 'maria-team', to: '/cabinet' },
+      { label: 'Команда: все приняли', name: 'team-shum-ready', to: '/apply/team-shum' },
+      { label: 'Команда: на проверке', name: 'team-shum-review', to: '/cabinet' },
     ],
   },
   {
     who: 'Кирилл', sub: '18+ · приглашён в команду',
     items: [
       { label: 'Ссылка-приглашение', name: 'invitee', to: '/join/team-shum' },
-      { label: 'В кабинете (А/Б)', name: 'invitee', to: '/cabinet' },
+      { label: 'Приглашение в кабинете', name: 'invitee', to: '/cabinet' },
+      { label: 'После принятия', name: 'invitee-accepted', to: '/cabinet' },
     ],
   },
   {
@@ -43,6 +46,15 @@ const PERSONAS = [
     items: [
       { label: 'Стена согласий', name: 'minor', to: '/wall' },
       { label: 'Приглашение', name: 'invitee-minor', to: '/join/team-shum' },
+    ],
+  },
+  {
+    who: 'Олег', sub: '43 года · только в команде',
+    items: [
+      { label: 'Регистрация по приглашению', name: 'senior-reg', to: '/register' },
+      { label: 'В кабинете (35+)', name: 'invitee-senior', to: '/cabinet' },
+      { label: 'Капитан: в пределах доли', name: 'captain-senior-ok', to: '/apply/team-kontur-ok' },
+      { label: 'Капитан: превышение доли', name: 'captain-senior', to: '/apply/team-kontur' },
     ],
   },
 ]
@@ -99,6 +111,17 @@ export const DemoPanel = () => {
     close()
   }
 
+  // Просмотр поданной заявки (read-only /view/:id): открываем первую не-черновик,
+  // а если поданных нет — поднимаем Марию с двумя заявками и ведём в кабинет к «Смотреть»
+  const goView = () => {
+    const submitted = state.stage === 'active' && state.apps.find(a => a.status !== 'draft')
+    if (submitted) { nav(`/view/${submitted.id}`); close(); return }
+    dispatch({ type: 'scenario', name: 'maria-full' })
+    nav('/cabinet')
+    toast('Загрузил заявки Марии — открой «Смотреть» у поданной')
+    close()
+  }
+
   const reset = () => {
     try { localStorage.removeItem(LS_KEY) } catch { /* недоступно */ }
     dispatch({ type: 'scenario', name: 'fresh' })
@@ -109,11 +132,12 @@ export const DemoPanel = () => {
 
   // ── контекст для блока «Действия здесь» ──
   const firstActive = state.apps.find(a => CYCLE.includes(a.status))
+  const teamDraft = state.apps.find(a => a.mode === 'team' && a.status === 'draft')
   const uploading = state.apps.flatMap(a => a.files.filter(f => f.state === 'progress').map(f => ({ app: a, f })))
   const invited = state.apps.flatMap(a => a.members.filter(m => m.tag === 'invited').map(m => ({ app: a, m })))
   const canAcceptDocs = state.stage === 'minor-wall'
   const canReturnDoc = state.stage === 'minor-wall' && state.minorDocs.pdn === 'review'
-  const hasActions = canAcceptDocs || canReturnDoc || firstActive || uploading.length > 0 || invited.length > 0
+  const hasActions = canAcceptDocs || canReturnDoc || firstActive || teamDraft || uploading.length > 0 || invited.length > 0
 
   // ── «где я сейчас» ──
   const name = fullName(state.profile)
@@ -168,6 +192,7 @@ export const DemoPanel = () => {
               <button className="dp-chip" onClick={() => goActive('/cabinet')}>Кабинет</button>
               <button className="dp-chip" onClick={() => goActive('/profile')}>Профиль</button>
               <button className="dp-chip" onClick={goForm}>Форма заявки</button>
+              <button className="dp-chip" onClick={goView}>Просмотр заявки</button>
             </div>
           </div>
 
@@ -191,6 +216,14 @@ export const DemoPanel = () => {
                 ↩ Вернуть документ на замену (модератор)
               </button>
             )}
+            {teamDraft && (
+              <button className="dp-btn" onClick={() => {
+                dispatch({ type: 'submit-app', id: teamDraft.id })
+                toast(`Капитан подал «${teamDraft.teamName || teamDraft.title}» — статус «Подана»`)
+              }}>
+                → Капитан подал «{teamDraft.teamName || teamDraft.title}»
+              </button>
+            )}
             {firstActive && (
               <button className="dp-btn" onClick={() => { dispatch({ type: 'advance-status', id: firstActive.id }); toast('Статус продвинут') }}>
                 → Продвинуть статус «{advLabel(firstActive)}»
@@ -207,12 +240,21 @@ export const DemoPanel = () => {
                 toast('Соединение прервано — файл можно докачать')
               }}>⚡ Оборвать загрузку файла</button>
             )}
-            {invited.length > 0 && (
-              <button className="dp-btn" onClick={() => {
-                invited.forEach(({ app, m }) => dispatch({ type: 'member-tag', id: app.id, memberId: m.id, tag: 'confirmed' }))
-                toast('Приглашённые подтвердили участие')
-              }}>✓ Подтвердить приглашения ({invited.length})</button>
-            )}
+            {invited.map(({ app, m }) => (
+              <div className="dp-invite-row" key={m.id}>
+                <span className="dp-invite-who">{m.email}</span>
+                <div className="dp-invite-acts">
+                  <button className="dp-btn dp-btn-ok" onClick={() => {
+                    dispatch({ type: 'member-tag', id: app.id, memberId: m.id, tag: 'confirmed' })
+                    toast(`${m.email} → принял приглашение`)
+                  }}>✓ принял</button>
+                  <button className="dp-btn dp-btn-err" onClick={() => {
+                    dispatch({ type: 'member-tag', id: app.id, memberId: m.id, tag: 'declined' })
+                    toast(`${m.email} → отказался`)
+                  }}>× отказал</button>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* ── Сброс ── */}

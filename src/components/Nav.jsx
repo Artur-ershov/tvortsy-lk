@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, initialsOf, fullName } from '../state/store.jsx'
 
 export const Logo = ({ dark = false, style }) => (
-  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />РФ 2026</div>
+  <div className="logo" style={{ color: dark ? '#fff' : 'var(--ink)', ...style }}>Творцы<br />РФ</div>
 )
 
 const IconUser = () => (
@@ -65,10 +65,10 @@ export const Nav = ({ tab = 'apps' }) => {
             </div>
             <div className="umenu-sep" />
             <button className={'umenu-item' + (tab === 'apps' ? ' on' : '')} onClick={() => { setOpen(false); nav('/cabinet') }}>
-              <IconDoc />Мои заявки
+              <IconDoc />Заявки
             </button>
             <button className={'umenu-item' + (tab === 'profile' ? ' on' : '')} onClick={() => { setOpen(false); nav('/profile') }}>
-              <IconUser />Мой профиль
+              <IconUser />Профиль
             </button>
             <div className="umenu-sep" />
             <button className="umenu-item danger" onClick={() => { setOpen(false); dispatch({ type: 'logout' }); nav('/login') }}>

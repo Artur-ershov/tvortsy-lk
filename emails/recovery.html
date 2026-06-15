@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- Письмо: восстановление пароля (код). Флоу: src/screens/auth/Recovery.jsx
+     Плейсхолдеры: {{code.0..3}}, {{resetUrl}}, {{email}} -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Восстановление пароля — Творцы РФ 2026</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    body { margin: 0; padding: 0; background: #FFFFFF; }
+    a { text-decoration: none; }
+    @media (max-width: 620px) {
+      .wrap { width: 100% !important; }
+      .poster { padding: 32px 26px !important; }
+      .panel { padding: 28px 22px !important; }
+      .h1 { font-size: 40px !important; }
+      .cell { width: 60px !important; height: 72px !important; line-height: 72px !important; font-size: 34px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#FFFFFF;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Код для сброса пароля — {{code.0}}{{code.1}}{{code.2}}{{code.3}}. Действует 10 минут.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;">
+    <tr><td align="center" style="padding:24px 16px 32px;">
+      <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;font-family:'Golos Text',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">
+
+        <tr><td style="padding:8px 8px 16px;">
+          <div style="font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:15.5px;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;color:#000000;">Творцы<br>РФ</div>
+        </td></tr>
+
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#15151A;border-radius:36px;">
+            <tr><td class="poster" style="padding:44px;">
+              <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:#C5E4F9;">Доступ к аккаунту</span>
+              <h1 class="h1" style="margin:16px 0 0;font-size:54px;line-height:.9;letter-spacing:-.04em;font-weight:500;color:#FFFFFF;">Сброс<br>пароля</h1>
+              <p style="margin:22px 0 0;font-size:20px;line-height:1.4;color:rgba(255,255,255,.8);max-width:440px;">Ты запросил(-а) восстановление пароля. Введи код на странице сброса — и придумай новый.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:30px;">
+                <tr><td style="padding:2px;"><div style="width:16px;height:16px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;"></div></td></tr>
+                <tr><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;"></div></td></tr>
+                <tr><td style="padding:2px;"><div style="width:16px;height:16px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td><td style="padding:2px;"><div style="width:16px;height:16px;background:#C5E4F9;border-radius:4px;"></div></td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>
+
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F8FD;border-radius:36px;">
+            <tr><td class="panel" style="padding:40px;">
+
+              <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:15.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#000000;">Код для сброса</span>
+              <p style="margin:12px 0 0;font-size:20px;line-height:1.4;color:#646A6E;">Введи код на странице сброса — 4 цифры</p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
+                <tr>
+                  <td style="padding-right:12px;"><div class="cell" style="width:72px;height:84px;line-height:84px;text-align:center;font-family:'Golos Text',-apple-system,sans-serif;font-size:40px;font-weight:400;letter-spacing:-.02em;color:#000000;background:#FFFFFF;border:1.5px solid rgba(0,0,0,.18);border-radius:16px;">{{code.0}}</div></td>
+                  <td style="padding-right:12px;"><div class="cell" style="width:72px;height:84px;line-height:84px;text-align:center;font-family:'Golos Text',-apple-system,sans-serif;font-size:40px;font-weight:400;letter-spacing:-.02em;color:#000000;background:#FFFFFF;border:1.5px solid rgba(0,0,0,.18);border-radius:16px;">{{code.1}}</div></td>
+                  <td style="padding-right:12px;"><div class="cell" style="width:72px;height:84px;line-height:84px;text-align:center;font-family:'Golos Text',-apple-system,sans-serif;font-size:40px;font-weight:400;letter-spacing:-.02em;color:#000000;background:#FFFFFF;border:1.5px solid rgba(0,0,0,.18);border-radius:16px;">{{code.2}}</div></td>
+                  <td><div class="cell" style="width:72px;height:84px;line-height:84px;text-align:center;font-family:'Golos Text',-apple-system,sans-serif;font-size:40px;font-weight:400;letter-spacing:-.02em;color:#000000;background:#FFFFFF;border:1.5px solid rgba(0,0,0,.18);border-radius:16px;">{{code.3}}</div></td>
+                </tr>
+              </table>
+              <p style="margin:8px 0 24px;font-size:13.5px;line-height:1.45;color:#646A6E;">Код действует 10 минут. Мы никогда не спрашиваем пароль — не передавай код никому.</p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="background:#15151A;border-radius:16px;">
+                  <a href="{{resetUrl}}" style="display:block;text-align:center;padding:19px 24px;font-family:'Golos Text',-apple-system,sans-serif;font-size:20px;font-weight:400;color:#FFFFFF;">Задать новый пароль</a>
+                </td></tr>
+              </table>
+
+              <div style="height:1px;background:rgba(0,0,0,.10);margin:28px 0 0;"></div>
+              <p style="margin:18px 0 0;font-size:13.5px;line-height:1.5;color:#646A6E;">Не ты запрашивал(-а) сброс? Пароль остался прежним — можно ничего не делать. Если такое повторяется, напиши нам.</p>
+
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:24px 8px 8px;">
+          <p style="margin:0;font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;line-height:1.7;color:#646A6E;">Отправлено на {{email}} · фестиваль «Творцы&nbsp;РФ&nbsp;2026»<br>Вопросы — ответь на это письмо или напиши на <a href="mailto:help@tvortsy.online" style="color:#5B9BC9;">help@tvortsy.online</a></p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    if (p.size > 0) {
+      document.documentElement.innerHTML = document.documentElement.innerHTML
+        .replace(/{{code\.0}}/g, p.get('code0') || '{{code.0}}')
+        .replace(/{{code\.1}}/g, p.get('code1') || '{{code.1}}')
+        .replace(/{{code\.2}}/g, p.get('code2') || '{{code.2}}')
+        .replace(/{{code\.3}}/g, p.get('code3') || '{{code.3}}')
+        .replace(/{{resetUrl}}/g, p.get('resetUrl') || '{{resetUrl}}')
+        .replace(/{{email}}/g, p.get('email') || '{{email}}');
+    }
+  </script>
+</body>
+</html>

@@ -65,6 +65,22 @@ export function vDob(v) {
   return null // ok | minor
 }
 
+// Возрастной гейт регистрации. Старше 35 нельзя участвовать самостоятельно,
+// но можно в составе команды по приглашению — тогда не блокируем, а предупреждаем.
+export const vDobRegister = (hasInvite = false) => (v) => {
+  const s = (v || '').trim()
+  if (!s) return err('Укажи дату рождения')
+  const verdict = dobVerdict(s)
+  if (verdict === 'invalid') return err('Формат: ДД.ММ.ГГГГ')
+  if (verdict === 'young') return warn('Участвовать можно с 14 лет', true)
+  if (verdict === 'old') {
+    return hasInvite
+      ? warn('Старше 35 — участвовать можно только в составе команды по приглашению')
+      : warn('Самостоятельно участвовать можно до 35 лет — старше только по приглашению в команду', true)
+  }
+  return null // ok | minor
+}
+
 export function vPassword(v) {
   const s = v || ''
   if (!s) return err('Придумай пароль')

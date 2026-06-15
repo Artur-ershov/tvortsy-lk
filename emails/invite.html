@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!-- Письмо: приглашение в команду. Флоу: src/screens/team/JoinInvite.jsx, ApplyForm.jsx
+     Имя приглашённого неизвестно до принятия — обращаемся нейтрально.
+     Плейсхолдеры: {{captainName}}, {{captainInit}}, {{teamName}}, {{nomination}}, {{joinUrl}}, {{email}} -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Приглашение в команду — Творцы РФ 2026</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    body { margin: 0; padding: 0; background: #FFFFFF; }
+    a { text-decoration: none; }
+    @media (max-width: 620px) {
+      .wrap { width: 100% !important; }
+      .poster { padding: 32px 26px !important; }
+      .panel { padding: 28px 22px !important; }
+      .h1 { font-size: 38px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#FFFFFF;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{captainName}} зовёт тебя в команду «{{teamName}}» на «Творцах РФ 2026».</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFFFFF;">
+    <tr><td align="center" style="padding:24px 16px 32px;">
+      <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;font-family:'Golos Text',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">
+
+        <tr><td style="padding:8px 8px 16px;">
+          <div style="font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:15.5px;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;color:#000000;">Творцы<br>РФ</div>
+        </td></tr>
+
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#15151A;border-radius:36px;">
+            <tr><td class="poster" style="padding:44px;">
+              <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:#C5E4F9;">Приглашение в команду</span>
+              <h1 class="h1" style="margin:16px 0 0;font-size:50px;line-height:.9;letter-spacing:-.04em;font-weight:500;color:#FFFFFF;">Тебя зовут<br>в команду</h1>
+              <p style="margin:22px 0 0;font-size:20px;line-height:1.4;color:rgba(255,255,255,.8);max-width:460px;"><span style="color:#FFFFFF;">{{captainName}}</span> приглашает тебя в команду <span style="color:#FFFFFF;">«{{teamName}}»</span> для участия в фестивале.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>
+
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F8FD;border-radius:36px;">
+            <tr><td class="panel" style="padding:40px;">
+
+              <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:15.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#000000;">Детали команды</span>
+              <p style="margin:12px 0 0;font-size:16.5px;line-height:1.5;color:#15151A;">Прими приглашение, чтобы попасть в состав. Нет аккаунта — заведём за пару минут на той же странице.</p>
+
+              <!-- Белая карточка с деталями (.card-white на paper) -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0 0;background:#FFFFFF;border:1px solid rgba(0,0,0,.10);border-radius:22px;">
+                <tr><td style="padding:22px 24px;">
+                  <!-- строка капитана (member-row .init) -->
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:middle;"><div style="width:38px;height:38px;border-radius:12px;background:#D9ECF9;text-align:center;line-height:38px;font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;font-weight:700;color:#23425A;">{{captainInit}}</div></td>
+                      <td style="vertical-align:middle;padding-left:12px;">
+                        <div style="font-size:15.5px;font-weight:500;color:#15151A;">{{captainName}}</div>
+                        <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;color:#646A6E;margin-top:2px;">капитан команды</div>
+                      </td>
+                    </tr>
+                  </table>
+                  <div style="height:1px;background:rgba(0,0,0,.10);margin:16px 0;"></div>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#646A6E;padding-bottom:4px;">Команда</td>
+                    </tr>
+                    <tr><td style="font-size:20px;font-weight:500;letter-spacing:-.01em;color:#15151A;padding-bottom:14px;">«{{teamName}}»</td></tr>
+                    <tr><td style="font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#646A6E;padding-bottom:4px;">Номинация</td></tr>
+                    <tr><td style="font-size:16.5px;color:#15151A;">{{nomination}}</td></tr>
+                  </table>
+                </td></tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+                <tr><td style="background:#15151A;border-radius:16px;">
+                  <a href="{{joinUrl}}" style="display:block;text-align:center;padding:19px 24px;font-family:'Golos Text',-apple-system,sans-serif;font-size:20px;font-weight:400;color:#FFFFFF;">Посмотреть приглашение</a>
+                </td></tr>
+              </table>
+
+              <div style="height:1px;background:rgba(0,0,0,.10);margin:28px 0 0;"></div>
+              <p style="margin:18px 0 0;font-size:13.5px;line-height:1.5;color:#646A6E;">Участвовать можно максимум в 2 заявках сразу — членство в команде занимает одно из мест.</p>
+
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:24px 8px 8px;">
+          <p style="margin:0;font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;line-height:1.7;color:#646A6E;">Отправлено на {{email}} · фестиваль «Творцы&nbsp;РФ&nbsp;2026»<br>Не знаешь, кто это? Письмо можно проигнорировать — без ответа тебя не добавят.</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    if (p.size > 0) {
+      document.documentElement.innerHTML = document.documentElement.innerHTML
+        .replace(/{{captainName}}/g, p.get('captainName') || '{{captainName}}')
+        .replace(/{{captainInit}}/g, p.get('captainInit') || '{{captainInit}}')
+        .replace(/{{teamName}}/g, p.get('teamName') || '{{teamName}}')
+        .replace(/{{nomination}}/g, p.get('nomination') || '{{nomination}}')
+        .replace(/{{joinUrl}}/g, p.get('joinUrl') || '{{joinUrl}}')
+        .replace(/{{email}}/g, p.get('email') || '{{email}}');
+    }
+  </script>
+</body>
+</html>

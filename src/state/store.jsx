@@ -6,16 +6,22 @@ import React, { createContext, useContext, useEffect, useMemo, useReducer, useRe
 /* ───────── Справочники ───────── */
 
 export const NOMINATIONS = {
-  audio:  { label: 'Аудио',  num: '01', en: 'AUDIO',     badge: 'demo · 1–2 трека',    blurb: 'Композиция · саунд-дизайн · электроника · песня', req: 'Аудио — запись MP3 или WAV · до 300 МБ',  formats: ['mp3', 'wav'], maxMB: 300, fmt: 'MP3 или WAV · до 300 МБ' },
+  audio:  { label: 'Аудио',  num: '01', en: 'AUDIO',     badge: 'demo · 1–2 трека',    blurb: 'Композиция · саунд-дизайн · электроника · песня', req: 'Аудио — запись MP3 · до 100 МБ',          formats: ['mp3'],        maxMB: 100, fmt: 'MP3 · до 100 МБ' },
   media:  { label: 'Медиа',  num: '04', en: 'MEDIA',     badge: '1 фильм · до 15 мин',  blurb: 'Короткий метр · док · экспериментальное видео',   req: 'Медиа — видеоролик MP4 · до 500 МБ',      formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
   dance:  { label: 'Танец',  num: '03', en: 'DANCE',     badge: 'видео · 3–5 мин',      blurb: 'Хореография · перформанс · contemporary',          req: 'Танец — видеозапись MP4 · до 500 МБ',     formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ' },
-  visual: { label: 'Визуал', num: '02', en: 'VISUAL',    badge: 'до 12 работ',          blurb: 'Иллюстрация · моушн · 3D · AI · фотография',       req: 'Визуал — файл PDF или PNG · до 100 МБ',   formats: ['pdf', 'png'], maxMB: 100, fmt: 'PDF или PNG · до 100 МБ' },
-  synth:  { label: 'Синтез', num: '05', en: 'SYNTHESIS', badge: 'на стыке · грант ×2',  blurb: 'Произведение, которое собирается на стыке направлений', req: 'Синтез — материалы по выбранным направлениям · суммарно до 800 МБ', formats: null, maxMB: 800, fmt: 'несколько форматов · до 800 МБ суммарно', minDirs: 2 },
+  visual: { label: 'Визуал', num: '02', en: 'VISUAL',    badge: 'до 12 работ',          blurb: 'Иллюстрация · моушн · 3D · AI · фотография',       req: 'Визуал — файл PDF, MP4 или JPG · до 300 МБ', formats: ['pdf', 'mp4', 'jpg'], maxMB: 300, fmt: 'PDF, MP4 или JPG · до 300 МБ' },
+  synth:  { label: 'Синтез', num: '05', en: 'SYNTHESIS', badge: 'на стыке · грант ×2',  blurb: 'Произведение, которое собирается на стыке направлений', req: 'Синтез — видеозапись MP4 · до 500 МБ',     formats: ['mp4'],        maxMB: 500, fmt: 'MP4 · до 500 МБ', minDirs: 2 },
 }
 export const NOMINATION_KEYS = ['audio', 'media', 'dance', 'visual', 'synth']
 export const SYNTH_DIR_KEYS = ['audio', 'media', 'dance', 'visual']
 
 export const APP_LIMIT = 2 // не более 2 поданных заявок; черновики в лимит не входят
+
+// Возрастное правило команды: участвовать самостоятельно можно только до 35 лет.
+// Старше — лишь в составе команды по приглашению капитана, и таких не более доли состава.
+// SENIOR_SHARE / округление — открытый вопрос к заказчику (10% или 20%?); меняется одной строкой.
+export const SENIOR_AGE = 35
+export const SENIOR_SHARE = 0.2
 
 export const STATUS = {
   draft:     { label: 'Черновик',     cls: 'wait' },
@@ -63,6 +69,18 @@ export function dobVerdict(dobStr) {
   return 'ok'
 }
 
+// Старше 35: участвовать может только в составе команды (не самостоятельно)
+export const isSenior = (dobStr) => dobVerdict(dobStr) === 'old'
+
+// Сводка по «старшим» в команде: сколько их, сколько максимум допустимо и есть ли превышение.
+// max = доля SENIOR_SHARE от всего состава, округление вниз (открытый вопрос формулы).
+// Участники без даты рождения (приглашены, ещё не приняли) в подсчёт не идут — возраст неизвестен.
+export function teamSeniorStat(members = []) {
+  const count = members.filter(m => isSenior(m.dob)).length
+  const max = Math.floor(members.length * SENIOR_SHARE)
+  return { count, max, over: count > max }
+}
+
 export function fmtMB(mb) {
   if (mb >= 1000) return (mb / 1000).toFixed(1).replace('.', ',') + ' ГБ'
   return Math.round(mb) + ' МБ'
@@ -108,7 +126,7 @@ export function newDraft(num) {
     description: '',
     mode: 'solo',             // solo | team
     teamName: '',
-    members: [],              // {id, name, email, role:'captain'|'member', tag:'in'|'confirmed'|'invited'|'declined'}; имя пустое до принятия приглашения
+    members: [],              // {id, name, email, dob, role:'captain'|'member', tag:'in'|'confirmed'|'invited'|'declined'}; имя и dob пусты до принятия приглашения
     files: [],                // {id, name, sizeMB, state:'queue'|'progress'|'broken'|'done'|'error'|'over', pct, errText, note}
     link: '',                 // ссылка при превышении лимита
     consents: [false, false], // 2 согласия (Положение + лицензия); ПДн — только на регистрации
@@ -178,10 +196,43 @@ export function sectionState(app, n) {
 export const countSubmitted = apps => apps.filter(a => a.status !== 'draft').length
 export const filledCount = app => [1, 2, 3, 4].filter(n => sectionState(app, n) === 'done').length
 
-// Номинации, уже занятые поданными заявками: нельзя подать две заявки в одну номинацию.
+// ───── Квота участника: правило «2 на всё» (HANDOFF §9.2) ─────
+// Занимает ли заявка один из двух слотов участника (по его email):
+//  — членство (командная заявка, где ты НЕ капитан): с момента принятия приглашения
+//    (tag confirmed/in), даже пока команда черновик — это обязательство перед капитаном,
+//    поэтому слот резервируется сразу;
+//  — своя заявка (solo или где ты капитан): когда подана (черновик можно удалить — не в счёт).
+export const occupiesSlot = (app, email) => {
+  const asMember = app.mode === 'team' && app.members.find(m => m.email === email && m.role !== 'captain')
+  if (asMember) return asMember.tag === 'confirmed' || asMember.tag === 'in'
+  return app.status !== 'draft'
+}
+
+// Сколько слотов из APP_LIMIT уже занято — ЕДИНЫЙ счётчик для кабинета и редьюсера,
+// чтобы «X из 2» на экране и блокировка подачи считались по одной формуле.
+// exceptId — исключить подаваемую/принимаемую заявку, чтобы она не считала саму себя.
+export const countUsed = (state, email, exceptId = null) =>
+  state.apps.filter(a => a.id !== exceptId && occupiesSlot(a, email)).length
+
+// Номинации, уже занятые поданными заявками участника: нельзя подать две заявки в одну номинацию.
+// Считаются только поданные заявки, занимающие слот участника (членство по приглашению — тоже его);
 // exceptId исключает саму редактируемую заявку (черновики в расчёт не идут — они вне статусов).
-export const takenNominations = (apps, exceptId = null) =>
-  apps.filter(a => a.status !== 'draft' && a.id !== exceptId && a.nomination).map(a => a.nomination)
+export const takenNominations = (apps, email, exceptId = null) =>
+  apps.filter(a => a.id !== exceptId && a.status !== 'draft' && a.nomination && occupiesSlot(a, email))
+    .map(a => a.nomination)
+
+// Единое условие «заявку можно подать» — ОДИН источник истины для формы (футер + подсказка)
+// и редьюсера (submit-app). Подать можно, когда заполнено всё необходимое и не нарушено ни одно
+// правило: свободен слот из APP_LIMIT (countUsed), номинация не занята другой поданной заявкой,
+// и в команде старше 35 — не больше доли состава.
+export function canSubmit(app, state) {
+  if (!app) return false
+  if (computeTodos(app).length > 0) return false
+  if (countUsed(state, state.email, app.id) >= APP_LIMIT) return false
+  if (app.nomination && takenNominations(state.apps, state.email, app.id).includes(app.nomination)) return false
+  if (app.mode === 'team' && teamSeniorStat(app.members).over) return false
+  return true
+}
 
 /* ───────── Сиды (данные из FgV9 / it3) ───────── */
 
@@ -230,12 +281,12 @@ const seedApps = () => {
 }
 
 const TEAM_SEED = () => ([
-  { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', role: 'captain', tag: 'in' },
-  { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', role: 'member', tag: 'confirmed' },
-  // до принятия приглашения известен только email — имени нет
+  { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', dob: '14.03.2004', role: 'captain', tag: 'in' },
+  { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', dob: '08.09.2000', role: 'member', tag: 'confirmed' },
+  // до принятия приглашения известен только email — имени и даты рождения нет
   { id: nextId(), name: '', email: 'k.dmitriev@inbox.ru', role: 'member', tag: 'invited' },
   // несовершеннолетний попадает в команду только после Стены согласий — статус согласия капитану не нужен
-  { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', role: 'member', tag: 'confirmed' },
+  { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', dob: '02.11.2011', role: 'member', tag: 'confirmed' },
 ])
 
 // Командная заявка «Шум» — фиксированный id, чтобы демо-ссылка /join/team-shum работала из коробки
@@ -271,6 +322,16 @@ const PROFILE_TIMUR = {
   nationality: 'татарин',
   city: 'Казань',
   work: 'Лицей № 7',
+}
+
+// Олег — старше 35: участвовать может только в команде по приглашению
+const PROFILE_OLEG = {
+  lastName: 'Лебедев', firstName: 'Олег', middleName: 'Викторович',
+  dob: '12.05.1983',
+  phone: '+7 905 770-22-14',
+  nationality: 'русский',
+  city: 'Казань',
+  work: 'Студия «Контур»',
 }
 
 /* ───────── Начальное состояние ───────── */
@@ -343,16 +404,16 @@ function reducer(state, action) {
     case 'patch-app':
       return patchApp(state, action.id, action.patch)
     case 'submit-app': {
-      // handoff: «Проверяется на сервере при submit» — лимит 2 поданных, черновики не в счёт
-      if (countSubmitted(state.apps) >= APP_LIMIT) return state
-      // одна заявка на номинацию: нельзя подать две заявки в одну и ту же номинацию
+      // бэкстоп к UI: подача проходит только если выполнены ВСЕ условия (см. canSubmit) —
+      // заполнено всё, свободен слот «2 на всё», номинация свободна, доля старших в норме.
+      // Дату/время не сочиняем здесь: submittedAt/submittedTime приходят готовыми из payload
+      // (позже это будут значения из ответа сервера).
       const me = state.apps.find(a => a.id === action.id)
-      if (me && takenNominations(state.apps, action.id).includes(me.nomination)) return state
-      const now = new Date()
+      if (!canSubmit(me, state)) return state
       return patchApp(state, action.id, {
         status: 'submitted',
-        submittedAt: now.toLocaleDateString('ru-RU'),
-        submittedTime: now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        submittedAt: action.submittedAt,
+        submittedTime: action.submittedTime,
         reworkNote: '',
       })
     }
@@ -393,15 +454,18 @@ function reducer(state, action) {
     case 'respond-invite': {
       // приглашённый отвечает со своего email; при принятии имя подтягивается из профиля
       const email = state.email
+      // правило «2 на всё»: принять приглашение нельзя, если оба слота уже заняты (бэкстоп к UI)
+      if (action.tag === 'confirmed' && countUsed(state, email, action.id) >= APP_LIMIT) return state
       const next = patchApp(state, action.id, a => {
         const known = a.members.some(m => m.email === email)
         if (!known && action.tag === 'confirmed') {
-          // пришёл по пересланной ссылке — добавляем себя в состав
-          return { members: [...a.members, { id: nextId(), name: fullName(state.profile), email, role: 'member', tag: 'confirmed' }] }
+          // пришёл по пересланной ссылке — добавляем себя в состав (с датой рождения для возрастного правила).
+          // id участника готовим в месте диспатча (action.memberId) — редьюсер ничего не сочиняет.
+          return { members: [...a.members, { id: action.memberId, name: fullName(state.profile), email, dob: state.profile.dob, role: 'member', tag: 'confirmed' }] }
         }
         return {
           members: a.members.map(m => (m.email === email
-            ? { ...m, tag: action.tag, ...(action.tag === 'confirmed' ? { name: fullName(state.profile) } : {}) }
+            ? { ...m, tag: action.tag, ...(action.tag === 'confirmed' ? { name: fullName(state.profile), dob: state.profile.dob } : {}) }
             : m)),
         }
       })
@@ -412,9 +476,10 @@ function reducer(state, action) {
     case 'ensure-captain':
       return patchApp(state, action.id, a => {
         if (a.members.some(m => m.role === 'captain')) return {}
+        // id капитана готовим в месте диспатча (action.captainId) — редьюсер ничего не сочиняет
         return {
           members: [
-            { id: nextId(), name: fullName(state.profile), email: state.email, role: 'captain', tag: 'in' },
+            { id: action.captainId, name: fullName(state.profile), email: state.email, dob: state.profile.dob, role: 'captain', tag: 'in' },
             ...a.members,
           ],
         }
@@ -466,6 +531,111 @@ function reducer(state, action) {
             profile: PROFILE_TIMUR,
             minorDocs: { participation: 'none', pdn: 'review' },
           }
+        case 'senior-reg':
+          // регистрация старше 35 «по приглашению»: pendingInvite есть → ввод 35+ не блокируется
+          return { ...base, stage: 'guest', pendingInvite: 'team-shum', apps: [teamShumApp()] }
+        case 'invitee-senior':
+          // Олег (43) приглашён в команду — участвовать может только так. Ещё не ответил.
+          return {
+            ...base,
+            stage: 'active',
+            email: 'o.lebedev@mail.ru',
+            profile: PROFILE_OLEG,
+            apps: [teamShumApp([...TEAM_SEED(), { id: nextId(), name: '', email: 'o.lebedev@mail.ru', role: 'member', tag: 'invited' }])],
+            pendingInvite: 'team-shum',
+          }
+        case 'captain-senior': {
+          // капитан Мария собрала команду, где старших больше дозволенной доли — демонстрация блока подачи
+          const members = [
+            { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', dob: '14.03.2004', role: 'captain', tag: 'in' },
+            { id: nextId(), name: 'Лебедев Олег Викторович', email: 'o.lebedev@mail.ru', dob: '12.05.1983', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', dob: '08.09.2000', role: 'member', tag: 'confirmed' },
+          ]
+          const draft = {
+            ...newDraft('ТВ-2026-0' + state.appSeq),
+            id: 'team-kontur',
+            nomination: 'media',
+            title: 'Тихий свет',
+            description: 'Короткометражный фильм о городе на рассвете — три героя и общий маршрут.',
+            mode: 'team', teamName: 'Контур', members,
+            files: [{ id: nextId(), name: 'tihiy_svet.mp4', sizeMB: 420, state: 'done', pct: 100 }],
+            consents: [true, true],
+          }
+          return { ...base, stage: 'active', email: 'm.sokolova@mail.ru', profile: PROFILE_MARIA, apps: [draft], appSeq: state.appSeq + 1 }
+        }
+        case 'captain-senior-ok': {
+          // команда из 5 человек с одним старше 35 — в пределах доли (1 из 1): заявку можно подать
+          const members = [
+            { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', dob: '14.03.2004', role: 'captain', tag: 'in' },
+            { id: nextId(), name: 'Лебедев Олег Викторович', email: 'o.lebedev@mail.ru', dob: '12.05.1983', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', dob: '08.09.2000', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Жукова Дарья Сергеевна', email: 'd.zhukova@mail.ru', dob: '19.02.2002', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Орлов Никита Павлович', email: 'n.orlov@ya.ru', dob: '27.06.1999', role: 'member', tag: 'confirmed' },
+          ]
+          const draft = {
+            ...newDraft('ТВ-2026-0' + state.appSeq),
+            id: 'team-kontur-ok',
+            nomination: 'media',
+            title: 'Тихий свет',
+            description: 'Короткометражный фильм о городе на рассвете — три героя и общий маршрут.',
+            mode: 'team', teamName: 'Контур', members,
+            files: [{ id: nextId(), name: 'tihiy_svet.mp4', sizeMB: 420, state: 'done', pct: 100 }],
+            consents: [true, true],
+          }
+          return { ...base, stage: 'active', email: 'm.sokolova@mail.ru', profile: PROFILE_MARIA, apps: [draft], appSeq: state.appSeq + 1 }
+        }
+        case 'team-shum-ready': {
+          // Команда «Шум»: все участники подтвердили, файлы загружены, согласия стоят — готова к подаче
+          const members = [
+            { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', dob: '14.03.2004', role: 'captain', tag: 'in' },
+            { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', dob: '08.09.2000', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Дмитриев Кирилл Олегович', email: 'k.dmitriev@inbox.ru', dob: '21.07.2001', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', dob: '02.11.2011', role: 'member', tag: 'confirmed' },
+          ]
+          const app = {
+            ...teamShumApp(members),
+            files: [
+              { id: nextId(), name: 'shepot_zvuk.wav', sizeMB: 212, state: 'done', pct: 100 },
+              { id: nextId(), name: 'shepot_goroda_v3.mp4', sizeMB: 486, state: 'done', pct: 100 },
+            ],
+            consents: [true, true],
+          }
+          return { ...base, stage: 'active', email: 'm.sokolova@mail.ru', profile: PROFILE_MARIA, apps: [app] }
+        }
+        case 'team-shum-review': {
+          // Команда «Шум» подала заявку — капитан Мария видит статус «На проверке» в кабинете
+          const members = [
+            { id: nextId(), name: 'Соколова Мария Андреевна', email: 'm.sokolova@mail.ru', dob: '14.03.2004', role: 'captain', tag: 'in' },
+            { id: nextId(), name: 'Беляев Артём Игоревич', email: 'a.belyaev@ya.ru', dob: '08.09.2000', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Дмитриев Кирилл Олегович', email: 'k.dmitriev@inbox.ru', dob: '21.07.2001', role: 'member', tag: 'confirmed' },
+            { id: nextId(), name: 'Гарипов Тимур Маратович', email: 't.garipov@mail.ru', dob: '02.11.2011', role: 'member', tag: 'confirmed' },
+          ]
+          const app = {
+            ...teamShumApp(members),
+            status: 'review',
+            files: [
+              { id: nextId(), name: 'shepot_zvuk.wav', sizeMB: 212, state: 'done', pct: 100 },
+              { id: nextId(), name: 'shepot_goroda_v3.mp4', sizeMB: 486, state: 'done', pct: 100 },
+            ],
+            consents: [true, true],
+            submittedAt: '10.06.2026',
+          }
+          return { ...base, stage: 'active', email: 'm.sokolova@mail.ru', profile: PROFILE_MARIA, apps: [app] }
+        }
+        case 'invitee-accepted': {
+          // Кирилл принял приглашение в «Шум» — видит командную заявку в своём кабинете
+          const members = TEAM_SEED().map(m => m.email === 'k.dmitriev@inbox.ru'
+            ? { ...m, name: 'Дмитриев Кирилл Олегович', dob: '21.07.2001', tag: 'confirmed' }
+            : m
+          )
+          return {
+            ...base,
+            stage: 'active',
+            email: 'k.dmitriev@inbox.ru',
+            profile: PROFILE_KIRILL,
+            apps: [teamShumApp(members)],
+          }
+        }
         default:
           return state
       }
@@ -482,7 +652,7 @@ function reducer(state, action) {
 const StoreCtx = createContext(null)
 const ToastCtx = createContext(() => {})
 
-export const LS_KEY = 'tvortsy-lk-state-v2' // bump: профиль перешёл на раздельные lastName/firstName/middleName
+export const LS_KEY = 'tvortsy-lk-state-v3' // bump: у участника команды появилось поле dob (возрастное правило)
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
@@ -550,17 +720,14 @@ export function useStore() {
   return useContext(StoreCtx)
 }
 
-// Все форматы направлений — допустимы в «Синтезе» («несколько форматов»)
-export const SYNTH_FORMATS = ['mp3', 'wav', 'mp4', 'pdf', 'png']
-
 // Валидация добавляемого файла под номинацию (it3: ошибка формата / превышение).
-// Для «Синтеза» лимит 800 МБ — суммарный по всем материалам заявки.
+// Для «Синтеза» лимит 500 МБ — суммарный по всем материалам заявки.
 export function classifyFile(name, sizeMB, nomination, files = []) {
   const nom = NOMINATIONS[nomination] || NOMINATIONS.media
   const ext = (name.split('.').pop() || '').toLowerCase()
-  const formats = nom.formats || SYNTH_FORMATS
+  const formats = nom.formats
   if (!formats.includes(ext)) {
-    const all = (nom.formats || ['MP3', 'WAV', 'MP4', 'PDF', 'PNG'].map(f => f.toLowerCase())).map(f => f.toUpperCase())
+    const all = formats.map(f => f.toUpperCase())
     const list = all.length > 1 ? `${all.slice(0, -1).join(', ')} или ${all[all.length - 1]}` : all[0]
     return { state: 'error', errText: `Формат ${ext.toUpperCase()} не подходит — загрузи файл в формате ${list}` }
   }
@@ -577,16 +744,25 @@ export function classifyFile(name, sizeMB, nomination, files = []) {
   return { state: 'queue', note: 'в очереди — загрузка начнётся автоматически' }
 }
 
+// Не подходит ли загруженный файл под текущую номинацию (после смены номинации).
+// Возвращает накладку состояния { state, errText } для подсветки ошибкой, либо null.
+// Один источник правды для computeTodos (что мешает подать) и FileRow (как показать).
+export function fileMisfit(app, f) {
+  const nom = app.nomination && NOMINATIONS[app.nomination]
+  if (!nom || f.state !== 'done') return null
+  const ext = (f.name.split('.').pop() || '').toLowerCase()
+  if (!nom.formats.includes(ext)) {
+    const all = nom.formats.map(x => x.toUpperCase())
+    const list = all.length > 1 ? `${all.slice(0, -1).join(', ')} или ${all[all.length - 1]}` : all[0]
+    return { state: 'error', errText: `Формат ${ext.toUpperCase()} не подходит под номинацию — загрузи ${list}` }
+  }
+  if (app.nomination !== 'synth' && f.sizeMB > nom.maxMB) {
+    return { state: 'over', errText: `Файл больше ${nom.maxMB} МБ для этой номинации — сожми его или дай ссылку на облако.` }
+  }
+  return null
+}
+
 // Загруженные файлы, не подходящие под текущую номинацию (после смены номинации)
 export function misfitFiles(app) {
-  const nom = app.nomination && NOMINATIONS[app.nomination]
-  if (!nom) return []
-  const formats = nom.formats || SYNTH_FORMATS
-  return app.files.filter(f => {
-    if (f.state !== 'done') return false
-    const ext = (f.name.split('.').pop() || '').toLowerCase()
-    if (!formats.includes(ext)) return true
-    if (app.nomination !== 'synth' && f.sizeMB > nom.maxMB) return true
-    return false
-  })
+  return app.files.filter(f => fileMisfit(app, f))
 }

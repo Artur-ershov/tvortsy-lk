@@ -1,6 +1,6 @@
 // Общие примитивы — стиль из «Основные экраны» (lk3/fig-shared.jsx, screens-*.jsx)
 import React, { useState } from 'react'
-import { STATUS, CYCLE, CYCLE_DATES, fmtMB, initialsOf } from '../state/store.jsx'
+import { STATUS, CYCLE, CYCLE_DATES, fmtMB, initialsOf, isSenior } from '../state/store.jsx'
 
 /* ── Пиксельная мозаика по битовой карте (FgPix) ── */
 export const PIX_A = ['0110', '1100', '0111', '0010']
@@ -50,30 +50,36 @@ export const Wing = ({ tile = 22, gap, cols = 16, rows = 7, thickness = 2, waves
 export const StatusTimeline = ({ status = 'submitted', dark = false, submittedAt }) => {
   const idx = Math.max(0, CYCLE.indexOf(status === 'rework' ? 'review' : status))
   const N = CYCLE.length
-  const fill = dark ? '#fff' : 'var(--ink)'                      // залитый шаг (как на лендинге)
+  const fill = dark ? '#fff' : 'var(--ink)'                      // активный шаг (как на лендинге)
   const ring = dark ? 'rgba(255,255,255,.40)' : 'rgba(0,0,0,.28)' // кольцо будущего шага
   const hollowBg = dark ? 'transparent' : '#fff'                 // фон полого кружка перекрывает трек
+  const halo = dark ? 'rgba(127,169,201,.45)' : 'rgba(91,155,201,.30)' // ореол активного шага (accent)
   return (
     <div className="stl">
       {/* серый трек по всей длине + чёрный прогресс до текущего шага (на узком экране трек скрыт) */}
       <div className="stl-track" style={{ position: 'absolute', left: 0, right: 0, top: 7.5, height: 1, background: dark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)' }}></div>
       <div className="stl-track" style={{ position: 'absolute', left: 0, top: 7.5, height: 1, width: `calc(${(idx / N) * 100}% + 7px)`, background: fill }}></div>
       {CYCLE.map((key, i) => {
-        const done = i < idx, cur = i === idx, filled = done || cur
+        // «Подана» — событие в прошлом: раз заявка отправлена, шаг всегда пройден (кольцо с точкой внутри).
+        const passed = i < idx || i === 0
+        const cur = i === idx && i !== 0          // активная фаза (на рассмотрении и т.д.) — крупнее, с ореолом
+        const filled = passed || cur               // пройденный и активный залиты; будущие — полые
         return (
           <div key={key} style={{ position: 'relative', paddingRight: 'var(--sp-3)' }}>
             <div style={{ height: 16, display: 'flex', alignItems: 'center' }}>
               <span style={{
                 display: 'block', boxSizing: 'border-box', borderRadius: '50%',
-                width: filled ? 14 : 12, height: filled ? 14 : 12,
+                // неактивные (пройденный + будущие) — одного размера и чуть меньше активного
+                width: cur ? 16 : 12, height: cur ? 16 : 12,
                 background: filled ? fill : hollowBg,
                 border: filled ? 'none' : `1.5px solid ${ring}`,
+                boxShadow: cur ? `0 0 0 4px ${halo}` : 'none',
               }}></span>
             </div>
-            <div className="jbm" style={{ fontSize: 'var(--fs-2xs)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 'var(--sp-2)', opacity: .6 }}>
+            <div className="jbm" style={{ fontSize: 'var(--fs-2xs)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 'var(--sp-2)', opacity: cur ? 1 : .6, color: cur ? (dark ? 'var(--accent-3)' : 'var(--accent)') : undefined }}>
               {i === 0 && submittedAt ? submittedAt : CYCLE_DATES[key]}
             </div>
-            <div style={{ fontSize: 'var(--fs-md)', fontWeight: cur ? 600 : 400, marginTop: 'var(--sp-1)', lineHeight: 1.25 }}>{STATUS[key].label}</div>
+            <div style={{ fontSize: 'var(--fs-base)', fontWeight: cur ? 600 : 400, marginTop: 'var(--sp-1)', lineHeight: 1.25 }}>{STATUS[key].label}</div>
           </div>
         )
       })}
@@ -289,6 +295,7 @@ export const MemberRow = ({ member, you = false, onRemove, onRemind, invitedLabe
       </div>
       {member.tag === 'invited' && onRemind && <button className="mlink" type="button" onClick={onRemind}>напомнить</button>}
       {onRemove && member.role !== 'captain' && <button className="mlink" type="button" onClick={onRemove}>убрать</button>}
+      {isSenior(member.dob) && <span className="mtag">35+</span>}
       <span className={'mtag ' + t.cls}>{tagLabel}</span>
       {children}
     </div>

@@ -34,7 +34,7 @@ guest → registered (email+password+DOB, awaiting code) → confirmed (fill pro
 - Age branching happens in the `confirm-email` action via `dobVerdict(profile.dob)`. DOB is collected at **registration**, not in the onboarding form (under-18 can't register without consent, so it's asked first).
 
 ### Routing
-`HashRouter` (hash URLs — relevant because the prod twin uses clean paths). All routes are declared in `src/App.jsx`. `/join/:id` is intentionally reachable by guests (auth happens inside the screen).
+`BrowserRouter` (clean paths, matching the prod twin; switched from HashRouter). All routes are declared in `src/App.jsx`. Prod needs an SPA fallback (any path → `index.html`) — `vercel.json` rewrite in the repo root; Vite dev handles it automatically. `/join/:id` is intentionally reachable by guests (auth happens inside the screen).
 
 ### Validation layer
 `src/state/validation.js` sits on top of the `<Field>` primitive. Validators return `null | {error} | {warn} | {warn, block}` (warn blocks submit only when `block` is set — e.g. age outside 14–35). Use the `useField(initial, validate, opts)` hook and spread `f.bind` into `<Field>`; call `revealInvalid(fields, container)` on submit. Input masks (`maskPhone`, `maskDob`) live here too.

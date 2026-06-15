@@ -7,7 +7,8 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   useStore, NOMINATIONS, SYNTH_DIR_KEYS,
   computeTodos, sectionState, filledCount, fullName, initialsOf,
-  classifyFile, nextId, countSubmitted, APP_LIMIT, takenNominations,
+  classifyFile, nextId, countUsed, canSubmit, APP_LIMIT, takenNominations,
+  isSenior, teamSeniorStat, fileMisfit,
 } from '../../state/store.jsx'
 import { NomCard, SynthCard, NOM_CARD_KEYS } from '../../components/NominationCards.jsx'
 import { Nav } from '../../components/Nav.jsx'
@@ -54,9 +55,12 @@ export default function ApplyForm() {
   const [over, setOver] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [saving, setSaving] = useState(false) // короткая «вспышка» автосохранения после правки
   const fileInput = useRef(null)
   const replaceInput = useRef(null)
   const replaceFor = useRef(null)
+  const saveTimer = useRef(null)
+  useEffect(() => () => clearTimeout(saveTimer.current), [])
 
   // скролл-спай по offsetTop секций s01–s04
   useEffect(() => {
@@ -78,24 +82,36 @@ export default function ApplyForm() {
   if (!app) return <Navigate to="/cabinet" replace />
   // форма доступна только для черновика — после подачи заявка не редактируется (временно)
   if (app.status !== 'draft') return <Navigate to="/cabinet" replace />
+  // старше 35 не может вести собственную заявку — только участвовать в чужой команде
+  if (isSenior(state.profile.dob)) return <Navigate to="/cabinet" replace />
 
-  const patch = (p) => dispatch({ type: 'patch-app', id, patch: { ...p, updatedAt: nowHM() } })
-  const touch = () => dispatch({ type: 'patch-app', id, patch: { updatedAt: nowHM() } })
+  // любая правка сразу пишется в стор (автосейв в localStorage, дебаунс 400 мс) —
+  // markSaving даёт видимую обратную связь: «Сохраняем…» → «Черновик сохранён · HH:MM»
+  const markSaving = () => {
+    setSaving(true)
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => setSaving(false), 600)
+  }
+  const patch = (p) => { markSaving(); dispatch({ type: 'patch-app', id, patch: { ...p, updatedAt: nowHM() } }) }
+  const touch = () => { markSaving(); dispatch({ type: 'patch-app', id, patch: { updatedAt: nowHM() } }) }
 
   const todos = computeTodos(app)
   const nomDef = NOMINATIONS[app.nomination] || NOMINATIONS.media
   const filled = filledCount(app)
-  const limitReached = countSubmitted(state.apps) >= APP_LIMIT
-  // одна заявка на номинацию: номинации, занятые другими поданными заявками
-  const taken = takenNominations(state.apps, app.id)
+  const limitReached = countUsed(state, state.email, app.id) >= APP_LIMIT
+  // одна заявка на номинацию: номинации, занятые другими поданными заявками участника
+  const taken = takenNominations(state.apps, state.email, app.id)
   const nomTaken = app.nomination && taken.includes(app.nomination)
+  // возрастное правило: в команде старше 35 — не более доли состава
+  const teamSenior = app.mode === 'team' ? teamSeniorStat(app.members) : { count: 0, max: 0, over: false }
+  const seniorOver = teamSenior.over
 
   /* ── файлы ── */
   const addFiles = (list) => {
     Array.from(list).forEach(file => {
       const sizeMB = Math.max(0.1, file.size / 1048576)
       const cls = classifyFile(file.name, sizeMB, app.nomination || 'media', app.files)
-      dispatch({ type: 'add-file', id, file: { id: nextId(), name: file.name, sizeMB, pct: 0, ...cls } })
+      dispatch({ type: 'add-file', id, file: { id: crypto.randomUUID(), name: file.name, sizeMB, pct: 0, ...cls } })
     })
     touch()
   }
@@ -127,21 +143,33 @@ export default function ApplyForm() {
   }
   const copyInviteLink = () => {
     try {
-      navigator.clipboard?.writeText(location.origin + location.pathname + '#/join/' + app.id)?.catch?.(() => {})
+      navigator.clipboard?.writeText(location.origin + '/join/' + app.id)?.catch?.(() => {})
     } catch { /* clipboard недоступен — демо */ }
     toast('Ссылка скопирована')
   }
 
   const submit = () => {
-    dispatch({ type: 'submit-app', id })
+    // подаём только если подача валидна — иначе остаёмся в форме (видно, что осталось заполнить)
+    if (!canSubmit(app, state)) return
+    // дату/время фиксируем здесь и передаём в payload (позже их даст ответ сервера)
+    const now = new Date()
+    dispatch({
+      type: 'submit-app',
+      id,
+      submittedAt: now.toLocaleDateString('ru-RU'),
+      submittedTime: now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+    })
+    // единственный переход на «Заявка подана» — позже сюда встанет момент успешного ответа сервера
     nav('/success/' + id)
   }
 
   const statusHint = limitReached ? (
-    <span className="cluster" style={{ color: 'var(--gray-2)' }}>ты подал 2 заявки — это максимум. Чтобы освободить место, <button type="button" onClick={() => nav('/cabinet')}>отзови одну в кабинете</button>.</span>
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>у тебя уже 2 заявки — это максимум (считаются и команды по приглашению). Чтобы освободить место, <button type="button" onClick={() => nav('/cabinet')}>отзови заявку или выйди из команды</button>.</span>
   ) : nomTaken ? (
     <span className="cluster" style={{ color: 'var(--gray-2)' }}>в номинации «{nomDef.label}» у тебя уже есть поданная заявка — выбери другую номинацию или <button type="button" onClick={() => nav('/cabinet')}>отзови ту в кабинете</button>.</span>
-  ) : todos.length === 0 ? (
+  ) : seniorOver ? (
+    <span className="cluster" style={{ color: 'var(--gray-2)' }}>старше 35 в команде — {teamSenior.count} из {teamSenior.max} допустимых: оставь не более 20% состава, чтобы подать заявку.</span>
+  ) : canSubmit(app, state) ? (
     <span className="cluster" style={{ color: 'var(--ink)' }}>всё готово — можно подавать заявку</span>
   ) : (
     <span className="cluster" style={{ color: 'var(--gray-2)' }}>
@@ -184,9 +212,12 @@ export default function ApplyForm() {
             <span className="kick">Новая заявка · черновик</span>
             <h1 style={{ fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 500, letterSpacing: '-.04em', lineHeight: .9, marginTop: 'var(--sp-3)' }}>Подать заявку</h1>
           </div>
-          <span className="cluster" style={{ paddingBottom: 'var(--sp-2)', textAlign: 'right' }}>
-            черновик сохранён · {app.updatedAt}<br />{app.num}
-          </span>
+          <div className="cluster" style={{ paddingBottom: 'var(--sp-2)', textAlign: 'right' }}>
+            <span className={'savemark' + (saving ? ' saving' : '')}>
+              {saving ? 'Сохраняем…' : `Черновик сохранён · ${app.updatedAt}`}
+            </span>
+            <br />{app.num}
+          </div>
         </div>
 
         <div className="form-cols" style={{ marginTop: 'var(--sp-7)' }}>
@@ -247,15 +278,20 @@ export default function ApplyForm() {
               </div>
               {app.files.length > 0 && (
                 <div style={{ display: 'grid', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
-                  {app.files.map(f => (
-                    <FileRow
-                      key={f.id}
-                      file={f}
-                      onResume={() => { dispatch({ type: 'patch-file', id, fileId: f.id, patch: { state: 'progress' } }); touch() }}
-                      onRemove={() => { dispatch({ type: 'remove-file', id, fileId: f.id }); touch() }}
-                      onReplace={() => openReplace(f.id)}
-                    />
-                  ))}
+                  {app.files.map(f => {
+                    // после смены номинации загруженный файл может перестать подходить —
+                    // показываем его ошибкой (формат) / превышением (размер), а не галочкой
+                    const mis = fileMisfit(app, f)
+                    return (
+                      <FileRow
+                        key={f.id}
+                        file={mis ? { ...f, ...mis } : f}
+                        onResume={() => { dispatch({ type: 'patch-file', id, fileId: f.id, patch: { state: 'progress' } }); touch() }}
+                        onRemove={() => { dispatch({ type: 'remove-file', id, fileId: f.id }); touch() }}
+                        onReplace={() => openReplace(f.id)}
+                      />
+                    )
+                  })}
                 </div>
               )}
               <button
@@ -294,7 +330,7 @@ export default function ApplyForm() {
                 <Chips
                   options={[{ key: 'solo', label: 'Одному' }, { key: 'team', label: 'С командой' }]}
                   value={app.mode}
-                  onChange={m => { patch({ mode: m }); if (m === 'team') dispatch({ type: 'ensure-captain', id }) }}
+                  onChange={m => { patch({ mode: m }); if (m === 'team') dispatch({ type: 'ensure-captain', id, captainId: crypto.randomUUID() }) }}
                 />
                 <span className="ff-hint">
                   {app.mode === 'solo'
@@ -308,7 +344,7 @@ export default function ApplyForm() {
                   <div className="member-row" style={{ gap: 'var(--sp-3)' }}>
                     <span className="init">{initialsOf(fullName(state.profile)) || '··'}</span>
                     <div style={{ flex: 1, minWidth: 180 }}>
-                      <div style={{ fontSize: 'var(--fs-md)', fontWeight: 500 }}>{fullName(state.profile) || 'Участник'}</div>
+                      <div style={{ fontSize: 'var(--fs-base)', fontWeight: 500 }}>{fullName(state.profile) || 'Участник'}</div>
                       <div className="cluster" style={{ color: 'var(--gray-2)', marginTop: 2 }}>
                         {[state.profile.city, state.email].filter(Boolean).join(' · ')}
                       </div>
@@ -361,6 +397,14 @@ export default function ApplyForm() {
                     ))}
                   </div>
 
+                  {/* Доля старше 35 — появляется, только когда такой участник в команде есть */}
+                  {teamSenior.count > 0 && (
+                    <div className={'fst ' + (teamSenior.over ? 'err' : 'warn')} style={{ marginTop: 'var(--sp-3)', fontSize: 'var(--fs-xs)' }}>
+                      старше 35 — {teamSenior.count} из {teamSenior.max} допустимых
+                      {teamSenior.over && ' · убери лишних: старше 35 можно не более 20% состава'}
+                    </div>
+                  )}
+
                   <div style={{ marginTop: 'var(--sp-3)', display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
                     <button type="button" className="fbtn sm line" onClick={() => setInviteOpen(o => !o)}>+ Пригласить по email</button>
                     <button type="button" className="fbtn sm line" onClick={copyInviteLink}>Скопировать ссылку-приглашение</button>
@@ -394,10 +438,10 @@ export default function ApplyForm() {
             <FSection num="04" title="Согласия и подача" st={sectionState(app, 4)}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
                 <Check on={app.consents[0]} onChange={v => patch({ consents: [v, app.consents[1]] })}>
-                  С правилами фестиваля ознакомлен и согласен — <a onClick={e => e.stopPropagation()}>Положение</a>
+                  С правилами фестиваля ознакомлен и согласен — <a href="/docs/polozheniye.html" target="_blank" rel="noopener" onClick={e => e.stopPropagation()}>Положение</a>
                 </Check>
                 <Check on={app.consents[1]} onChange={v => patch({ consents: [app.consents[0], v] })}>
-                  Предоставляю неисключительную лицензию на использование материалов — <a onClick={e => e.stopPropagation()}>Положение, раздел 11</a>
+                  Предоставляю неисключительную лицензию на использование материалов — <a href="/docs/polozheniye.html#s11" target="_blank" rel="noopener" onClick={e => e.stopPropagation()}>Положение, раздел 11</a>
                 </Check>
               </div>
             </FSection>
@@ -429,13 +473,15 @@ export default function ApplyForm() {
 
         {/* Sticky-футер подачи */}
         <div className="ff-foot">
-          {todos.length === 0 && !limitReached && !nomTaken ? (
+          {canSubmit(app, state) ? (
             <button type="button" className="fbtn" onClick={submit}>Подать заявку</button>
           ) : (
             <span className="fbtn dark" style={{ color: '#fff', fontWeight: 400, opacity: .45, cursor: 'default' }}>Подать заявку</span>
           )}
           <span className="todo">{statusHint}</span>
-          <button type="button" className="fbtn sm line" onClick={() => { touch(); toast('Черновик сохранён') }}>Сохранить черновик</button>
+          <span className={'ff-save savemark' + (saving ? ' saving' : '')}>
+            {saving ? 'Сохраняем…' : `Сохранено · ${app.updatedAt}`}
+          </span>
         </div>
       </div>
 
