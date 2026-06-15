@@ -8,9 +8,11 @@
 
 ## Превью
 
-Открой `emails/index.html` в браузере — галерея со всеми письмами в iframe.
-На dev-сервере доступно по адресу `/emails/index.html` (файлы вне `src`, Vite
-отдаёт их как статику из корня проекта).
+**GitHub Pages (прямо с GitHub):**
+- [Галерея всех писем](https://artur-ershov.github.io/tvortsy-lk/emails/index.html)
+
+Или открой `emails/index.html` локально в браузере — работает без сервера.
+На dev-сервере: `/emails/index.html`.
 
 ## Соответствие коду
 

@@ -5,15 +5,15 @@ Golos Text, токены из `src/styles/tokens.css`.
 
 ## Как смотреть
 
-Открой файл напрямую в браузере — работают без сервера.
+**GitHub Pages (прямо с GitHub):**
+- [Положение о фестивале](https://artur-ershov.github.io/tvortsy-lk/docs/polozheniye.html)
+- [Политика конфиденциальности](https://artur-ershov.github.io/tvortsy-lk/docs/privacy.html)
+- [Согласие на обработку данных](https://artur-ershov.github.io/tvortsy-lk/docs/consent.html)
 
-На dev-сервере доступно по адресам:
-- `/docs/polozheniye.html`
-- `/docs/privacy.html`
-- `/docs/consent.html`
+Или открой файл напрямую в браузере — работают без сервера.
 
-(Vite отдаёт `public/docs/` как статику; исходники в `docs/` — зеркало,
-при правке нужно скопировать в `public/docs/`.)
+На dev-сервере доступно по адресам `/docs/polozheniye.html` и т.д.
+(Vite отдаёт `public/docs/` как статику; при правке копируй в `public/docs/`.)
 
 ## Файлы
 
