@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<!-- Политика обработки персональных данных — Творцы РФ 2026 / Фонд «Лидеры Будущего»
+     Ссылается из: src/screens/auth/Register.jsx (чекбокс согласия на ПДн) -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Политика обработки персональных данных — Творцы РФ 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --plate: #15151A;
+      --paper: #F0F8FD;
+      --accent: #5B9BC9;
+      --ink: #15151A;
+      --gray: #646A6E;
+      --line: rgba(0,0,0,.10);
+      --r-md: 16px;
+      --font: 'Golos Text', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --top: 56px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); color: var(--ink); background: #fff; font-size: 16px; line-height: 1.65; }
+
+    .topbar {
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 28px; height: var(--top);
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0;
+      background: rgba(255,255,255,.94); backdrop-filter: blur(8px);
+      z-index: 20;
+    }
+    .logo { font-family: var(--mono); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.15; text-decoration: none; color: #000; }
+    .topbar-title { font-size: 14px; font-weight: 500; color: var(--gray); margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .back-link { font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .back-link:hover { text-decoration: underline; }
+
+    .layout { display: flex; align-items: flex-start; }
+
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      position: sticky; top: var(--top);
+      height: calc(100vh - var(--top));
+      overflow-y: auto;
+      border-right: 1px solid var(--line);
+      padding: 24px 0 40px;
+    }
+    .sidebar-head {
+      font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--gray);
+      padding: 0 16px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px;
+    }
+    .nav-link {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 7px 16px; font-size: 13px; line-height: 1.35;
+      color: var(--gray); text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--ink); background: rgba(0,0,0,.03); }
+    .nav-link.active { color: var(--ink); font-weight: 600; border-left-color: var(--accent); background: rgba(91,155,201,.07); }
+    .nav-link .n { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; min-width: 18px; }
+    .nav-link.doc-cur { color: var(--ink); font-weight: 600; border-left-color: var(--accent); cursor: default; }
+    .nav-link.doc-cur:hover { background: none; }
+
+    .content { flex: 1; min-width: 0; padding: 48px 48px 80px 56px; max-width: 820px; }
+
+    .doc-kicker { font-family: var(--mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--gray); margin-bottom: 14px; }
+    h1 { font-size: clamp(34px, 4.5vw, 56px); font-weight: 500; letter-spacing: -.04em; line-height: .95; margin-bottom: 28px; }
+    .doc-meta { display: flex; gap: 20px; flex-wrap: wrap; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+    .doc-meta-item { font-size: 13px; color: var(--gray); }
+    .doc-meta-item strong { color: var(--ink); font-weight: 500; }
+
+    .section { scroll-margin-top: calc(var(--top) + 24px); margin-bottom: 8px; }
+    h2 { font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin: 44px 0 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+    h2 .n { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--gray); display: block; margin-bottom: 5px; font-weight: 400; }
+
+    p { margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 5px; }
+
+    .note { background: var(--paper); border-radius: var(--r-md); padding: 16px 20px; margin: 16px 0; font-size: 15px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+    th { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--gray); text-align: left; padding: 8px 10px; border-bottom: 1.5px solid var(--line); font-weight: 500; }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    a { color: var(--accent); }
+    footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--gray); line-height: 1.7; }
+
+    @media (max-width: 800px) {
+      .sidebar { display: none; }
+      .content { padding: 32px 20px 60px; }
+      .topbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="/">Творцы<br>РФ</a>
+  <span class="topbar-title">Политика обработки персональных данных</span>
+  <a class="back-link" href="javascript:history.back()">← Назад</a>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-head">Содержание</div>
+    <a class="nav-link active" href="#s1" data-sec="s1"><span class="n">01</span>Общие положения</a>
+    <a class="nav-link" href="#s2" data-sec="s2"><span class="n">02</span>Кто мы</a>
+    <a class="nav-link" href="#s3" data-sec="s3"><span class="n">03</span>Какие данные</a>
+    <a class="nav-link" href="#s4" data-sec="s4"><span class="n">04</span>Цели и основания</a>
+    <a class="nav-link" href="#s5" data-sec="s5"><span class="n">05</span>Как мы храним</a>
+    <a class="nav-link" href="#s6" data-sec="s6"><span class="n">06</span>Передача данных</a>
+    <a class="nav-link" href="#s7" data-sec="s7"><span class="n">07</span>Cookies</a>
+    <a class="nav-link" href="#s8" data-sec="s8"><span class="n">08</span>Ваши права</a>
+    <a class="nav-link" href="#s9" data-sec="s9"><span class="n">09</span>Несовершеннолетние</a>
+    <a class="nav-link" href="#s10" data-sec="s10"><span class="n">10</span>Изменения политики</a>
+    <a class="nav-link" href="#s11" data-sec="s11"><span class="n">11</span>Контакты</a>
+
+    <div class="sidebar-head" style="margin-top: 26px;">Документы фестиваля</div>
+    <a class="nav-link" href="/docs/polozheniye.html"><span class="n">→</span>Положение о фестивале</a>
+    <a class="nav-link doc-cur"><span class="n">●</span>Политика обработки ПДн</a>
+    <a class="nav-link" href="/docs/consent.html"><span class="n">→</span>Согласие на обработку ПДн</a>
+  </nav>
+
+  <main class="content">
+
+    <div class="doc-kicker">Политика · персональные данные</div>
+    <h1>Политика<br>обработки<br>персональных<br>данных</h1>
+
+    <div class="doc-meta">
+      <div class="doc-meta-item">Версия <strong>1.0 от 01.03.2026</strong></div>
+      <div class="doc-meta-item">Вступает в силу <strong>01.04.2026</strong></div>
+      <div class="doc-meta-item">Согласие <strong><a href="/docs/consent.html">на обработку ПДн</a></strong></div>
+    </div>
+
+    <!-- 1 -->
+    <div class="section" id="s1">
+      <h2><span class="n">Раздел 01</span>Общие положения</h2>
+      <p>Настоящая Политика обработки персональных данных (далее — Политика) разработана во исполнение требований п. 2 ч. 1 ст. 18.1 Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных» и определяет порядок обработки персональных данных и меры по обеспечению их безопасности у Оператора в отношении участников Международного молодёжного фестиваля-конкурса «ТВОРЦЫ.РФ 2026: Единство в Творчестве» (далее — Фестиваль).</p>
+      <p>Политика — публичный документ Оператора и носит информационный характер: она описывает, как обрабатываются данные, но сама по себе не является согласием. Согласие на обработку персональных данных вы даёте отдельно — отметкой при регистрации; его текст и состав приведены в документе <a href="/docs/consent.html">«Согласие на обработку персональных данных»</a>.</p>
+      <div class="note">
+        Актуальная редакция Политики постоянно доступна по адресу <a href="/docs/privacy.html">/docs/privacy.html</a>. Используя портал, вы соглашаетесь с тем, что обработка ваших данных ведётся на изложенных здесь условиях.
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="section" id="s2">
+      <h2><span class="n">Раздел 02</span>Кто мы — оператор данных</h2>
+      <p>Оператором персональных данных является <strong>Фонд общественных, социальных и творческих инициатив «Лидеры Будущего»</strong> (далее — Оператор).</p>
+      <ul>
+        <li><strong>Адрес:</strong> 123022, г. Москва, 2-я Звенигородская ул., д. 13, стр. 41, помещ. 2/1</li>
+        <li><strong>Email:</strong> <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a></li>
+        <li><strong>Телефон:</strong> +7 (499) 370-00-70</li>
+      </ul>
+    </div>
+
+    <!-- 3 -->
+    <div class="section" id="s3">
+      <h2><span class="n">Раздел 03</span>Какие данные мы собираем</h2>
+      <p>При регистрации и участии в Фестивале мы собираем следующие категории данных:</p>
+      <table>
+        <thead>
+          <tr><th>Категория</th><th>Состав данных</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Идентификационные</strong></td>
+            <td>Фамилия, имя, отчество; дата рождения; пол</td>
+          </tr>
+          <tr>
+            <td><strong>Контактные</strong></td>
+            <td>Email-адрес; номер телефона; город проживания</td>
+          </tr>
+          <tr>
+            <td><strong>Документальные</strong></td>
+            <td>Копия документа, удостоверяющего личность (для подтверждения возраста)</td>
+          </tr>
+          <tr>
+            <td><strong>Профессиональные</strong></td>
+            <td>Место работы или учёбы; творческое направление; национальность</td>
+          </tr>
+          <tr>
+            <td><strong>Технические</strong></td>
+            <td>IP-адрес; тип браузера и устройства; данные cookies; история действий на сайте</td>
+          </tr>
+          <tr>
+            <td><strong>Контент</strong></td>
+            <td>Конкурсные работы и аннотации к ним, загруженные или указанные по ссылке</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Мы не собираем специальные категории персональных данных (сведения о состоянии здоровья, политических взглядах, вероисповедании) в рамках регистрации и участия в Фестивале.</p>
+    </div>
+
+    <!-- 4 -->
+    <div class="section" id="s4">
+      <h2><span class="n">Раздел 04</span>Цели и правовые основания обработки</h2>
+      <table>
+        <thead>
+          <tr><th>Цель</th><th>Правовое основание</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Регистрация аккаунта участника и управление им</td>
+            <td>Согласие субъекта (ст. 9 152-ФЗ)</td>
+          </tr>
+          <tr>
+            <td>Организация участия в конкурсном отборе, приём и рассмотрение заявок</td>
+            <td>Согласие; договор об участии</td>
+          </tr>
+          <tr>
+            <td>Формирование документов (сертификаты участника, дипломы лауреата)</td>
+            <td>Согласие; договор об участии</td>
+          </tr>
+          <tr>
+            <td>Уведомления об изменении статуса заявки и мероприятиях Фестиваля</td>
+            <td>Согласие; законный интерес Оператора</td>
+          </tr>
+          <tr>
+            <td>Выплата денежных грантов и исполнение налоговых обязательств (НДФЛ)</td>
+            <td>Выполнение требований законодательства РФ</td>
+          </tr>
+          <tr>
+            <td>Публикация результатов и показ конкурсных работ на мероприятиях</td>
+            <td>Согласие; лицензия по разделу 11 Положения о Фестивале</td>
+          </tr>
+          <tr>
+            <td>Обеспечение безопасности и предотвращение мошенничества</td>
+            <td>Законный интерес Оператора</td>
+          </tr>
+          <tr>
+            <td>Статистика и улучшение работы платформы</td>
+            <td>Законный интерес Оператора</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5 -->
+    <div class="section" id="s5">
+      <h2><span class="n">Раздел 05</span>Как мы храним и защищаем данные</h2>
+      <p>Персональные данные хранятся на защищённых серверах на территории Российской Федерации в соответствии с требованиями ч. 5 ст. 18 152-ФЗ.</p>
+      <p>Оператор применяет технические и организационные меры защиты, в том числе:</p>
+      <ul>
+        <li>шифрование данных при передаче (TLS/HTTPS) и хранении;</li>
+        <li>ограничение доступа к персональным данным по принципу минимальной необходимости;</li>
+        <li>регулярный аудит систем безопасности;</li>
+        <li>обязательства о конфиденциальности для сотрудников, имеющих доступ к данным.</li>
+      </ul>
+      <p><strong>Сроки хранения:</strong></p>
+      <ul>
+        <li>Данные аккаунта участника — до удаления аккаунта по запросу или в течение 3 лет с последней активности, если аккаунт не удалён.</li>
+        <li>Конкурсные работы и сертификаты — бессрочно в архиве Фестиваля (на основании лицензии раздела 11 Положения).</li>
+        <li>Финансовые документы (для налоговых целей) — 5 лет с даты выплаты приза.</li>
+        <li>Технические логи — до 1 года.</li>
+      </ul>
+    </div>
+
+    <!-- 6 -->
+    <div class="section" id="s6">
+      <h2><span class="n">Раздел 06</span>Передача данных третьим лицам</h2>
+      <p>Оператор вправе передавать персональные данные следующим категориям получателей:</p>
+      <ul>
+        <li><strong>Экспертный совет и Координационный совет</strong> — для организации оценки заявок (в объёме, необходимом для экспертизы).</li>
+        <li><strong>Партнёры Фестиваля</strong> (VK, Яндекс, Ростелеком и др.) — для публикации результатов и показа работ победителей, на основании отдельных соглашений о конфиденциальности.</li>
+        <li><strong>Государственные органы</strong> — в случаях, прямо предусмотренных законодательством РФ (в том числе ФНС при налогообложении призов).</li>
+        <li><strong>Технические подрядчики</strong> (хостинг, email-рассылка, аналитика) — исключительно в целях технического обеспечения работы платформы, на основании договоров с обязательствами по защите данных.</li>
+      </ul>
+      <p>Передача персональных данных в иных случаях без вашего согласия не производится.</p>
+      <div class="note">
+        Для иностранных участников (категория Б) данные могут передаваться организациям в странах БРИКС/ШОС в целях визовой поддержки — исключительно с согласия участника.
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="section" id="s7">
+      <h2><span class="n">Раздел 07</span>Файлы cookies</h2>
+      <p>Портал Фестиваля использует файлы cookies для обеспечения работы личного кабинета, запоминания настроек и сбора обезличенной статистики (количество посещений, страницы просмотра).</p>
+      <p>Вы вправе отключить cookies в настройках браузера. Обратите внимание, что при отключении некоторые функции личного кабинета могут работать некорректно.</p>
+      <p>Мы используем следующие категории cookies:</p>
+      <ul>
+        <li><strong>Необходимые</strong> — для работы авторизации и сессии. Не могут быть отключены.</li>
+        <li><strong>Функциональные</strong> — для запоминания ваших предпочтений (язык интерфейса).</li>
+        <li><strong>Аналитические</strong> — для понимания, как используется платформа (обезличенная статистика).</li>
+      </ul>
+    </div>
+
+    <!-- 8 -->
+    <div class="section" id="s8">
+      <h2><span class="n">Раздел 08</span>Ваши права</h2>
+      <p>В соответствии с Главой 3 Федерального закона № 152-ФЗ вы вправе:</p>
+      <ul>
+        <li><strong>Получить информацию</strong> об обработке ваших персональных данных и их составе.</li>
+        <li><strong>Исправить</strong> неточные или неполные данные.</li>
+        <li><strong>Удалить</strong> персональные данные («право на забвение») — за исключением данных, хранение которых обязательно по закону.</li>
+        <li><strong>Отозвать согласие</strong> на обработку данных. Отзыв согласия не влияет на законность обработки, осуществлённой до его отзыва.</li>
+        <li><strong>Ограничить обработку</strong> ваших данных — в случаях, предусмотренных законом.</li>
+        <li><strong>Обратиться с жалобой</strong> в Роскомнадзор (уполномоченный орган по защите прав субъектов персональных данных): <a href="https://rkn.gov.ru" target="_blank" rel="noopener">rkn.gov.ru</a>.</li>
+      </ul>
+      <p>Для реализации любого из указанных прав направьте запрос на адрес <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a>. Мы рассмотрим запрос в течение 30 календарных дней.</p>
+      <div class="note">
+        Отзыв согласия на обработку персональных данных влечёт невозможность дальнейшего участия в Фестивале, поскольку обработка данных необходима для его организации.
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="section" id="s9">
+      <h2><span class="n">Раздел 09</span>Несовершеннолетние участники</h2>
+      <p>Участники в возрасте от 14 до 17 лет (включительно) вправе зарегистрироваться на портале Фестиваля при наличии согласия законного представителя (родителя или опекуна) на обработку их персональных данных.</p>
+      <p>Согласие законного представителя оформляется по форме Приложения № 3 к Положению о Фестивале и предоставляется в составе заявки на участие.</p>
+      <p>Оператор не собирает персональные данные лиц, которым не исполнилось 14 лет. Если вам стало известно, что такие данные были нами получены, незамедлительно свяжитесь с нами по адресу <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a>.</p>
+    </div>
+
+    <!-- 10 -->
+    <div class="section" id="s10">
+      <h2><span class="n">Раздел 10</span>Изменения настоящей Политики</h2>
+      <p>Оператор вправе вносить изменения в настоящую Политику. Актуальная версия всегда доступна по адресу <a href="/docs/privacy.html">/docs/privacy.html</a>.</p>
+      <p>При существенных изменениях, затрагивающих ваши права, мы уведомим вас по email, указанному при регистрации, не позднее чем за 14 дней до вступления изменений в силу.</p>
+      <p>Продолжение использования личного кабинета после вступления изменений в силу означает ваше согласие с обновлённой Политикой.</p>
+    </div>
+
+    <!-- 11 -->
+    <div class="section" id="s11">
+      <h2><span class="n">Раздел 11</span>Контактная информация</h2>
+      <p>По всем вопросам, связанным с обработкой персональных данных, обращайтесь:</p>
+      <ul>
+        <li><strong>Email:</strong> <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a></li>
+        <li><strong>Почтовый адрес:</strong> 123022, г. Москва, 2-я Звенигородская ул., д. 13, стр. 41, помещ. 2/1, Фонд «Лидеры Будущего», с пометкой «Персональные данные»</li>
+        <li><strong>Телефон:</strong> +7 (499) 370-00-70 (пн–пт, 10:00–18:00 МСК)</li>
+      </ul>
+      <p>Роскомнадзор (орган надзора за обработкой персональных данных): <a href="https://rkn.gov.ru" target="_blank" rel="noopener">rkn.gov.ru</a></p>
+      <p>По общим вопросам фестиваля: <a href="mailto:help@tvortsy.online">help@tvortsy.online</a></p>
+    </div>
+
+    <footer>
+      Фестиваль-конкурс «ТВОРЦЫ.РФ 2026» · Фонд «Лидеры Будущего»<br>
+      Политика обработки персональных данных v1.0, вступает в силу 01.04.2026<br>
+      Связанные документы: <a href="/docs/polozheniye.html">Положение о фестивале</a> · <a href="/docs/consent.html">Согласие на обработку ПДн</a><br>
+      Вопросы: <a href="mailto:privacy@tvortsy.online">privacy@tvortsy.online</a>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  const links = document.querySelectorAll('.nav-link[data-sec]');
+  const sections = Array.from(links).map(l => document.getElementById(l.dataset.sec)).filter(Boolean);
+  const TOP = 80;
+  function updateActive() {
+    const pos = window.scrollY + TOP + 10;
+    let cur = sections[0];
+    sections.forEach(s => { if (s.getBoundingClientRect().top + window.scrollY <= pos) cur = s; });
+    links.forEach(l => l.classList.toggle('active', l.dataset.sec === cur.id));
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+</script>
+
+</body>
+</html>

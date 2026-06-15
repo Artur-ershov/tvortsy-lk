@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!-- Галерея-превью писем. Сайдбар + один preview-фрейм, без скролла страницы. -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Шаблоны писем — Творцы РФ 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --plate:#15151A; --paper:#F0F8FD; --accent:#5B9BC9; --gray:#646A6E; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100vh; overflow: hidden; font-family: 'Golos Text', -apple-system, sans-serif; color: #15151A; background: #fff; display: flex; flex-direction: column; }
+
+    /* ── Верхняя панель ── */
+    .topbar {
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(0,0,0,.10);
+      flex-shrink: 0;
+    }
+    .logo {
+      font-family: 'JetBrains Mono', monospace; font-weight: 700;
+      font-size: 13px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.15;
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; margin-right: auto; color: #15151A; }
+    .btn {
+      padding: 8px 18px; border-radius: 8px; border: none;
+      font-size: 13.5px; cursor: pointer; font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-on  { background: #15151A; color: #fff; font-weight: 600; box-shadow: 0 3px 10px rgba(0,0,0,.15); }
+    .btn-off { background: #fff; color: #15151A; opacity: .5; border: 1px solid rgba(0,0,0,.12); }
+    .open-link { font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .open-link:hover { text-decoration: underline; }
+
+    /* ── Основной layout ── */
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Сайдбар ── */
+    .sidebar {
+      width: 210px; flex-shrink: 0;
+      border-right: 1px solid rgba(0,0,0,.10);
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+    .nav-item {
+      display: block; width: 100%; padding: 9px 16px;
+      border: none; background: none; text-align: left;
+      font-family: inherit; font-size: 13.5px; line-height: 1.35; color: #15151A;
+      cursor: pointer;
+    }
+    .nav-item:hover { background: rgba(0,0,0,.04); }
+    .nav-item.active { background: var(--paper); font-weight: 600; }
+    .nav-item .tag {
+      display: block;
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: var(--accent); margin-top: 2px;
+    }
+
+    /* ── Preview ── */
+    .preview-pane { flex: 1; overflow: hidden; background: #f5f5f5; }
+    .preview-pane iframe { width: 100%; height: 100%; border: 0; display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="logo">Творцы<br>РФ</div>
+    <div class="topbar-title">Шаблоны писем</div>
+    <button id="btn-template" class="btn btn-on" data-label="Плейсхолдеры {{...}}">✓ Плейсхолдеры {{...}}</button>
+    <button id="btn-real"     class="btn btn-off" data-label="Реальные данные (Мария)">Реальные данные (Мария)</button>
+    <a id="open-link" class="open-link" href="confirm.html" target="_blank">Открыть ↗</a>
+  </div>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <button class="nav-item active" data-src="confirm.html">
+        Подтверждение почты
+        <span class="tag">confirm.html</span>
+      </button>
+      <button class="nav-item" data-src="recovery.html">
+        Сброс пароля
+        <span class="tag">recovery.html</span>
+      </button>
+      <button class="nav-item" data-src="invite.html">
+        Приглашение в команду
+        <span class="tag">invite.html</span>
+      </button>
+      <button class="nav-item" data-src="submitted.html">
+        Заявка принята
+        <span class="tag">submitted.html</span>
+      </button>
+      <button class="nav-item" data-src="admitted.html">
+        Заявка допущена
+        <span class="tag">admitted.html</span>
+      </button>
+      <button class="nav-item" data-src="rework.html">
+        На доработку
+        <span class="tag">rework.html</span>
+      </button>
+      <button class="nav-item" data-src="results.html">
+        Итоги фестиваля
+        <span class="tag">results.html</span>
+      </button>
+    </nav>
+
+    <div class="preview-pane">
+      <iframe id="preview-frame" src="confirm.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const maria = {
+      name: 'Мария', email: 'm.sokolova@mail.ru',
+      appNum: 'ТВ-2026-0847', appTitle: 'Клубная фонограмма «Летний полусон»',
+      nomination: 'Аудио', teamName: 'Three Stars',
+      captainName: 'Шумейко Игорь', captainInit: 'ИШ',
+      code0: '1', code1: '2', code2: '3', code3: '4',
+      submittedAt: '02.06.2026', deadline: '15.06.2026',
+      reworkNote: 'Аудио обрезано в начале — проверь исходник. Уровень лучше отрегулировать.',
+      confirmUrl: 'https://tvortsy.online/confirm?code=1234',
+      resetUrl: 'https://tvortsy.online/reset?code=1234',
+      joinUrl: 'https://tvortsy.online/join/invite-token-xyz',
+      appUrl: 'https://tvortsy.online/cabinet/app/ТВ-2026-0847',
+      resultsUrl: 'https://tvortsy.online/cabinet/app/ТВ-2026-0847'
+    };
+
+    const frame    = document.getElementById('preview-frame');
+    const openLink = document.getElementById('open-link');
+    const btnT     = document.getElementById('btn-template');
+    const btnR     = document.getElementById('btn-real');
+    let currentSrc = 'confirm.html';
+    let isReal     = false;
+
+    function frameUrl(src) {
+      return isReal ? src + '?' + new URLSearchParams(maria).toString() : src;
+    }
+
+    function setMode(active, inactive) {
+      active.className   = 'btn btn-on';
+      active.textContent = '✓ ' + active.dataset.label;
+      inactive.className   = 'btn btn-off';
+      inactive.textContent = inactive.dataset.label;
+      frame.src = frameUrl(currentSrc);
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        currentSrc = item.dataset.src;
+        frame.src  = frameUrl(currentSrc);
+        openLink.href = currentSrc;
+      });
+    });
+
+    btnT.addEventListener('click', () => { isReal = false; setMode(btnT, btnR); });
+    btnR.addEventListener('click', () => { isReal = true;  setMode(btnR, btnT); });
+  </script>
+</body>
+</html>
